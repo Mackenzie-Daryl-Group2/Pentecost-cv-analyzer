@@ -1,0 +1,5 @@
+id,username,email,password,role
+1,vc,vc@pentecost.edu,password,vc
+2,hr,hr@pentecost.edu,password,hr
+3,admin,admin@pentecost.edu,password,admin
+4,registrar,registrar@pentecost.edu,password,registrar

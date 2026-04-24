@@ -1,0 +1,9 @@
+streamlit
+pdfplumber
+spacy
+scikit-learn
+pillow
+twilio
+streamlit-webrtc
+pandas
+numpy
