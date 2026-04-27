@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import os
 
 st.set_page_config(
     page_title="Pentecost University CV Analyzer",
@@ -32,14 +31,172 @@ st.markdown("""
     }
     .welcome-header {
         text-align: center;
-        font-size: 2em;
+        font-size: 3.5em;
         color: #2E8B57;
+        font-weight: bold;
+        margin-top: 100px;
+        margin-bottom: 50px;
+    }
+    .button-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 40px;
+    }
+    .search-box {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.7;
+        }
+    }
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+    @keyframes rotate {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    .animation-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin: 40px 0;
+        height: 100px;
+    }
+    .animated-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2E8B57 0%, #4CAF50 100%);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    .animated-circle:nth-child(2) {
+        animation: pulse 2s ease-in-out infinite 0.3s;
+        width: 40px;
+        height: 40px;
+    }
+    .animated-circle:nth-child(3) {
+        animation: pulse 2s ease-in-out infinite 0.6s;
+        width: 60px;
+        height: 60px;
+    }
+    .animated-icon {
+        font-size: 48px;
+        animation: float 3s ease-in-out infinite;
+    }
+    .login-background-container {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-form-overlay {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 400px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    .login-form-overlay h3 {
+        color: #2E8B57;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 24px;
+        font-weight: bold;
+    }
+    .login-form-overlay input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 2px solid #2E8B57;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+    .login-form-overlay button {
+        width: 100%;
+        background-color: #2E8B57;
+        color: white;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .login-form-overlay button:hover {
+        background-color: #1e5f3f;
+    }
+    .video-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1;
+    }
+    .page-overlay {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(3px);
+    }
+    .login-centered {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+    .login-form-box {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 50px;
+        border-radius: 15px;
+        width: 100%;
+        max-width: 450px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(10px);
+    }
+    .login-form-box h2 {
+        color: #2E8B57;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 28px;
+        font-weight: bold;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Load users
+# Load users and jobs
 users_df = pd.read_csv("data/users.csv")
+jobs_df = pd.read_csv("data/jobs.csv")
 
 # Session state
 if 'logged_in' not in st.session_state:
@@ -80,38 +237,121 @@ def create_account(username, email, password):
 
 # Main app
 if not st.session_state.logged_in:
-    st.markdown('<h1 class="welcome-header">Welcome to Pentecost University</h1>', unsafe_allow_html=True)
-    st.image("https://www.pentecostuniversity.edu.gh/wp-content/uploads/2020/07/puclogo.png", width=300)
-    st.write("An automated system for CV analysis and job matching at Pentecost University.")
+    # Initialize session states for showing forms
+    if 'show_login' not in st.session_state:
+        st.session_state.show_login = False
+    if 'show_signup' not in st.session_state:
+        st.session_state.show_signup = False
+    if 'show_search' not in st.session_state:
+        st.session_state.show_search = False
+    
+    # Main homepage with heading and buttons
+    if not st.session_state.show_login and not st.session_state.show_signup and not st.session_state.show_search:
+        # Welcome heading
+        st.markdown('<h1 class="welcome-header">Welcome to Pentecost University Recruiter</h1>', unsafe_allow_html=True)
+        
+        # Buttons below heading
+        col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+        
+        with col2:
+            if st.button("🔐 Login", key="btn_login_home", use_container_width=True):
+                st.session_state.show_login = True
+                st.rerun()
+        
+        with col3:
+            if st.button("📝 Sign Up", key="btn_signup_home", use_container_width=True):
+                st.session_state.show_signup = True
+                st.rerun()
+        
+        with col4:
+            if st.button("🔍 Search", key="btn_search_home", use_container_width=True):
+                st.session_state.show_search = True
+                st.rerun()
 
-    st.markdown("### Key Features:")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("**Job Showcase**")
-        st.write("Browse available positions tailored to your skills.")
-    with col2:
-        st.markdown("**Smart Matching**")
-        st.write("AI-powered cosine similarity ranking for job-CV matching.")
-    with col3:
-        st.markdown("**Secure Dashboards**")
-        st.write("Role-based access for admins, HR, VC, and more.")
+        st.markdown("""
+            <p style="text-align:center; max-width:700px; margin:0 auto 30px auto; color:#444; font-size:18px;">
+                Quickly search available jobs by title, skills, or department. Create an account to save applications and track progress.
+            </p>
+        """, unsafe_allow_html=True)
 
-    tab1, tab2 = st.tabs(["Login", "Create Account"])
-
-    with tab1:
-        st.subheader("Login to Your Account")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.button("Login"):
-            login(username, password)
-
-    with tab2:
-        st.subheader("Create New Account")
-        new_username = st.text_input("Username", key="new_user")
-        new_email = st.text_input("Email", key="new_email")
-        new_password = st.text_input("Password", type="password", key="new_pass")
-        if st.button("Create Account"):
-            create_account(new_username, new_email, new_password)
+        search_col1, search_col2 = st.columns([3, 1])
+        with search_col1:
+            search_query_home = st.text_input("Search jobs or skills", key="home_search_query", placeholder="e.g., Computer Science, Research, Administrative")
+        with search_col2:
+            if st.button("Search", key="btn_home_search", use_container_width=True):
+                if search_query_home:
+                    query = search_query_home.lower()
+                    results = jobs_df[jobs_df.apply(lambda row: query in str(row['title']).lower() or query in str(row['description']).lower() or query in str(row['requirements']).lower(), axis=1)]
+                    if not results.empty:
+                        st.success(f"Found {len(results)} matching jobs")
+                        for _, job in results.iterrows():
+                            st.markdown(f"**{job['title']}**  \n{job['description']}  \nRequirements: {job['requirements']}  \nSalary: ${job['salary']}")
+                    else:
+                        st.warning("No matching jobs found. Try a broader term.")
+                else:
+                    st.warning("Please enter a search term")
+    
+    # Show login form
+    if st.session_state.show_login:
+        # Back button at top
+        if st.button("← Back to Home", key="btn_back_login_top"):
+            st.session_state.show_login = False
+            st.rerun()
+        
+        st.markdown("---")
+        
+        st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.98); padding: 35px; border-radius: 18px; max-width: 520px; margin: 0 auto 30px auto; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);">
+                <h3 style="color: #2E8B57; text-align: center; margin: 0 0 15px 0; font-size: 28px; font-weight: bold;">Login to Your Account</h3>
+                <p style="text-align: center; margin: 0; color: #555; font-size: 16px;">Enter your credentials to manage applications, review jobs, and access personalized recommendations.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2, col3 = st.columns([1, 1.5, 1])
+        with col2:
+            username = st.text_input("👤 Username", key="login_username", placeholder="Enter your username")
+            password = st.text_input("🔒 Password", type="password", key="login_password", placeholder="Enter your password")
+            
+            col_login, col_cancel = st.columns(2)
+            with col_login:
+                if st.button("🔐 Login", key="btn_login_submit", use_container_width=True):
+                    login(username, password)
+            with col_cancel:
+                if st.button("❌ Cancel", key="btn_cancel_login", use_container_width=True):
+                    st.session_state.show_login = False
+                    st.rerun()
+    
+    # Show signup form
+    elif st.session_state.show_signup:
+        st.markdown("### Create New Account")
+        new_username = st.text_input("Username", key="signup_username")
+        new_email = st.text_input("Email", key="signup_email")
+        new_password = st.text_input("Password", type="password", key="signup_password")
+        col_btn1, col_btn2 = st.columns([2, 1])
+        with col_btn1:
+            if st.button("Create Account", key="btn_signup_submit", use_container_width=True):
+                create_account(new_username, new_email, new_password)
+        with col_btn2:
+            if st.button("Back", key="btn_back_signup"):
+                st.session_state.show_signup = False
+                st.rerun()
+    
+    # Show search form
+    elif st.session_state.show_search:
+        st.markdown("### Search for Jobs or Candidates")
+        search_query = st.text_input("Enter search term (job title, skills, etc.)", key="search_query", placeholder="e.g., Software Engineer, Python")
+        col_btn1, col_btn2 = st.columns([2, 1])
+        with col_btn1:
+            if st.button("Search", key="btn_search_submit", use_container_width=True):
+                if search_query:
+                    st.success(f"Searching for: {search_query}")
+                    # Add search functionality here
+                else:
+                    st.warning("Please enter a search term")
+        with col_btn2:
+            if st.button("Back", key="btn_back_search"):
+                st.session_state.show_search = False
+                st.rerun()
 
 else:
     # Sidebar for navigation
