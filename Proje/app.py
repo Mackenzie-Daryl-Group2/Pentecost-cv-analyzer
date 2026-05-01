@@ -13,6 +13,9 @@ from pandas.errors import ParserError
 from streamlit.errors import StreamlitSecretNotFoundError
 import streamlit.components.v1 as components
 
+# Ensure working directory is the same as the script location
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 st.set_page_config(
     page_title="Pentecost University CV Analyzer",
     page_icon="🎓",
