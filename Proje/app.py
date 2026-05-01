@@ -1386,9 +1386,7 @@ if not st.session_state.logged_in:
         clear_home_watermark_js()
         clear_login_video_bg_js()
         signup_bg_path = resolve_asset_path([
-            "school.jpeg",
-            "..\\..\\..\\school.jpeg",
-            "C:\\Users\\user\\Desktop\\CV\\school.jpeg"
+            "school.jpeg"
         ])
         if signup_bg_path:
             render_signup_background_js(signup_bg_path)
