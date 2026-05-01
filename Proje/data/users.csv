@@ -1,5 +1,10 @@
 id,username,email,password,role
-1,vc,vc@pentecost.edu,password,vc
-2,hr,hr@pentecost.edu,password,hr
+1,provc,provc@pentecost.edu,ProVC@123,pro_vc
+2,hr,hr@pentecost.edu,HR@123,hr
 3,admin,admin@pentecost.edu,password,admin
 4,registrar,registrar@pentecost.edu,password,registrar
+5,Daryl,hugheskobby7@gmail.com,BQwRhc4YZRfmejW,user
+6,Kenzie,kenzieackah@gmail.com,cTCa2pgJ9ugZDAa,user
+7,Mark,ackahkenzie@gmail.com ,cTCa2pgJ9ugZDAa,user
+8,Kobina,kobinabuadoo18@gmail.com,ProjetMbappe7,user
+9,Rec,darylhughesbuadoo@gmail.com,Rec@1234,user

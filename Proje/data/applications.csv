@@ -1,0 +1,4 @@
+id,name,email,phone,job_id,cv_path,image_path,submitted_at,similarity,cv_passed,interview_scheduled_at,interview_meet_link,interview_notes,interview_passed,hr_report_sent,status
+b43532cc-339a-4ffb-8929-234efd62f3bf,Kweku Agyemang,beekhay011@gmail.com,555104900,1,data/cvs/b43532cc-339a-4ffb-8929-234efd62f3bf.pdf,data/images/b43532cc-339a-4ffb-8929-234efd62f3bf.jpg,2026-04-28T22:15:35.486128,0.2563088217951602,False,,,,,False,CV Not Passed
+3495f2e9-e3de-45d7-8ab5-d274d73a4e73,Kofi Ofori,k.ofori@email.com,205023641,8,data/cvs/3495f2e9-e3de-45d7-8ab5-d274d73a4e73.pdf,data/images/3495f2e9-e3de-45d7-8ab5-d274d73a4e73.jpg,2026-04-29T10:05:01.530531,0.20189473672535,False,,,,,False,CV Not Passed
+dbe41709-a988-4183-845a-76543267ef15,KK,Kef1233@gmail.com,0244569625,8,data/cvs/dbe41709-a988-4183-845a-76543267ef15.pdf,data/images/dbe41709-a988-4183-845a-76543267ef15.jpg,2026-05-01T01:38:21.256308,0.20189473672535005,False,,,,,false,CV Not Passed

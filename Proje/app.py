@@ -1,5 +1,17 @@
 import streamlit as st
 import pandas as pd
+import base64
+import os
+import smtplib
+import random
+import string
+from email.utils import parseaddr
+from email.message import EmailMessage
+from datetime import datetime, timedelta
+from io import BytesIO
+from pandas.errors import ParserError
+from streamlit.errors import StreamlitSecretNotFoundError
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Pentecost University CV Analyzer",
@@ -33,9 +45,10 @@ st.markdown("""
         text-align: center;
         font-size: 3.5em;
         color: #2E8B57;
-        font-weight: bold;
+        font-weight: 900;
         margin-top: 100px;
         margin-bottom: 50px;
+        text-shadow: 0px 2px 4px rgba(255, 255, 255, 0.8), 0px 4px 10px rgba(0, 0, 0, 0.25);
     }
     .button-container {
         display: flex;
@@ -191,12 +204,576 @@ st.markdown("""
         font-size: 28px;
         font-weight: bold;
     }
+    .login-page-wrap {
+        position: relative;
+        min-height: 100vh;
+    }
+    .login-video-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -3;
+    }
+    .login-video-dim {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.56);
+        z-index: -2;
+    }
+    .login-panel {
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.22) 0%,
+            rgba(255, 255, 255, 0.10) 100%
+        );
+        backdrop-filter: blur(14px) saturate(140%);
+        -webkit-backdrop-filter: blur(14px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        padding: 30px 30px 18px 30px;
+        border-radius: 22px;
+        max-width: 560px;
+        margin: 20px auto 18px auto;
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.34);
+    }
+    .login-panel h3 {
+        color: #f5fff9;
+        text-align: center;
+        margin: 0 0 15px 0;
+        font-size: 30px;
+        font-weight: 700;
+        text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35);
+    }
+    .login-panel p {
+        text-align: center;
+        margin: 0;
+        color: rgba(245, 255, 249, 0.95);
+        font-size: 15px;
+        line-height: 1.45;
+    }
+    .login-badge {
+        width: fit-content;
+        margin: 0 auto 12px auto;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: linear-gradient(120deg, rgba(185, 255, 223, 0.30), rgba(148, 230, 188, 0.36));
+        border: 1px solid rgba(210, 255, 231, 0.45);
+        color: #f5fff9;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+    body[data-login-mode="true"] .block-container {
+        max-width: 560px;
+        margin-top: 5vh;
+        padding-top: 1rem;
+        padding-bottom: 1.25rem;
+    }
+    body[data-login-mode="true"] [data-testid="stTextInput"] input {
+        border-radius: 14px;
+        border: 1px solid rgba(208, 255, 232, 0.88);
+        background: linear-gradient(
+            120deg,
+            rgba(13, 42, 30, 0.62) 0%,
+            rgba(9, 30, 22, 0.52) 100%
+        );
+        backdrop-filter: blur(8px) saturate(120%);
+        -webkit-backdrop-filter: blur(8px) saturate(120%);
+        color: #ffffff;
+        height: 50px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    body[data-login-mode="true"] [data-testid="stTextInput"] input::placeholder {
+        color: rgba(228, 255, 243, 0.86);
+    }
+    body[data-login-mode="true"] [data-testid="stTextInput"] input:focus {
+        border-color: rgba(197, 255, 228, 0.98);
+        box-shadow: 0 0 0 2px rgba(143, 242, 191, 0.48);
+    }
+    body[data-login-mode="true"] [data-testid="stTextInputLabel"] p {
+        color: #f3fff8;
+        font-weight: 700;
+        font-size: 15px;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+    }
+    body[data-login-mode="true"] [data-testid="stButton"] button {
+        border-radius: 14px;
+        font-weight: 700;
+        min-height: 48px;
+    }
+    body[data-login-mode="true"] [data-testid="stButton"] button[kind="primary"] {
+        background: linear-gradient(
+            120deg,
+            rgba(65, 180, 126, 0.55) 0%,
+            rgba(37, 133, 86, 0.45) 100%
+        );
+        border: 1px solid rgba(205, 255, 232, 0.48);
+        box-shadow: 0 10px 25px rgba(21, 89, 57, 0.34);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+    }
+    body[data-login-mode="true"] [data-testid="stButton"] button[kind="secondary"] {
+        background: linear-gradient(
+            120deg,
+            rgba(255, 255, 255, 0.26) 0%,
+            rgba(255, 255, 255, 0.14) 100%
+        );
+        color: #ebfff4;
+        border: 1px solid rgba(232, 255, 244, 0.48);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.20);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+    }
+    body[data-login-mode="true"] [data-testid="stButton"] button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+    }
+    .login-hint {
+        margin-top: 12px;
+        text-align: center;
+        color: rgba(235, 255, 245, 0.95);
+        font-size: 13px;
+        opacity: 0.9;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    [data-testid="stTextInputLabel"] p,
+    [data-testid="stMarkdownContainer"] p {
+        color: #111;
+    }
+    @media (min-width: 992px) {
+        body[data-login-mode="true"] .block-container {
+            max-width: 620px;
+            margin-top: 9vh;
+        }
+        .login-panel {
+            padding: 34px 36px 20px 36px;
+            border-radius: 24px;
+        }
+        .login-panel h3 {
+            font-size: 34px;
+        }
+    }
+    @media (max-width: 768px) {
+        .welcome-header {
+            font-size: 2.1em;
+            margin-top: 45px;
+            margin-bottom: 25px;
+            padding: 0 8px;
+        }
+        .login-panel {
+            padding: 20px 18px 14px 18px;
+            margin: 12px auto 16px auto;
+            border-radius: 14px;
+        }
+        .login-panel h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+        .login-panel p {
+            font-size: 14px;
+        }
+        .login-badge {
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        body[data-login-mode="true"] .block-container {
+            max-width: 92%;
+            margin-top: 0.5vh;
+            padding-top: 0.6rem;
+        }
+        .stButton > button {
+            min-height: 44px;
+            font-size: 15px;
+        }
+    }
+    body[data-signup-mode="true"] .block-container {
+        max-width: 620px;
+        margin-top: 5vh;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    body[data-signup-mode="true"] .signup-panel {
+        background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.22) 0%,
+            rgba(255, 255, 255, 0.10) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 22px;
+        padding: 24px;
+        backdrop-filter: blur(14px) saturate(130%);
+        -webkit-backdrop-filter: blur(14px) saturate(130%);
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    }
+    body[data-signup-mode="true"] .signup-panel h3 {
+        margin: 0 0 8px 0;
+        color: #f5fff9;
+        text-align: center;
+        font-size: 30px;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+    body[data-signup-mode="true"] .signup-panel p {
+        margin: 0 0 16px 0;
+        text-align: center;
+        color: rgba(247, 255, 251, 0.98);
+        font-size: 16px;
+        font-weight: 600;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+    }
+    body[data-signup-mode="true"] [data-testid="stTextInputLabel"] p {
+        color: #fbfffd;
+        font-weight: 700;
+        font-size: 15px;
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+    }
+    body[data-signup-mode="true"] [data-testid="stTextInput"] input {
+        border-radius: 14px;
+        border: 1px solid rgba(208, 255, 232, 0.88);
+        background: linear-gradient(120deg, rgba(13, 42, 30, 0.62) 0%, rgba(9, 30, 22, 0.52) 100%);
+        color: #ffffff;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        height: 50px;
+        font-size: 16px;
+    }
+    body[data-signup-mode="true"] [data-testid="stTextInput"] input::placeholder {
+        color: rgba(228, 255, 243, 0.85);
+    }
+    body[data-signup-mode="true"] [data-testid="stButton"] button {
+        min-height: 48px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 15px;
+        color: #ffffff;
+        background: linear-gradient(120deg, rgba(31, 127, 80, 0.62), rgba(48, 169, 107, 0.5));
+        border: 1px solid rgba(214, 255, 237, 0.55);
+        text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+    }
+    body[data-signup-mode="true"] [data-testid="stButton"] button:hover {
+        filter: brightness(1.06);
+    }
+    body[data-signup-mode="true"] [data-testid="stMarkdownContainer"] p,
+    body[data-signup-mode="true"] [data-testid="stCaptionContainer"] {
+        color: #f5fff9;
+    }
+    @media (max-width: 768px) {
+        body[data-signup-mode="true"] .block-container {
+            max-width: 92%;
+            margin-top: 1vh;
+        }
+        body[data-signup-mode="true"] .signup-panel h3 {
+            font-size: 24px;
+        }
+    }
+    /* Dashboard Global Styles */
+    .dashboard-header {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #1e5f3f;
+        margin-bottom: 20px;
+        border-bottom: 3px solid #4CAF50;
+        padding-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .metric-container {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+    .metric-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(46, 139, 87, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        flex: 1;
+        min-width: 220px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(46, 139, 87, 0.15);
+    }
+    .metric-card h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+    .metric-card h2 {
+        margin: 10px 0 0 0;
+        font-size: 2.5rem;
+        color: #2E8B57;
+        font-weight: 900;
+    }
+    .styled-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+        border: 1px solid rgba(46, 139, 87, 0.1);
+        margin-bottom: 30px;
+    }
+    .styled-card h3 {
+        color: #1e5f3f;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        border-bottom: 2px solid #e0e0e0;
+        padding-bottom: 10px;
+    }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        display: inline-block;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-passed {
+        background-color: rgba(76, 175, 80, 0.15);
+        color: #2e7d32;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+    }
+    .status-failed {
+        background-color: rgba(244, 67, 54, 0.15);
+        color: #c62828;
+        border: 1px solid rgba(244, 67, 54, 0.3);
+    }
+    .status-pending {
+        background-color: rgba(255, 152, 0, 0.15);
+        color: #ef6c00;
+        border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+    
+    /* Enhance sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #f8fcf9;
+        border-right: 1px solid rgba(46, 139, 87, 0.15);
+    }
+    [data-testid="stSidebarNav"] span {
+        font-weight: 600;
+        color: #1e5f3f;
+    }
+    /* Form Visibility Fix */
+    .stTextInput input, .stTextArea textarea, .stSelectbox select {
+        color: #333 !important;
+        background-color: #fff !important;
+        border: 1px solid #ccc !important;
+        border-radius: 8px !important;
+    }
+    .stTextInput label p, .stTextArea label p, .stSelectbox label p, .stDateInput label p, .stTimeInput label p, .stFileUploader label p {
+        color: #1e5f3f !important;
+        font-weight: 700 !important;
+        font-size: 1rem !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
+def safe_read_csv(path, fallback_columns=None):
+    """Read CSV safely and avoid crashing on malformed rows."""
+    try:
+        return pd.read_csv(path)
+    except ParserError:
+        # Keep app alive if a single bad line exists.
+        cleaned = pd.read_csv(path, engine="python", on_bad_lines="skip")
+        if fallback_columns:
+            for col in fallback_columns:
+                if col not in cleaned.columns:
+                    cleaned[col] = ""
+            cleaned = cleaned[fallback_columns]
+        return cleaned
+
+
+def ensure_file_ends_with_newline(path):
+    """Append newline if file does not end with one."""
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return
+    with open(path, "rb+") as f:
+        f.seek(-1, os.SEEK_END)
+        last_char = f.read(1)
+        if last_char not in (b"\n", b"\r"):
+            f.write(b"\n")
+
+
 # Load users and jobs
-users_df = pd.read_csv("data/users.csv")
-jobs_df = pd.read_csv("data/jobs.csv")
+users_df = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+jobs_df = safe_read_csv("data/jobs.csv")
+
+# Common data paths and defaults
+APPLICATIONS_FILE = "data/applications.csv"
+SIMILARITY_PASS_MARK = 0.55
+
+
+def normalize_role(role_value):
+    role = str(role_value).strip().lower()
+    if role in {"pro-vc", "pro_vc", "provc", "vc"}:
+        return "pro_vc"
+    return role
+
+
+def role_home_page(role):
+    if role == "user":
+        return "jobs"
+    if role == "hr":
+        return "hr_dashboard"
+    if role == "pro_vc":
+        return "pro_vc_dashboard"
+    if role == "admin":
+        return "admin_dashboard"
+    return "home"
+
+
+def get_applications_df():
+    required_columns = [
+        "id",
+        "name",
+        "email",
+        "phone",
+        "job_id",
+        "cv_path",
+        "image_path",
+        "submitted_at",
+        "similarity",
+        "cv_passed",
+        "interview_scheduled_at",
+        "interview_meet_link",
+        "interview_notes",
+        "interview_passed",
+        "hr_report_sent",
+        "status"
+    ]
+    if not os.path.exists(APPLICATIONS_FILE):
+        return pd.DataFrame(columns=required_columns)
+    apps = safe_read_csv(APPLICATIONS_FILE, required_columns)
+    for col in required_columns:
+        if col not in apps.columns:
+            apps[col] = ""
+    return apps[required_columns]
+
+
+def save_applications_df(apps_df):
+    apps_df.to_csv(APPLICATIONS_FILE, index=False)
+
+
+def bool_series(values):
+    return values.fillna("").astype(str).str.lower().isin(["true", "1", "yes"])
+
+
+def escape_pdf_text(value):
+    return str(value).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def build_simple_pdf(report_title, lines):
+    """Generate a lightweight printable PDF without external dependencies."""
+    content_stream = "BT\n/F1 12 Tf\n50 790 Td\n"
+    title = escape_pdf_text(report_title)
+    content_stream += f"({title}) Tj\n0 -20 Td\n"
+    for line in lines:
+        safe_line = escape_pdf_text(line)
+        content_stream += f"({safe_line}) Tj\n0 -14 Td\n"
+    content_stream += "ET"
+    content_bytes = content_stream.encode("latin-1", errors="replace")
+
+    objects = []
+    objects.append(b"1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n")
+    objects.append(b"2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n")
+    objects.append(
+        b"3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n"
+    )
+    objects.append(b"4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n")
+    objects.append(
+        f"5 0 obj << /Length {len(content_bytes)} >> stream\n".encode("latin-1")
+        + content_bytes
+        + b"\nendstream endobj\n"
+    )
+
+    output = BytesIO()
+    output.write(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj in objects:
+        offsets.append(output.tell())
+        output.write(obj)
+
+    xref_start = output.tell()
+    output.write(f"xref\n0 {len(objects)+1}\n".encode("latin-1"))
+    output.write(b"0000000000 65535 f \n")
+    for off in offsets[1:]:
+        output.write(f"{off:010d} 00000 n \n".encode("latin-1"))
+    output.write(
+        f"trailer << /Size {len(objects)+1} /Root 1 0 R >>\nstartxref\n{xref_start}\n%%EOF".encode("latin-1")
+    )
+    return output.getvalue()
+
+
+def jobs_with_classification(jobs_df):
+    jobs = jobs_df.copy()
+    faculty_values = []
+    department_values = []
+    for _, row in jobs.iterrows():
+        text = f"{row.get('title', '')} {row.get('description', '')}".lower()
+        if "comput" in text or "ict" in text or "systems" in text:
+            faculty_values.append("Faculty of Computing")
+            department_values.append("Computing / ICT")
+        elif "account" in text or "market" in text or "finance" in text or "audit" in text or "procurement" in text:
+            faculty_values.append("Business School")
+            department_values.append("Business / Finance")
+        elif "nursing" in text or "health" in text or "laboratory" in text:
+            faculty_values.append("Faculty of Health Sciences")
+            department_values.append("Health and Clinical")
+        elif "theology" in text or "biblical" in text:
+            faculty_values.append("Faculty of Theology")
+            department_values.append("Theology")
+        elif "education" in text or "counsel" in text:
+            faculty_values.append("Faculty of Education")
+            department_values.append("Education and Counseling")
+        elif "engineering" in text or "science" in text:
+            faculty_values.append("Faculty of Engineering and Science")
+            department_values.append("Engineering / Science")
+        elif "library" in text:
+            faculty_values.append("Library Services")
+            department_values.append("University Library")
+        elif "admission" in text or "examination" in text or "registr" in text:
+            faculty_values.append("Academic Affairs")
+            department_values.append("Admissions and Exams")
+        elif "human resource" in text or "administrative assistant" in text or "admin" in text:
+            faculty_values.append("Central Administration")
+            department_values.append("HR and Admin")
+        elif "public relations" in text or "quality assurance" in text:
+            faculty_values.append("Corporate Services")
+            department_values.append("PR and Quality Assurance")
+        elif "estate" in text or "security" in text:
+            faculty_values.append("Operations and Facilities")
+            department_values.append("Estate and Security")
+        elif "sports" in text or "student affairs" in text:
+            faculty_values.append("Student Affairs")
+            department_values.append("Student Life")
+        else:
+            faculty_values.append("General University Services")
+            department_values.append("General")
+    jobs["faculty"] = faculty_values
+    jobs["department"] = department_values
+    return jobs
+
 
 # Session state
 if 'logged_in' not in st.session_state:
@@ -208,32 +785,507 @@ if 'username' not in st.session_state:
 
 # Function to login
 def login(username, password):
-    user = users_df[(users_df['username'] == username) & (users_df['password'] == password)]
-    if not user.empty:
+    u = str(username).strip()
+    p = str(password).strip()
+    match_df = users_df[
+        (users_df['username'].astype(str).str.strip() == u) & 
+        (users_df['password'].astype(str).str.strip() == p)
+    ]
+    if not match_df.empty:
         st.session_state.logged_in = True
-        st.session_state.user_role = user['role'].iloc[0]
-        st.session_state.username = username
+        st.session_state.user_role = normalize_role(match_df['role'].iloc[0])
+        st.session_state.username = match_df['username'].iloc[0]
+        st.session_state.page = role_home_page(st.session_state.user_role)
+        st.session_state.show_login = False
         st.rerun()
     else:
         st.error("Invalid credentials")
 
 # Function to create account
 def create_account(username, email, password):
-    if username in users_df['username'].values:
+    latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+    if username in latest_users['username'].values:
         st.error("Username already exists")
         return
-    if email in users_df['email'].values:
+    if email in latest_users['email'].values:
         st.error("Email already exists")
         return
+    if latest_users.empty or latest_users["id"].isna().all():
+        next_id = 1
+    else:
+        next_id = int(pd.to_numeric(latest_users["id"], errors="coerce").dropna().max()) + 1
+
     new_user = pd.DataFrame({
-        "id": [users_df['id'].max() + 1],
+        "id": [next_id],
         "username": [username],
         "email": [email],
         "password": [password],
         "role": ["user"]
     })
+    ensure_file_ends_with_newline("data/users.csv")
     new_user.to_csv("data/users.csv", mode='a', header=False, index=False)
     st.success("Account created! Please login.")
+    sent, message = send_signup_confirmation_email(email, username)
+    if sent:
+        st.info("A confirmation email has been sent to your address.")
+    else:
+        st.warning(f"Account created, but email notification was not sent: {message}")
+        st.caption(
+            "Configure SMTP via environment variables or Streamlit secrets "
+            "(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM)."
+        )
+
+
+def send_signup_confirmation_email(recipient_email, username):
+    """Send account creation confirmation email using SMTP settings."""
+    recipient_parsed = parseaddr(recipient_email)[1]
+    if "@" not in recipient_parsed:
+        return False, "invalid recipient email address"
+
+    try:
+        smtp = st.secrets.get("smtp", {})
+    except StreamlitSecretNotFoundError:
+        smtp = {}
+    smtp_host = smtp.get("host", os.getenv("SMTP_HOST"))
+    smtp_port_raw = smtp.get("port", os.getenv("SMTP_PORT", "587"))
+    smtp_user = smtp.get("user", os.getenv("SMTP_USER"))
+    smtp_password = smtp.get("password", os.getenv("SMTP_PASSWORD"))
+    smtp_from = smtp.get("from", os.getenv("SMTP_FROM", smtp_user if smtp_user else ""))
+    use_ssl_raw = str(smtp.get("use_ssl", os.getenv("SMTP_USE_SSL", "false"))).lower()
+    use_starttls_raw = str(smtp.get("use_starttls", os.getenv("SMTP_USE_STARTTLS", "true"))).lower()
+    use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
+    use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
+
+    if not all([smtp_host, smtp_port_raw, smtp_user, smtp_password, smtp_from]):
+        return False, "SMTP settings are not configured"
+    try:
+        smtp_port = int(smtp_port_raw)
+    except ValueError:
+        return False, "invalid SMTP_PORT value"
+
+    msg = EmailMessage()
+    msg["Subject"] = "Your Pentecost Recruiter account is ready"
+    msg["From"] = smtp_from
+    msg["To"] = recipient_parsed
+    msg.set_content(
+        f"Hello {username},\n\n"
+        "Your account has been created successfully on Pentecost University Recruiter.\n"
+        "You can now log in and continue your application journey.\n\n"
+        "If this wasn't you, please contact support.\n\n"
+        "Regards,\nPentecost University Recruiter"
+    )
+
+    try:
+        smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        with smtp_cls(smtp_host, smtp_port, timeout=20) as server:
+            server.ehlo()
+            if use_starttls and not use_ssl:
+                server.starttls()
+                server.ehlo()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+
+
+def send_signup_verification_code_email(recipient_email, username, verification_code):
+    """Send OTP code for signup verification."""
+    recipient_parsed = parseaddr(recipient_email)[1]
+    if "@" not in recipient_parsed:
+        return False, "invalid recipient email address"
+
+    try:
+        smtp = st.secrets.get("smtp", {})
+    except StreamlitSecretNotFoundError:
+        smtp = {}
+    smtp_host = smtp.get("host", os.getenv("SMTP_HOST"))
+    smtp_port_raw = smtp.get("port", os.getenv("SMTP_PORT", "587"))
+    smtp_user = smtp.get("user", os.getenv("SMTP_USER"))
+    smtp_password = smtp.get("password", os.getenv("SMTP_PASSWORD"))
+    smtp_from = smtp.get("from", os.getenv("SMTP_FROM", smtp_user if smtp_user else ""))
+    use_ssl_raw = str(smtp.get("use_ssl", os.getenv("SMTP_USE_SSL", "false"))).lower()
+    use_starttls_raw = str(smtp.get("use_starttls", os.getenv("SMTP_USE_STARTTLS", "true"))).lower()
+    use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
+    use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
+
+    if not all([smtp_host, smtp_port_raw, smtp_user, smtp_password, smtp_from]):
+        return False, "SMTP settings are not configured"
+    try:
+        smtp_port = int(smtp_port_raw)
+    except ValueError:
+        return False, "invalid SMTP_PORT value"
+
+    msg = EmailMessage()
+    msg["Subject"] = "Verify your Pentecost Recruiter signup"
+    msg["From"] = smtp_from
+    msg["To"] = recipient_parsed
+    msg.set_content(
+        f"Hello {username},\n\n"
+        "Use the verification code below to complete your signup:\n\n"
+        f"{verification_code}\n\n"
+        "This code expires in 10 minutes.\n\n"
+        "Regards,\nPentecost University Recruiter"
+    )
+
+    try:
+        smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+        with smtp_cls(smtp_host, smtp_port, timeout=20) as server:
+            server.ehlo()
+            if use_starttls and not use_ssl:
+                server.starttls()
+                server.ehlo()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as exc:
+        return False, f"{type(exc).__name__}: {exc}"
+
+
+def resolve_asset_path(candidates):
+    """Return first existing file path from candidates."""
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def render_login_video_bg(video_path):
+    """Render an inline HTML5 video as the login page background."""
+    try:
+        with open(video_path, "rb") as video_file:
+            video_b64 = base64.b64encode(video_file.read()).decode("utf-8")
+    except Exception:
+        return
+
+    st.markdown(
+        f"""
+        <div class="login-page-wrap">
+            <video class="login-video-bg" autoplay muted loop playsinline>
+                <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+            </video>
+            <div class="login-video-dim"></div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+def render_login_video_bg_js(video_path):
+    """Inject video background into parent DOM using JavaScript."""
+    try:
+        with open(video_path, "rb") as video_file:
+            video_b64 = base64.b64encode(video_file.read()).decode("utf-8")
+    except Exception:
+        return
+
+    components.html(
+        f"""
+        <script>
+            (function () {{
+                const doc = window.parent.document;
+                const oldVideo = doc.getElementById("login-video-bg");
+                const oldDim = doc.getElementById("login-video-dim");
+                if (oldVideo) oldVideo.remove();
+                if (oldDim) oldDim.remove();
+
+                const video = doc.createElement("video");
+                video.id = "login-video-bg";
+                video.autoplay = true;
+                video.muted = true;
+                video.loop = true;
+                video.playsInline = true;
+                video.setAttribute("playsinline", "");
+                video.style.position = "fixed";
+                video.style.top = "0";
+                video.style.left = "0";
+                video.style.width = "100vw";
+                video.style.height = "100vh";
+                video.style.objectFit = "contain";
+                video.style.backgroundColor = "#000";
+                video.style.objectPosition = "center center";
+                video.style.zIndex = "-3";
+                video.style.pointerEvents = "none";
+                video.innerHTML = '<source src="data:video/mp4;base64,{video_b64}" type="video/mp4">';
+
+                const dim = doc.createElement("div");
+                dim.id = "login-video-dim";
+                dim.style.position = "fixed";
+                dim.style.top = "0";
+                dim.style.left = "0";
+                dim.style.width = "100vw";
+                dim.style.height = "100vh";
+                dim.style.background = "rgba(0, 0, 0, 0.56)";
+                dim.style.zIndex = "-2";
+                dim.style.pointerEvents = "none";
+
+                const app = doc.querySelector('[data-testid="stAppViewContainer"]');
+                if (app) {{
+                    app.style.background = "transparent";
+                }}
+                const main = doc.querySelector(".stApp");
+                if (main) {{
+                    main.style.background = "transparent";
+                }}
+                doc.body.style.backgroundColor = "#000";
+                doc.body.setAttribute("data-login-mode", "true");
+
+                doc.body.prepend(dim);
+                doc.body.prepend(video);
+
+                // Ensure playback starts on reruns.
+                const playPromise = video.play();
+                if (playPromise && typeof playPromise.catch === "function") {{
+                    playPromise.catch(() => {{}});
+                }}
+            }})();
+        </script>
+        """,
+        height=0
+    )
+
+
+def render_login_image_bg_js(image_path):
+    """Inject an image background into parent DOM using JavaScript."""
+    try:
+        with open(image_path, "rb") as image_file:
+            image_b64 = base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception:
+        return
+
+    components.html(
+        f"""
+        <script>
+            (function () {{
+                const doc = window.parent.document;
+                const oldImg = doc.getElementById("login-image-bg");
+                const oldDim = doc.getElementById("login-image-dim");
+                if (oldImg) oldImg.remove();
+                if (oldDim) oldDim.remove();
+
+                const bg = doc.createElement("div");
+                bg.id = "login-image-bg";
+                bg.style.position = "fixed";
+                bg.style.top = "0";
+                bg.style.left = "0";
+                bg.style.width = "100vw";
+                bg.style.height = "100vh";
+                bg.style.backgroundImage = "url('data:image/jpeg;base64,{image_b64}')";
+                bg.style.backgroundRepeat = "no-repeat";
+                bg.style.backgroundPosition = "center center";
+                bg.style.backgroundSize = "cover";
+                bg.style.zIndex = "-3";
+                bg.style.pointerEvents = "none";
+
+                const dim = doc.createElement("div");
+                dim.id = "login-image-dim";
+                dim.style.position = "fixed";
+                dim.style.top = "0";
+                dim.style.left = "0";
+                dim.style.width = "100vw";
+                dim.style.height = "100vh";
+                dim.style.background = "rgba(0, 0, 0, 0.56)";
+                dim.style.zIndex = "-2";
+                dim.style.pointerEvents = "none";
+
+                const app = doc.querySelector('[data-testid="stAppViewContainer"]');
+                if (app) {{
+                    app.style.background = "transparent";
+                }}
+                const main = doc.querySelector(".stApp");
+                if (main) {{
+                    main.style.background = "transparent";
+                }}
+                doc.body.style.backgroundColor = "#000";
+                doc.body.setAttribute("data-login-mode", "true");
+
+                doc.body.prepend(dim);
+                doc.body.prepend(bg);
+            }})();
+        </script>
+        """,
+        height=0
+    )
+
+
+def clear_login_video_bg_js():
+    """Remove injected video background when leaving login page."""
+    components.html(
+        """
+        <script>
+            (function () {
+                const doc = window.parent.document;
+                const oldVideo = doc.getElementById("login-video-bg");
+                const oldDim = doc.getElementById("login-video-dim");
+                const oldImg = doc.getElementById("login-image-bg");
+                const oldImgDim = doc.getElementById("login-image-dim");
+                if (oldVideo) oldVideo.remove();
+                if (oldDim) oldDim.remove();
+                if (oldImg) oldImg.remove();
+                if (oldImgDim) oldImgDim.remove();
+                doc.body.removeAttribute("data-login-mode");
+            })();
+        </script>
+        """,
+        height=0
+    )
+
+
+def render_home_watermark_js(image_path):
+    """Show a subtle logo watermark on the public homepage."""
+    try:
+        with open(image_path, "rb") as image_file:
+            image_b64 = base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception:
+        return
+
+    components.html(
+        f"""
+        <script>
+            (function () {{
+                const doc = window.parent.document;
+                const oldMark = doc.getElementById("home-logo-watermark");
+                if (oldMark) oldMark.remove();
+
+                const mark = doc.createElement("div");
+                mark.id = "home-logo-watermark";
+                mark.style.position = "fixed";
+                mark.style.top = "0";
+                mark.style.left = "0";
+                mark.style.width = "100vw";
+                mark.style.height = "100vh";
+                mark.style.pointerEvents = "none";
+                mark.style.zIndex = "-1";
+                mark.style.backgroundImage = "url('data:image/jpeg;base64,{image_b64}')";
+                mark.style.backgroundRepeat = "no-repeat";
+                mark.style.backgroundPosition = "center center";
+                mark.style.backgroundSize = "min(56vw, 560px)";
+                mark.style.opacity = "0.18";
+                mark.style.filter = "grayscale(10%)";
+
+                const app = doc.querySelector('[data-testid="stAppViewContainer"]');
+                if (app) {{
+                    app.style.background = "transparent";
+                }}
+                const main = doc.querySelector(".stApp");
+                if (main) {{
+                    main.style.background = "transparent";
+                }}
+                doc.body.style.backgroundColor = "#eef2ef";
+                doc.body.prepend(mark);
+                doc.body.setAttribute("data-home-mode", "true");
+            }})();
+        </script>
+        """,
+        height=0
+    )
+
+
+def clear_home_watermark_js():
+    """Remove homepage watermark when navigating away."""
+    components.html(
+        """
+        <script>
+            (function () {
+                const doc = window.parent.document;
+                const oldMark = doc.getElementById("home-logo-watermark");
+                if (oldMark) oldMark.remove();
+                doc.body.removeAttribute("data-home-mode");
+                const app = doc.querySelector('[data-testid="stAppViewContainer"]');
+                if (app) {{
+                    app.style.background = "";
+                }}
+                const main = doc.querySelector(".stApp");
+                if (main) {{
+                    main.style.background = "";
+                }}
+                doc.body.style.backgroundColor = "";
+            })();
+        </script>
+        """,
+        height=0
+    )
+
+
+def render_signup_background_js(image_path):
+    """Render school background image for signup page."""
+    try:
+        with open(image_path, "rb") as image_file:
+            image_b64 = base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception:
+        return
+
+    components.html(
+        f"""
+        <script>
+            (function () {{
+                const doc = window.parent.document;
+                const oldBg = doc.getElementById("signup-bg-image");
+                const oldDim = doc.getElementById("signup-bg-dim");
+                if (oldBg) oldBg.remove();
+                if (oldDim) oldDim.remove();
+
+                const bg = doc.createElement("div");
+                bg.id = "signup-bg-image";
+                bg.style.position = "fixed";
+                bg.style.top = "0";
+                bg.style.left = "0";
+                bg.style.width = "100vw";
+                bg.style.height = "100vh";
+                bg.style.backgroundImage = "url('data:image/jpeg;base64,{image_b64}')";
+                bg.style.backgroundPosition = "center center";
+                bg.style.backgroundRepeat = "no-repeat";
+                bg.style.backgroundSize = "cover";
+                bg.style.zIndex = "-3";
+                bg.style.pointerEvents = "none";
+
+                const dim = doc.createElement("div");
+                dim.id = "signup-bg-dim";
+                dim.style.position = "fixed";
+                dim.style.top = "0";
+                dim.style.left = "0";
+                dim.style.width = "100vw";
+                dim.style.height = "100vh";
+                dim.style.background = "rgba(0, 0, 0, 0.45)";
+                dim.style.zIndex = "-2";
+                dim.style.pointerEvents = "none";
+
+                const app = doc.querySelector('[data-testid="stAppViewContainer"]');
+                if (app) {{
+                    app.style.background = "transparent";
+                }}
+                const main = doc.querySelector(".stApp");
+                if (main) {{
+                    main.style.background = "transparent";
+                }}
+                doc.body.style.backgroundColor = "#0a1d14";
+                doc.body.setAttribute("data-signup-mode", "true");
+                doc.body.prepend(dim);
+                doc.body.prepend(bg);
+            }})();
+        </script>
+        """,
+        height=0
+    )
+
+
+def clear_signup_background_js():
+    """Remove signup background image when leaving signup page."""
+    components.html(
+        """
+        <script>
+            (function () {
+                const doc = window.parent.document;
+                const oldBg = doc.getElementById("signup-bg-image");
+                const oldDim = doc.getElementById("signup-bg-dim");
+                if (oldBg) oldBg.remove();
+                if (oldDim) oldDim.remove();
+                doc.body.removeAttribute("data-signup-mode");
+            })();
+        </script>
+        """,
+        height=0
+    )
 
 # Main app
 if not st.session_state.logged_in:
@@ -244,9 +1296,24 @@ if not st.session_state.logged_in:
         st.session_state.show_signup = False
     if 'show_search' not in st.session_state:
         st.session_state.show_search = False
+    if 'signup_verification_pending' not in st.session_state:
+        st.session_state.signup_verification_pending = False
+    if 'signup_verification_code' not in st.session_state:
+        st.session_state.signup_verification_code = ""
+    if 'signup_verification_expires' not in st.session_state:
+        st.session_state.signup_verification_expires = None
+    if 'pending_signup_username' not in st.session_state:
+        st.session_state.pending_signup_username = ""
+    if 'pending_signup_email' not in st.session_state:
+        st.session_state.pending_signup_email = ""
+    if 'pending_signup_password' not in st.session_state:
+        st.session_state.pending_signup_password = ""
     
     # Main homepage with heading and buttons
     if not st.session_state.show_login and not st.session_state.show_signup and not st.session_state.show_search:
+        render_home_watermark_js("pentecost logo.jpg")
+        clear_signup_background_js()
+        clear_login_video_bg_js()
         # Welcome heading
         st.markdown('<h1 class="welcome-header">Welcome to Pentecost University Recruiter</h1>', unsafe_allow_html=True)
         
@@ -274,70 +1341,206 @@ if not st.session_state.logged_in:
             </p>
         """, unsafe_allow_html=True)
 
-        search_col1, search_col2 = st.columns([3, 1])
-        with search_col1:
-            search_query_home = st.text_input("Search jobs or skills", key="home_search_query", placeholder="e.g., Computer Science, Research, Administrative")
-        with search_col2:
-            if st.button("Search", key="btn_home_search", use_container_width=True):
-                if search_query_home:
-                    query = search_query_home.lower()
-                    results = jobs_df[jobs_df.apply(lambda row: query in str(row['title']).lower() or query in str(row['description']).lower() or query in str(row['requirements']).lower(), axis=1)]
-                    if not results.empty:
-                        st.success(f"Found {len(results)} matching jobs")
-                        for _, job in results.iterrows():
-                            st.markdown(f"**{job['title']}**  \n{job['description']}  \nRequirements: {job['requirements']}  \nSalary: ${job['salary']}")
-                    else:
-                        st.warning("No matching jobs found. Try a broader term.")
-                else:
-                    st.warning("Please enter a search term")
-    
+
     # Show login form
     if st.session_state.show_login:
+        clear_home_watermark_js()
+        clear_signup_background_js()
+        render_login_image_bg_js("pent 2.jpg")
+
         # Back button at top
         if st.button("← Back to Home", key="btn_back_login_top"):
             st.session_state.show_login = False
             st.rerun()
         
-        st.markdown("---")
-        
         st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.98); padding: 35px; border-radius: 18px; max-width: 520px; margin: 0 auto 30px auto; box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);">
-                <h3 style="color: #2E8B57; text-align: center; margin: 0 0 15px 0; font-size: 28px; font-weight: bold;">Login to Your Account</h3>
-                <p style="text-align: center; margin: 0; color: #555; font-size: 16px;">Enter your credentials to manage applications, review jobs, and access personalized recommendations.</p>
+            <div class="login-panel">
+                <div class="login-badge">Secure Access</div>
+                <h3>Login to Your Account</h3>
+                <p>Continue your recruitment journey with a clean, secure sign-in experience.</p>
             </div>
         """, unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 1.5, 1])
-        with col2:
-            username = st.text_input("👤 Username", key="login_username", placeholder="Enter your username")
-            password = st.text_input("🔒 Password", type="password", key="login_password", placeholder="Enter your password")
-            
-            col_login, col_cancel = st.columns(2)
-            with col_login:
-                if st.button("🔐 Login", key="btn_login_submit", use_container_width=True):
-                    login(username, password)
-            with col_cancel:
-                if st.button("❌ Cancel", key="btn_cancel_login", use_container_width=True):
-                    st.session_state.show_login = False
-                    st.rerun()
+
+        username = st.text_input("👤 Username", key="login_username", placeholder="Enter your username")
+        password = st.text_input("🔒 Password", type="password", key="login_password", placeholder="Enter your password")
+
+        col_login, col_cancel = st.columns(2)
+        with col_login:
+            if st.button("🔐 Login", key="btn_login_submit", use_container_width=True, type="primary"):
+                login(username, password)
+        with col_cancel:
+            if st.button("❌ Cancel", key="btn_cancel_login", use_container_width=True):
+                st.session_state.show_login = False
+                st.rerun()
+
+        st.markdown('<div class="login-hint">Use your assigned username and password from registration.</div>', unsafe_allow_html=True)
     
     # Show signup form
     elif st.session_state.show_signup:
-        st.markdown("### Create New Account")
-        new_username = st.text_input("Username", key="signup_username")
-        new_email = st.text_input("Email", key="signup_email")
-        new_password = st.text_input("Password", type="password", key="signup_password")
-        col_btn1, col_btn2 = st.columns([2, 1])
-        with col_btn1:
-            if st.button("Create Account", key="btn_signup_submit", use_container_width=True):
-                create_account(new_username, new_email, new_password)
-        with col_btn2:
-            if st.button("Back", key="btn_back_signup"):
+        if 'signup_step' not in st.session_state:
+            st.session_state.signup_step = 1
+
+        clear_home_watermark_js()
+        clear_login_video_bg_js()
+        signup_bg_path = resolve_asset_path([
+            "school.jpeg",
+            "..\\..\\..\\school.jpeg",
+            "C:\\Users\\user\\Desktop\\CV\\school.jpeg"
+        ])
+        if signup_bg_path:
+            render_signup_background_js(signup_bg_path)
+            
+        if st.session_state.signup_step == 1:
+            st.markdown("""
+                <div class="signup-panel">
+                    <h3>Create New Account</h3>
+                    <p>Step 1: Enter your registration details.</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            new_username = st.text_input("Username", key="signup_username")
+            new_email = st.text_input("Email", key="signup_email")
+            new_password = st.text_input("Password", type="password", key="signup_password")
+            col_phone_code, col_phone_num = st.columns([1, 3])
+            with col_phone_code:
+                all_country_codes = ["+233", "+1", "+7", "+20", "+27", "+30", "+31", "+32", "+33", "+34", "+36", "+39", "+40", "+41", "+43", "+44", "+45", "+46", "+47", "+48", "+49", "+51", "+52", "+53", "+54", "+55", "+56", "+57", "+58", "+60", "+61", "+62", "+63", "+64", "+65", "+66", "+81", "+82", "+84", "+86", "+90", "+91", "+92", "+93", "+94", "+95", "+98", "+211", "+212", "+213", "+216", "+218", "+220", "+221", "+222", "+223", "+224", "+225", "+226", "+227", "+228", "+229", "+230", "+231", "+232", "+234", "+235", "+236", "+237", "+238", "+239", "+240", "+241", "+242", "+243", "+244", "+245", "+246", "+247", "+248", "+249", "+250", "+251", "+252", "+253", "+254", "+255", "+256", "+257", "+258", "+260", "+261", "+262", "+263", "+264", "+265", "+266", "+267", "+268", "+269", "+290", "+291", "+297", "+298", "+299", "+350", "+351", "+352", "+353", "+354", "+355", "+356", "+357", "+358", "+359", "+370", "+371", "+372", "+373", "+374", "+375", "+376", "+377", "+378", "+379", "+380", "+381", "+382", "+383", "+385", "+386", "+387", "+389", "+420", "+421", "+423", "+500", "+501", "+502", "+503", "+504", "+505", "+506", "+507", "+508", "+509", "+590", "+591", "+592", "+593", "+594", "+595", "+596", "+597", "+598", "+599", "+670", "+672", "+673", "+674", "+675", "+676", "+677", "+678", "+679", "+680", "+681", "+682", "+683", "+685", "+686", "+687", "+688", "+689", "+690", "+691", "+692", "+850", "+852", "+853", "+855", "+856", "+880", "+886", "+960", "+961", "+962", "+963", "+964", "+965", "+966", "+967", "+968", "+970", "+971", "+972", "+973", "+974", "+975", "+976", "+977", "+992", "+993", "+994", "+995", "+996", "+998"]
+                country_code = st.selectbox("Code", options=all_country_codes, index=0, key="signup_country_code")
+            with col_phone_num:
+                new_phone = st.text_input("Phone Number", key="signup_phone", placeholder="Optional for SMS")
+                
+            verification_method = st.radio("Send verification code via:", ["Email", "SMS"], horizontal=True)
+            
+            col_btn1, col_btn2 = st.columns([2, 1])
+            with col_btn1:
+                if st.button("Send Verification Code", key="btn_signup_send_code", use_container_width=True):
+                    latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+                    if not new_username or not new_email or not new_password:
+                        st.error("Please fill username, email and password first.")
+                    elif new_username in latest_users["username"].values:
+                        st.error("Username already exists")
+                    elif new_email in latest_users["email"].values:
+                        st.error("Email already exists")
+                    elif verification_method == "SMS" and not new_phone.strip():
+                        st.error("Please enter a phone number to use SMS verification.")
+                    else:
+                        code = "".join(random.choices(string.digits, k=6))
+                        sent = False
+                        full_phone = ""
+                        
+                        if verification_method == "SMS":
+                            # Strip leading zero if user enters 054... so +23354... is valid
+                            full_phone = f"{country_code}{new_phone.strip().lstrip('0')}"
+                            from utils.sms import send_sms
+                            sent = send_sms(full_phone, f"Your Pentecost Recruiter verification code is {code}")
+                        else:
+                            sent, _ = send_signup_verification_code_email(new_email, new_username, code)
+                            
+                        st.session_state.signup_verification_code = code
+                        st.session_state.signup_verification_expires = (datetime.now() + timedelta(minutes=10)).isoformat()
+                        st.session_state.pending_signup_username = new_username
+                        st.session_state.pending_signup_email = new_email
+                        st.session_state.pending_signup_password = new_password
+                        st.session_state.pending_signup_phone = full_phone if verification_method == "SMS" else new_phone
+                        st.session_state.signup_verification_method = verification_method
+                        
+                        if not sent:
+                            st.session_state.signup_verification_fallback = True
+                        else:
+                            st.session_state.signup_verification_fallback = False
+                            
+                        st.session_state.signup_step = 2
+                        st.rerun()
+            with col_btn2:
+                if st.button("Cancel", key="btn_cancel_signup"):
+                    st.session_state.show_signup = False
+                    st.session_state.signup_step = 1
+                    st.rerun()
+
+        elif st.session_state.signup_step == 2:
+            st.markdown("""
+                <div class="signup-panel">
+                    <h3>Verify Account</h3>
+                    <p>Step 2: Enter the code sent to your selected contact method.</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if st.session_state.get("signup_verification_method") == "SMS":
+                st.info(f"Verification code sent via SMS to {st.session_state.pending_signup_phone}")
+            else:
+                st.info(f"Verification code sent via Email to {st.session_state.pending_signup_email}")
+                
+            if st.session_state.get("signup_verification_fallback", False):
+                st.warning(f"Development Mode Fallback: Your verification code is **{st.session_state.signup_verification_code}**")
+                
+            verification_code_input = st.text_input("Verification Code", key="signup_verification_code_input")
+            
+            col_btn1, col_btn2 = st.columns([2, 1])
+            with col_btn1:
+                if st.button("Verify & Create Account", key="btn_signup_verify_create", use_container_width=True):
+                    if not verification_code_input.strip():
+                        st.error("Enter the verification code.")
+                    else:
+                        expires_raw = st.session_state.signup_verification_expires
+                        is_expired = True
+                        if expires_raw:
+                            try:
+                                is_expired = datetime.now() > datetime.fromisoformat(expires_raw)
+                            except ValueError:
+                                is_expired = True
+                                
+                        if is_expired:
+                            st.error("Verification code expired. Please go back and request a new code.")
+                        elif verification_code_input.strip() != st.session_state.signup_verification_code:
+                            st.error("Invalid verification code.")
+                        else:
+                            # Create the account
+                            latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+                            next_id = 1 if latest_users.empty else int(pd.to_numeric(latest_users["id"], errors="coerce").dropna().max()) + 1
+                            new_user = pd.DataFrame({
+                                "id": [next_id],
+                                "username": [st.session_state.pending_signup_username],
+                                "email": [st.session_state.pending_signup_email],
+                                "password": [st.session_state.pending_signup_password],
+                                "role": ["user"]
+                            })
+                            ensure_file_ends_with_newline("data/users.csv")
+                            new_user.to_csv("data/users.csv", mode='a', header=False, index=False)
+                            # Send welcome email silently
+                            send_signup_confirmation_email(st.session_state.pending_signup_email, st.session_state.pending_signup_username)
+                            
+                            # Clean up and move to step 3
+                            st.session_state.signup_verification_code = ""
+                            st.session_state.signup_verification_expires = None
+                            st.session_state.signup_step = 3
+                            st.rerun()
+            with col_btn2:
+                if st.button("Back", key="btn_back_to_step1"):
+                    st.session_state.signup_step = 1
+                    st.rerun()
+                    
+        elif st.session_state.signup_step == 3:
+            st.markdown("""
+                <div class="signup-panel">
+                    <h3>🎉 Success!</h3>
+                    <p>Your account has been created successfully.</p>
+                </div>
+            """, unsafe_allow_html=True)
+            st.success(f"Welcome, {st.session_state.pending_signup_username}! You can now log in and start applying for jobs.")
+            
+            if st.button("Go to Login", use_container_width=True, type="primary"):
+                st.session_state.signup_step = 1
+                st.session_state.pending_signup_username = ""
+                st.session_state.pending_signup_email = ""
+                st.session_state.pending_signup_password = ""
                 st.session_state.show_signup = False
+                st.session_state.show_login = True
                 st.rerun()
     
     # Show search form
     elif st.session_state.show_search:
+        clear_home_watermark_js()
+        clear_login_video_bg_js()
+        clear_signup_background_js()
         st.markdown("### Search for Jobs or Candidates")
         search_query = st.text_input("Enter search term (job title, skills, etc.)", key="search_query", placeholder="e.g., Software Engineer, Python")
         col_btn1, col_btn2 = st.columns([2, 1])
@@ -354,28 +1557,96 @@ if not st.session_state.logged_in:
                 st.rerun()
 
 else:
-    # Sidebar for navigation
-    st.sidebar.title("Navigation")
-    st.sidebar.write(f"Logged in as: {st.session_state.username} ({st.session_state.user_role})")
+    clear_home_watermark_js()
+    clear_login_video_bg_js()
+    clear_signup_background_js()
+    # Top Navigation Bar
+    st.markdown("""
+        <style>
+        .top-nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(46, 139, 87, 0.15);
+        }
+        .top-nav-user {
+            font-weight: 700;
+            color: #1e5f3f;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+        }
+        .nav-btn-container .stButton > button {
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid rgba(46, 139, 87, 0.2);
+            color: #1e5f3f;
+            background-color: transparent;
+            transition: all 0.3s ease;
+        }
+        .nav-btn-container .stButton > button:hover {
+            background-color: rgba(46, 139, 87, 0.1);
+            border-color: #2E8B57;
+            color: #2E8B57;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    if st.sidebar.button("Home"):
-        st.session_state.page = "home"
+    st.markdown(
+        f'<div class="top-nav"><span class="top-nav-user">🎓 Pentecost Recruiter &nbsp;|&nbsp; Logged in as: {st.session_state.username} ({str(st.session_state.user_role).upper()})</span></div>', 
+        unsafe_allow_html=True
+    )
+    
+    st.markdown('<div class="nav-btn-container">', unsafe_allow_html=True)
+    
+    nav_items = ["Home"]
     if st.session_state.user_role == "user":
-        if st.sidebar.button("Available Jobs"):
-            st.session_state.page = "jobs"
-        if st.sidebar.button("Apply for Job"):
-            st.session_state.page = "apply"
-        if st.sidebar.button("My Applications"):
-            st.session_state.page = "my_apps"
-    elif st.session_state.user_role in ["admin", "hr", "vc", "registrar"]:
-        if st.sidebar.button("Dashboard"):
-            st.session_state.page = "dashboard"
+        nav_items.extend(["Available Jobs", "Apply for Job", "My Applications"])
+    elif st.session_state.user_role == "hr":
+        nav_items.append("HR Dashboard")
+    elif st.session_state.user_role == "pro_vc":
+        nav_items.append("PRO-VC Dashboard")
+    elif st.session_state.user_role == "admin":
+        nav_items.append("Admin Dashboard")
+        
+    if st.session_state.user_role in ["admin", "hr", "pro_vc"]:
+        nav_items.append("Account Settings")
+        
+    nav_items.append("Logout")
+    
+    cols = st.columns(len(nav_items))
+    
+    for i, item in enumerate(nav_items):
+        with cols[i]:
+            if st.button(item, use_container_width=True, key=f"nav_{item}"):
+                if item == "Logout":
+                    st.session_state.logged_in = False
+                    st.session_state.user_role = None
+                    st.session_state.username = None
+                    st.session_state.page = "home"
+                    st.rerun()
+                elif item == "Home":
+                    st.session_state.page = "home"
+                elif item == "Available Jobs":
+                    st.session_state.page = "jobs"
+                elif item == "Apply for Job":
+                    st.session_state.page = "apply"
+                elif item == "My Applications":
+                    st.session_state.page = "my_apps"
+                elif item == "HR Dashboard":
+                    st.session_state.page = "hr_dashboard"
+                elif item == "PRO-VC Dashboard":
+                    st.session_state.page = "pro_vc_dashboard"
+                elif item == "Admin Dashboard":
+                    st.session_state.page = "admin_dashboard"
+                elif item == "Account Settings":
+                    st.session_state.page = "account_settings"
 
-    if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.user_role = None
-        st.session_state.username = None
-        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # Page content
     if 'page' not in st.session_state:
@@ -391,28 +1662,116 @@ else:
 
     elif st.session_state.page == "jobs":
         # Jobs page
-        st.title("Available Jobs")
+        st.title("University Job Opportunities")
+        st.caption("Teaching and non-teaching vacancies across faculties and departments.")
         jobs_df = pd.read_csv("data/jobs.csv")
-        for _, job in jobs_df.iterrows():
-            with st.container():
-                st.subheader(job['title'])
-                st.write(f"**Description:** {job['description']}")
-                st.write(f"**Requirements:** {job['requirements']}")
-                st.write(f"**Salary:** ${job['salary']}")
-                if st.button(f"Apply for {job['title']}", key=int(job['id'])):
-                    st.session_state.selected_job = job['id']
-                    st.session_state.page = "apply"
-                    st.rerun()
+        jobs_df = jobs_with_classification(jobs_df)
+        all_faculties = sorted(jobs_df["faculty"].dropna().unique().tolist())
+        all_departments = sorted(jobs_df["department"].dropna().unique().tolist())
+        selected_faculties = st.multiselect("Filter by Faculty", all_faculties)
+        selected_departments = st.multiselect("Filter by Department", all_departments)
+        filtered_jobs = jobs_df.copy()
+        if selected_faculties:
+            filtered_jobs = filtered_jobs[filtered_jobs["faculty"].isin(selected_faculties)]
+        if selected_departments:
+            filtered_jobs = filtered_jobs[filtered_jobs["department"].isin(selected_departments)]
+        if filtered_jobs.empty:
+            st.warning("No jobs match selected faculty/department filters.")
+        st.markdown(
+            """
+            <style>
+                .job-card {
+                    background: rgba(255, 255, 255, 0.96);
+                    border: 1px solid rgba(0, 0, 0, 0.08);
+                    border-radius: 14px;
+                    padding: 14px;
+                    margin-bottom: 14px;
+                    box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+                }
+                .job-card .job-title {
+                    color: #111827;
+                    font-size: 18px;
+                    font-weight: 800;
+                    margin: 0 0 8px 0;
+                }
+                .job-card .job-meta {
+                    color: #111827;
+                    font-size: 13.5px;
+                    margin: 2px 0;
+                }
+                .job-card .job-body {
+                    color: #111827;
+                    font-size: 13.5px;
+                    margin: 8px 0;
+                    line-height: 1.35;
+                }
+                .job-card b { color: #111827; }
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+        def is_lecturer_title(title_value):
+            title_value = str(title_value or "").strip().lower()
+            return "lecturer" in title_value or "teaching" in title_value
+
+        teaching_df = filtered_jobs[filtered_jobs["title"].apply(is_lecturer_title)].copy()
+        non_teaching_df = filtered_jobs[~filtered_jobs["title"].apply(is_lecturer_title)].copy()
+
+        def render_jobs_grid(df, section_title):
+            if df.empty:
+                st.info(f"No {section_title.lower()} available for the current filters.")
+                return
+
+            st.subheader(section_title)
+            jobs_records = df.to_dict(orient="records")
+            for row_idx in range(0, len(jobs_records), 2):
+                col_left, col_right = st.columns(2)
+
+                def render_job(job):
+                    with st.container():
+                        st.markdown(
+                            f"""
+                            <div class="job-card">
+                                <div class="job-title">{job.get('title','')}</div>
+                                <div class="job-meta"><b>Faculty:</b> {job.get('faculty','')} &nbsp; | &nbsp; <b>Department:</b> {job.get('department','')}</div>
+                                <div class="job-body"><b>Description:</b> {job.get('description','')}</div>
+                                <div class="job-body"><b>Requirements:</b> {job.get('requirements','')}</div>
+                                <div class="job-meta"><b>Salary (Annual):</b> ${job.get('salary','')}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+
+                        if st.button(
+                            f"Apply for {job.get('title','')}",
+                            key=f"apply_{section_title}_{job.get('id','')}",
+                            use_container_width=True
+                        ):
+                            st.session_state.selected_job = job["id"]
+                            st.session_state.page = "apply"
+                            st.rerun()
+
+                with col_left:
+                    if row_idx < len(jobs_records):
+                        render_job(jobs_records[row_idx])
+                with col_right:
+                    if row_idx + 1 < len(jobs_records):
+                        render_job(jobs_records[row_idx + 1])
+
+        render_jobs_grid(teaching_df, "Teaching (Lecturer) Jobs")
+        render_jobs_grid(non_teaching_df, "Non-Lecturing / Other Jobs")
 
     elif st.session_state.page == "apply":
         # Apply page
-        st.title("Apply for Job")
+        st.markdown('<div class="dashboard-header">📝 Apply for Job</div>', unsafe_allow_html=True)
         if 'selected_job' not in st.session_state:
             st.error("Please select a job first.")
         else:
             job_id = st.session_state.selected_job
             jobs_df = pd.read_csv("data/jobs.csv")
             job = jobs_df[jobs_df['id'] == job_id].iloc[0]
+            st.markdown('<div class="styled-card">', unsafe_allow_html=True)
             st.subheader(f"Applying for: {job['title']}")
 
             with st.form("application_form"):
@@ -445,11 +1804,15 @@ else:
                     cv_text = extract_text_from_pdf(cv_path)
                     job_req = job['requirements']
                     similarity = compute_similarity(cv_text, job_req)
+                    is_passed = similarity >= SIMILARITY_PASS_MARK
+                    
+                    interview_time = ""
+                    meet_link = ""
+                    if is_passed:
+                        interview_time = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %I:%M %p")
+                        meet_link = "https://meet.google.com/xyz-abcd-efg"
 
-                    applications_file = "data/applications.csv"
-                    if not os.path.exists(applications_file):
-                        pd.DataFrame(columns=["id", "name", "email", "phone", "job_id", "cv_path", "image_path", "submitted_at", "similarity"]).to_csv(applications_file, index=False)
-
+                    apps_df = get_applications_df()
                     new_app = pd.DataFrame({
                         "id": [app_id],
                         "name": [name],
@@ -459,73 +1822,357 @@ else:
                         "cv_path": [cv_path],
                         "image_path": [image_path],
                         "submitted_at": [datetime.now().isoformat()],
-                        "similarity": [similarity]
+                        "similarity": [similarity],
+                        "cv_passed": [str(is_passed)],
+                        "interview_scheduled_at": [interview_time],
+                        "interview_meet_link": [meet_link],
+                        "interview_notes": [""],
+                        "interview_passed": [""],
+                        "hr_report_sent": ["false"],
+                        "status": ["CV Passed" if is_passed else "CV Not Passed"]
                     })
-                    new_app.to_csv(applications_file, mode='a', header=False, index=False)
+                    apps_df = pd.concat([apps_df, new_app], ignore_index=True)
+                    save_applications_df(apps_df)
 
-                    st.success("Application submitted successfully!")
-                    st.write(f"CV-Job Similarity Score: {similarity:.2f}")
-                    # Send SMS notification
                     from utils.sms import send_sms
-                    send_sms(phone, f"Your application for {job['title']} has been submitted. Similarity score: {similarity:.2f}")
+                    if is_passed:
+                        send_sms(phone, f"Congrats! Your CV for {job['title']} passed. Interview: {interview_time}. Link: {meet_link}")
+                    else:
+                        send_sms(phone, f"Your application for {job['title']} has been submitted successfully.")
+
+                    st.session_state.just_submitted = True
+                    st.session_state.page = "my_apps"
+                    st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.page == "my_apps":
-        st.title("My Applications")
+        st.markdown('<div class="dashboard-header">📁 My Applications</div>', unsafe_allow_html=True)
+        if st.session_state.get("just_submitted", False):
+            st.success("🎉 Application submitted successfully! We will review your application and contact you shortly if you are shortlisted.")
+            st.session_state.just_submitted = False
+            
         user_email = users_df[users_df['username'] == st.session_state.username]['email'].iloc[0]
-        if os.path.exists("data/applications.csv"):
-            apps_df = pd.read_csv("data/applications.csv")
+        if os.path.exists(APPLICATIONS_FILE):
+            apps_df = pd.read_csv(APPLICATIONS_FILE)
             user_apps = apps_df[apps_df['email'] == user_email]
-            st.dataframe(user_apps)
+            st.markdown('<div class="styled-card">', unsafe_allow_html=True)
+            display_columns = ["job_id", "submitted_at", "interview_scheduled_at", "interview_meet_link"]
+            available_cols = [col for col in display_columns if col in user_apps.columns]
+            st.dataframe(user_apps[available_cols], use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.write("No applications yet.")
+            st.info("No applications yet.")
 
-    elif st.session_state.page == "dashboard":
-        st.title(f"{st.session_state.user_role.upper()} Dashboard")
-        if st.session_state.user_role == "admin":
-            st.subheader("Applications")
-            if os.path.exists("data/applications.csv"):
-                apps_df = pd.read_csv("data/applications.csv")
-                st.dataframe(apps_df)
-            st.subheader("Jobs")
-            jobs_df = pd.read_csv("data/jobs.csv")
-            st.dataframe(jobs_df)
-        elif st.session_state.user_role == "hr":
-            st.subheader("Ranked Applications")
-            if os.path.exists("data/applications.csv"):
-                apps_df = pd.read_csv("data/applications.csv")
-                apps_df = apps_df.sort_values('similarity', ascending=False)
-                st.dataframe(apps_df)
-                selected_app_id = st.selectbox("Select Applicant for Interview", apps_df['id'].tolist())
-                if st.button("Start Video Interview"):
-                    st.write(f"Starting video interview with {apps_df[apps_df['id']==selected_app_id]['name'].iloc[0]}")
-                    import streamlit_webrtc as webrtc
-                    webrtc.webrtc_streamer(key=f"interview_{selected_app_id}")
-        elif st.session_state.user_role == "vc":
-            st.subheader("Applicant Reviews")
-            if os.path.exists("data/applications.csv"):
-                apps_df = pd.read_csv("data/applications.csv")
-                jobs_df = pd.read_csv("data/jobs.csv")
-                for _, app in apps_df.iterrows():
-                    with st.container():
-                        col1, col2 = st.columns([1, 3])
-                        with col1:
-                            if os.path.exists(app['image_path']):
-                                st.image(app['image_path'], width=100)
-                        with col2:
-                            job_title = jobs_df[jobs_df['id'] == app['job_id']]['title'].iloc[0]
-                            st.subheader(f"{app['name']} - {job_title}")
-                            st.write(f"Similarity: {app['similarity']:.2f}")
-                            with st.expander("View CV"):
-                                from utils.cv_processor import extract_text_from_pdf
-                                cv_text = extract_text_from_pdf(app['cv_path'])
-                                st.text_area("CV Content", cv_text, height=200)
-                            if st.button(f"Approve {app['name']}", key=app['id']):
-                                st.success("Approved!")
-                                from utils.sms import send_sms
-                                app_phone = apps_df[apps_df['id'] == app['id']]['phone'].iloc[0]
-                                send_sms(app_phone, "Congratulations! Your application has been approved by the VC.")
-        elif st.session_state.user_role == "registrar":
-            st.subheader("Student Applications")
-            if os.path.exists("data/applications.csv"):
-                apps_df = pd.read_csv("data/applications.csv")
-                st.dataframe(apps_df)
+    elif st.session_state.page == "hr_dashboard":
+        st.markdown('<div class="dashboard-header">👥 Human Resources Dashboard</div>', unsafe_allow_html=True)
+        apps_df = get_applications_df()
+        jobs_df = safe_read_csv("data/jobs.csv")
+        total_jobs = len(jobs_df)
+        total_apps = len(apps_df)
+        passed_cvs = len(apps_df[bool_series(apps_df["cv_passed"])]) if not apps_df.empty else 0
+        st.markdown(f'''
+        <div class="metric-container">
+            <div class="metric-card"><h4>Total Vacancies</h4><h2>{total_jobs}</h2></div>
+            <div class="metric-card"><h4>Total Applications</h4><h2>{total_apps}</h2></div>
+            <div class="metric-card"><h4>CV Passed Candidates</h4><h2>{passed_cvs}</h2></div>
+        </div>
+        ''', unsafe_allow_html=True)
+        st.markdown('<div class="styled-card"><h3>➕ Create Job Vacancy</h3>', unsafe_allow_html=True)
+        with st.form("create_vacancy_form"):
+            vacancy_title = st.text_input("Job Title")
+            vacancy_description = st.text_area("Description")
+            vacancy_requirements = st.text_area("Requirements")
+            vacancy_salary = st.text_input("Salary")
+            vacancy_submit = st.form_submit_button("Publish Vacancy")
+
+        if vacancy_submit:
+            if not vacancy_title or not vacancy_description or not vacancy_requirements or not vacancy_salary:
+                st.error("Please fill all vacancy fields.")
+            else:
+                jobs = safe_read_csv("data/jobs.csv")
+                next_job_id = 1 if jobs.empty else int(pd.to_numeric(jobs["id"], errors="coerce").dropna().max()) + 1
+                new_job = pd.DataFrame({
+                    "id": [next_job_id],
+                    "title": [vacancy_title],
+                    "description": [vacancy_description],
+                    "requirements": [vacancy_requirements],
+                    "salary": [vacancy_salary]
+                })
+                new_job.to_csv("data/jobs.csv", mode="a", header=False, index=False)
+                st.success("Vacancy published successfully.")
+                st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>🗑️ Remove Job Vacancy</h3>', unsafe_allow_html=True)
+        jobs_for_removal = safe_read_csv("data/jobs.csv")
+        if not jobs_for_removal.empty:
+            with st.form("remove_vacancy_form"):
+                job_to_remove = st.selectbox(
+                    "Select Job to Remove", 
+                    options=jobs_for_removal['id'].astype(str) + " - " + jobs_for_removal['title']
+                )
+                remove_submit = st.form_submit_button("Remove Job")
+            
+            if remove_submit:
+                job_id_to_remove = int(job_to_remove.split(" - ")[0])
+                jobs_for_removal = jobs_for_removal[jobs_for_removal['id'] != job_id_to_remove]
+                jobs_for_removal.to_csv("data/jobs.csv", index=False)
+                st.success("Job removed successfully.")
+                st.rerun()
+        else:
+            st.info("No active jobs to remove.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>✅ Applicants Who Passed CV Mark</h3>', unsafe_allow_html=True)
+        apps_df = get_applications_df()
+        jobs_df = safe_read_csv("data/jobs.csv")
+        cv_passed_df = apps_df[bool_series(apps_df["cv_passed"])].copy()
+        if not cv_passed_df.empty:
+            cv_passed_df = cv_passed_df.sort_values("similarity", ascending=False)
+            st.dataframe(cv_passed_df[["id", "name", "email", "phone", "job_id", "similarity", "status"]])
+
+            selected_app_id = st.selectbox("Select Applicant for Interview Scheduling / Rescheduling", cv_passed_df["id"].tolist())
+            
+            # Fetch current details
+            current_app = apps_df[apps_df["id"] == selected_app_id].iloc[0]
+            current_schedule = current_app.get("interview_scheduled_at", "")
+            current_link = current_app.get("interview_meet_link", "")
+            current_notes = current_app.get("interview_notes", "")
+            
+            st.info(f"**Current Schedule**: {current_schedule if str(current_schedule).strip() else 'None'}\n\n**Current Link**: {current_link if str(current_link).strip() else 'None'}")
+
+            col_d, col_t = st.columns(2)
+            with col_d:
+                interview_date = st.date_input("Interview Date")
+            with col_t:
+                interview_time = st.time_input("Interview Time")
+                
+            new_meet_link = st.text_input("Google Meet Link", value=str(current_link) if str(current_link).strip() else "https://meet.google.com/")
+            interview_notes = st.text_area("Interview Notes / Venue", value=str(current_notes) if str(current_notes).strip() else "")
+
+            if st.button("Schedule / Reschedule Interview"):
+                schedule_str = f"{interview_date} {interview_time}"
+                apps_df.loc[apps_df["id"] == selected_app_id, "interview_scheduled_at"] = schedule_str
+                apps_df.loc[apps_df["id"] == selected_app_id, "interview_meet_link"] = new_meet_link
+                apps_df.loc[apps_df["id"] == selected_app_id, "interview_notes"] = interview_notes
+                apps_df.loc[apps_df["id"] == selected_app_id, "status"] = "Interview Scheduled"
+                save_applications_df(apps_df)
+                
+                from utils.sms import send_sms
+                phone = current_app['phone']
+                job_id = current_app['job_id']
+                j_df = safe_read_csv("data/jobs.csv")
+                j_title = j_df[j_df['id'] == job_id]['title'].iloc[0] if not j_df[j_df['id'] == job_id].empty else "your application"
+                
+                msg = f"Interview Update: Your interview for {j_title} is set for {schedule_str}. Link: {new_meet_link}"
+                send_sms(phone, msg)
+                
+                st.success("Interview scheduled successfully and applicant notified via SMS.")
+                st.rerun()
+
+            st.markdown('</div><div class="styled-card"><h3>🎯 Interview Results & Reports</h3>', unsafe_allow_html=True)
+            scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""].copy()
+            if not scheduled_df.empty:
+                chosen_id = st.selectbox("Select Interviewed Applicant", scheduled_df["id"].tolist(), key="hr_interview_result")
+                result = st.radio("Interview Result", ["Passed", "Failed"], horizontal=True)
+                if st.button("Submit Interview Result and Send Report"):
+                    passed = result == "Passed"
+                    apps_df.loc[apps_df["id"] == chosen_id, "interview_passed"] = str(passed).lower()
+                    apps_df.loc[apps_df["id"] == chosen_id, "hr_report_sent"] = "true" if passed else "false"
+                    apps_df.loc[apps_df["id"] == chosen_id, "status"] = "Interview Passed" if passed else "Interview Failed"
+                    save_applications_df(apps_df)
+                    st.success("Report submitted. PRO-VC dashboard has been updated.")
+                    st.rerun()
+        else:
+            st.info("No applicant has passed the CV mark yet.")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>📂 All Applications</h3>', unsafe_allow_html=True)
+        st.dataframe(apps_df.sort_values("submitted_at", ascending=False), use_container_width=True)
+        hr_report_df = apps_df[
+            bool_series(apps_df["cv_passed"]) &
+            bool_series(apps_df["interview_passed"])
+        ][["id", "name", "email", "phone", "job_id", "similarity", "interview_scheduled_at", "status"]]
+        report_lines = ["HR Final Report (CV + Interview Passed)", ""]
+        if hr_report_df.empty:
+            report_lines.append("No passed applicants yet.")
+        else:
+            for _, rec in hr_report_df.iterrows():
+                report_lines.append(
+                    f"{rec['name']} | {rec['email']} | Job ID {rec['job_id']} | Similarity {float(rec['similarity']):.2f} | {rec['status']}"
+                )
+        hr_pdf = build_simple_pdf("HR Final Report", report_lines)
+        st.download_button(
+            "Download HR Printable PDF Report",
+            data=hr_pdf,
+            file_name="hr_final_report.pdf",
+            mime="application/pdf"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    elif st.session_state.page == "pro_vc_dashboard":
+        st.markdown('<div class="dashboard-header">🏛️ PRO-VC Dashboard</div>', unsafe_allow_html=True)
+        apps_df = get_applications_df()
+        jobs_df = safe_read_csv("data/jobs.csv")
+        scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""]
+        report_df = apps_df[
+            bool_series(apps_df["cv_passed"]) &
+            bool_series(apps_df["interview_passed"]) &
+            bool_series(apps_df["hr_report_sent"])
+        ]
+        
+        st.markdown(f'''
+        <div class="metric-container">
+            <div class="metric-card"><h4>Pending Interviews</h4><h2>{len(scheduled_df)}</h2></div>
+            <div class="metric-card"><h4>Final Reports</h4><h2>{len(report_df)}</h2></div>
+            <div class="metric-card"><h4>Active Vacancies</h4><h2>{len(jobs_df)}</h2></div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>📋 Jobs Published by HR</h3>', unsafe_allow_html=True)
+        st.dataframe(jobs_df, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>📅 Applicants Scheduled for Interview</h3>', unsafe_allow_html=True)
+        scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""]
+        if not scheduled_df.empty:
+            st.dataframe(scheduled_df[["id", "name", "email", "phone", "job_id", "interview_scheduled_at", "interview_notes", "status"]], use_container_width=True)
+        else:
+            st.info("No interview schedule has been added by HR yet.")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>✅ HR Report: Passed CV and Interview</h3>', unsafe_allow_html=True)
+        report_df = apps_df[
+            bool_series(apps_df["cv_passed"]) &
+            bool_series(apps_df["interview_passed"]) &
+            bool_series(apps_df["hr_report_sent"])
+        ]
+        if not report_df.empty:
+            st.dataframe(report_df[["id", "name", "email", "phone", "job_id", "similarity", "interview_scheduled_at", "status"]])
+        else:
+            st.info("No final passed candidates report from HR yet.")
+        pro_vc_lines = ["PRO-VC Report: Passed CV and Interview", ""]
+        if report_df.empty:
+            pro_vc_lines.append("No records available.")
+        else:
+            for _, rec in report_df.iterrows():
+                pro_vc_lines.append(
+                    f"{rec['name']} | {rec['email']} | Job ID {rec['job_id']} | Similarity {float(rec['similarity']):.2f} | {rec['status']}"
+                )
+        pro_vc_pdf = build_simple_pdf("PRO-VC Recruitment Report", pro_vc_lines)
+        st.download_button(
+            "Download PRO-VC Printable PDF Report",
+            data=pro_vc_pdf,
+            file_name="pro_vc_report.pdf",
+            mime="application/pdf"
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    elif st.session_state.page == "admin_dashboard":
+        st.markdown('<div class="dashboard-header">⚙️ System Administrator</div>', unsafe_allow_html=True)
+        apps_df = get_applications_df()
+        jobs_df = safe_read_csv("data/jobs.csv")
+        users_df_all = safe_read_csv("data/users.csv")
+        
+        st.markdown(f'''
+        <div class="metric-container">
+            <div class="metric-card"><h4>Total Users</h4><h2>{len(users_df_all)}</h2></div>
+            <div class="metric-card"><h4>Total Vacancies</h4><h2>{len(jobs_df)}</h2></div>
+            <div class="metric-card"><h4>Total Applications</h4><h2>{len(apps_df)}</h2></div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>👥 User Management</h3>', unsafe_allow_html=True)
+        
+        st.subheader("Current Users")
+        display_users = users_df_all[["id", "username", "email", "role"]].copy() if not users_df_all.empty else pd.DataFrame()
+        st.dataframe(display_users, use_container_width=True)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Add New User")
+            with st.form("admin_add_user"):
+                new_u_name = st.text_input("Username")
+                new_u_email = st.text_input("Email")
+                new_u_pass = st.text_input("Password", type="password")
+                new_u_role = st.selectbox("Role", ["user", "hr", "pro_vc", "admin"])
+                submit_new = st.form_submit_button("Create User")
+                if submit_new:
+                    if not new_u_name or not new_u_email or not new_u_pass:
+                        st.error("Fill all fields")
+                    elif new_u_name in users_df_all["username"].values:
+                        st.error("Username already exists")
+                    elif new_u_email in users_df_all["email"].values:
+                        st.error("Email already exists")
+                    else:
+                        next_id = 1 if users_df_all.empty or users_df_all["id"].isna().all() else int(pd.to_numeric(users_df_all["id"], errors="coerce").dropna().max()) + 1
+                        new_user_row = pd.DataFrame({
+                            "id": [next_id],
+                            "username": [new_u_name],
+                            "email": [new_u_email],
+                            "password": [new_u_pass],
+                            "role": [new_u_role]
+                        })
+                        ensure_file_ends_with_newline("data/users.csv")
+                        new_user_row.to_csv("data/users.csv", mode='a', header=False, index=False)
+                        st.success(f"User {new_u_name} created successfully!")
+                        st.rerun()
+
+        with col2:
+            st.subheader("Edit User")
+            with st.form("admin_edit_user"):
+                if not users_df_all.empty:
+                    edit_u_name = st.selectbox("Select User", users_df_all["username"].tolist())
+                else:
+                    edit_u_name = None
+                new_role = st.selectbox("New Role", ["user", "hr", "pro_vc", "admin"])
+                reset_pass = st.text_input("New Password (leave blank to keep current)", type="password")
+                submit_edit = st.form_submit_button("Update User")
+                if submit_edit and edit_u_name:
+                    users_df_all.loc[users_df_all["username"] == edit_u_name, "role"] = new_role
+                    if reset_pass:
+                        users_df_all.loc[users_df_all["username"] == edit_u_name, "password"] = reset_pass
+                    users_df_all.to_csv("data/users.csv", index=False)
+                    st.success(f"User {edit_u_name} updated successfully!")
+                    st.rerun()
+                    
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>🏢 All Jobs</h3>', unsafe_allow_html=True)
+        st.dataframe(jobs_df, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div class="styled-card"><h3>📁 All Applications</h3>', unsafe_allow_html=True)
+        st.dataframe(apps_df, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    elif st.session_state.page == "account_settings" and st.session_state.user_role in ["admin", "hr", "pro_vc"]:
+        st.markdown('<div class="dashboard-header">⚙️ Account Settings</div>', unsafe_allow_html=True)
+        st.markdown('<div class="styled-card"><h3>Update Credentials</h3>', unsafe_allow_html=True)
+        
+        current_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+        user_row = current_users[current_users["username"] == st.session_state.username]
+        current_email = user_row["email"].iloc[0] if not user_row.empty else ""
+        
+        with st.form("update_account_form"):
+            new_email = st.text_input("New Email", value=current_email)
+            new_password = st.text_input("New Password", type="password")
+            confirm_password = st.text_input("Confirm New Password", type="password")
+            submit_update = st.form_submit_button("Update Account")
+            
+        if submit_update:
+            if not new_email or not new_password or not confirm_password:
+                st.error("Please fill in all fields.")
+            elif new_password != confirm_password:
+                st.error("Passwords do not match.")
+            else:
+                other_users = current_users[current_users["username"] != st.session_state.username]
+                if new_email in other_users["email"].values:
+                    st.error("This email is already in use by another account.")
+                else:
+                    current_users.loc[current_users["username"] == st.session_state.username, "email"] = new_email
+                    current_users.loc[current_users["username"] == st.session_state.username, "password"] = new_password
+                    ensure_file_ends_with_newline("data/users.csv")
+                    current_users.to_csv("data/users.csv", index=False)
+                    st.success("Account updated successfully! Your new credentials will be required on your next login.")
+        st.markdown('</div>', unsafe_allow_html=True)

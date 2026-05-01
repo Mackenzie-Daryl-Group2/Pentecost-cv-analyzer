@@ -1,4 +1,26 @@
 id,title,description,requirements,salary
-1,Lecturer in Computer Science,Teach computer science courses,PhD in CS,50000
-2,Research Assistant,Assist in research projects,MSc in relevant field,30000
-3,Administrative Assistant,Handle administrative tasks,Bachelor's degree,25000
+1,Lecturer in Computer Science,Teach software engineering and data structures in the Faculty of Computing,PhD in Computer Science with teaching experience,50000
+2,Lecturer in Information Systems,Deliver database and enterprise systems courses in Faculty of Computing,PhD or MSc with strong industry and academic experience,48000
+3,Lecturer in Accounting,Teach financial accounting and taxation in Business School,PhD in Accounting or related professional certification,47000
+4,Lecturer in Marketing,Teach strategic marketing and digital marketing in Business School,PhD or MSc in Marketing plus publications,46000
+5,Lecturer in Nursing,Teach clinical nursing and health assessment in Faculty of Health Sciences,Master's degree in Nursing and license to practice,49000
+6,Lecturer in Theology,Teach biblical studies and ministry practice in Faculty of Theology,Master's or PhD in Theology,45000
+7,Lecturer in Education,Teach curriculum and educational psychology in Faculty of Education,Master's degree in Education and classroom experience,44000
+8,Research Assistant - Engineering,Support faculty research and lab documentation in Engineering Department,MSc or BSc in Engineering with research skills,32000
+9,Laboratory Technologist - Science,Manage laboratory equipment and practical sessions in Science Department,BSc in Laboratory Technology or related field,33000
+10,Assistant Librarian,Support cataloging and digital library services in University Library,Bachelor's degree in Library and Information Science,30000
+11,Admissions Officer,Process applications and admissions records in Admissions Unit,Bachelor's degree and admissions operations experience,31000
+12,Examinations Officer,Coordinate examination schedules and scripts in Academic Affairs,Bachelor's degree and records management skills,32000
+13,Procurement Officer,Manage purchasing and vendor contracts in Procurement Department,Bachelor's degree in Procurement or Supply Chain,34000
+14,Human Resource Officer,Support recruitment and staff welfare in HR Department,Bachelor's degree in HRM and recruitment experience,35000
+15,ICT Support Engineer,Provide helpdesk and network support for ICT Directorate,BSc in IT and troubleshooting expertise,36000
+16,Systems Administrator,Manage servers and campus systems in ICT Directorate,BSc in Computer Science and systems administration experience,38000
+17,Finance Officer,Handle budgeting and payment processing in Finance Department,Bachelor's degree in Finance or Accounting,36000
+18,Internal Auditor,Conduct compliance and risk audits for university units,Professional accounting qualification and audit experience,39000
+19,Public Relations Officer,Coordinate communication and media engagements in PR Office,Bachelor's degree in Communication and media relations skills,34000
+20,Quality Assurance Officer,Monitor program quality and accreditation compliance in QA Unit,Master's degree in Education or QA experience,37000
+21,Estate Officer,Supervise facilities and maintenance operations in Estate Department,Bachelor's degree in Building Technology or related field,33000
+22,Security Supervisor,Lead campus security operations and incident response,Security management certification and supervisory experience,32000
+23,Sports Coordinator,Manage student sports and recreation programs in Student Affairs,Degree in Sports Management or Physical Education,30000
+24,Guidance and Counseling Officer,Provide student counseling and psychosocial support in Student Affairs,Master's degree in Counseling Psychology,35000
+25,Administrative Assistant - Faculty Office,Handle correspondence and scheduling in Faculty Offices,Bachelor's degree and office administration experience,28000
