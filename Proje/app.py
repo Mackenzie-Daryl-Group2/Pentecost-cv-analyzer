@@ -846,16 +846,21 @@ def send_signup_confirmation_email(recipient_email, username):
         return False, "invalid recipient email address"
 
     try:
-        smtp = st.secrets.get("smtp", {})
-    except StreamlitSecretNotFoundError:
-        smtp = {}
-    smtp_host = smtp.get("host", os.getenv("SMTP_HOST"))
-    smtp_port_raw = smtp.get("port", os.getenv("SMTP_PORT", "587"))
-    smtp_user = smtp.get("user", os.getenv("SMTP_USER"))
-    smtp_password = smtp.get("password", os.getenv("SMTP_PASSWORD"))
-    smtp_from = smtp.get("from", os.getenv("SMTP_FROM", smtp_user if smtp_user else ""))
-    use_ssl_raw = str(smtp.get("use_ssl", os.getenv("SMTP_USE_SSL", "false"))).lower()
-    use_starttls_raw = str(smtp.get("use_starttls", os.getenv("SMTP_USE_STARTTLS", "true"))).lower()
+        smtp_host = st.secrets["smtp"]["host"]
+        smtp_port_raw = str(st.secrets["smtp"]["port"])
+        smtp_user = st.secrets["smtp"]["user"]
+        smtp_password = st.secrets["smtp"]["password"]
+        smtp_from = st.secrets["smtp"].get("from", smtp_user)
+        use_ssl_raw = str(st.secrets["smtp"].get("use_ssl", False)).lower()
+        use_starttls_raw = str(st.secrets["smtp"].get("use_starttls", True)).lower()
+    except Exception:
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_port_raw = os.getenv("SMTP_PORT", "587")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        smtp_from = os.getenv("SMTP_FROM", smtp_user if smtp_user else "")
+        use_ssl_raw = os.getenv("SMTP_USE_SSL", "false").lower()
+        use_starttls_raw = os.getenv("SMTP_USE_STARTTLS", "true").lower()
     use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
     use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
 
@@ -899,16 +904,21 @@ def send_signup_verification_code_email(recipient_email, username, verification_
         return False, "invalid recipient email address"
 
     try:
-        smtp = st.secrets.get("smtp", {})
-    except StreamlitSecretNotFoundError:
-        smtp = {}
-    smtp_host = smtp.get("host", os.getenv("SMTP_HOST"))
-    smtp_port_raw = smtp.get("port", os.getenv("SMTP_PORT", "587"))
-    smtp_user = smtp.get("user", os.getenv("SMTP_USER"))
-    smtp_password = smtp.get("password", os.getenv("SMTP_PASSWORD"))
-    smtp_from = smtp.get("from", os.getenv("SMTP_FROM", smtp_user if smtp_user else ""))
-    use_ssl_raw = str(smtp.get("use_ssl", os.getenv("SMTP_USE_SSL", "false"))).lower()
-    use_starttls_raw = str(smtp.get("use_starttls", os.getenv("SMTP_USE_STARTTLS", "true"))).lower()
+        smtp_host = st.secrets["smtp"]["host"]
+        smtp_port_raw = str(st.secrets["smtp"]["port"])
+        smtp_user = st.secrets["smtp"]["user"]
+        smtp_password = st.secrets["smtp"]["password"]
+        smtp_from = st.secrets["smtp"].get("from", smtp_user)
+        use_ssl_raw = str(st.secrets["smtp"].get("use_ssl", False)).lower()
+        use_starttls_raw = str(st.secrets["smtp"].get("use_starttls", True)).lower()
+    except Exception:
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_port_raw = os.getenv("SMTP_PORT", "587")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        smtp_from = os.getenv("SMTP_FROM", smtp_user if smtp_user else "")
+        use_ssl_raw = os.getenv("SMTP_USE_SSL", "false").lower()
+        use_starttls_raw = os.getenv("SMTP_USE_STARTTLS", "true").lower()
     use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
     use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
 
