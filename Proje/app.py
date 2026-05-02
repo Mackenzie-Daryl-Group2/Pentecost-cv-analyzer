@@ -1428,14 +1428,15 @@ if not st.session_state.logged_in:
                         sent = False
                         full_phone = ""
                         
+                        send_error_msg = ""
                         if verification_method == "SMS":
                             # Strip leading zero if user enters 054... so +23354... is valid
                             full_phone = f"{country_code}{new_phone.strip().lstrip('0')}"
                             from utils.sms import send_sms
                             sent = send_sms(full_phone, f"Your Pentecost Recruiter verification code is {code}")
                         else:
-                            sent, _ = send_signup_verification_code_email(new_email, new_username, code)
-                            
+                            sent, send_error_msg = send_signup_verification_code_email(new_email, new_username, code)
+
                         st.session_state.signup_verification_code = code
                         st.session_state.signup_verification_expires = (datetime.now() + timedelta(minutes=10)).isoformat()
                         st.session_state.pending_signup_username = new_username
@@ -1443,12 +1444,14 @@ if not st.session_state.logged_in:
                         st.session_state.pending_signup_password = new_password
                         st.session_state.pending_signup_phone = full_phone if verification_method == "SMS" else new_phone
                         st.session_state.signup_verification_method = verification_method
-                        
+
                         if not sent:
                             st.session_state.signup_verification_fallback = True
+                            st.session_state.signup_send_error = send_error_msg
                         else:
                             st.session_state.signup_verification_fallback = False
-                            
+                            st.session_state.signup_send_error = ""
+
                         st.session_state.signup_step = 2
                         st.rerun()
             with col_btn2:
@@ -1471,7 +1474,8 @@ if not st.session_state.logged_in:
                 st.info(f"Verification code sent via Email to {st.session_state.pending_signup_email}")
                 
             if st.session_state.get("signup_verification_fallback", False):
-                st.warning(f"Development Mode Fallback: Your verification code is **{st.session_state.signup_verification_code}**")
+                err = st.session_state.get("signup_send_error", "")
+                st.warning(f"Email sending failed ({err}). Development fallback — your code is **{st.session_state.signup_verification_code}**")
                 
             verification_code_input = st.text_input("Verification Code", key="signup_verification_code_input")
             
