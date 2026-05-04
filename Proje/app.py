@@ -903,6 +903,7 @@ def send_signup_verification_code_email(recipient_email, username, verification_
     if "@" not in recipient_parsed:
         return False, "invalid recipient email address"
 
+    _secrets_exc = ""
     try:
         smtp_host = st.secrets["smtp"]["host"]
         smtp_port_raw = str(st.secrets["smtp"]["port"])
@@ -911,7 +912,8 @@ def send_signup_verification_code_email(recipient_email, username, verification_
         smtp_from = st.secrets["smtp"].get("from", smtp_user)
         use_ssl_raw = str(st.secrets["smtp"].get("use_ssl", False)).lower()
         use_starttls_raw = str(st.secrets["smtp"].get("use_starttls", True)).lower()
-    except Exception:
+    except Exception as _e:
+        _secrets_exc = f"{type(_e).__name__}: {_e}"
         smtp_host = os.getenv("SMTP_HOST")
         smtp_port_raw = os.getenv("SMTP_PORT", "587")
         smtp_user = os.getenv("SMTP_USER")
@@ -923,7 +925,8 @@ def send_signup_verification_code_email(recipient_email, username, verification_
     use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
 
     if not all([smtp_host, smtp_port_raw, smtp_user, smtp_password, smtp_from]):
-        return False, "SMTP settings are not configured"
+        detail = f" (secrets error: {_secrets_exc})" if _secrets_exc else ""
+        return False, f"SMTP settings are not configured{detail}"
     try:
         smtp_port = int(smtp_port_raw)
     except ValueError:
