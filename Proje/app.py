@@ -1149,32 +1149,29 @@ if not st.session_state.logged_in:
             margin: 0 auto 55px auto;
             background: rgba(255,255,255,0.88);
             border-radius: 18px;
-            border: 1px solid rgba(46,139,87,0.15);
-            box-shadow: 0 8px 32px rgba(46,139,87,0.08);
-            backdrop-filter: blur(12px);
-            overflow: hidden;
-        }
-        .stat-item {
-            flex: 1;
-            padding: 22px 10px;
+        .hero-section {
             text-align: center;
-            border-right: 1px solid rgba(46,139,87,0.1);
+            padding: 40px 20px;
         }
-        .stat-item:last-child { border-right: none; }
-        .stat-num {
-            font-size: 2rem;
+        .hero-title {
+            font-size: 3.2rem;
             font-weight: 900;
-            color: #2E8B57;
-            display: block;
-            line-height: 1;
-            margin-bottom: 4px;
+            line-height: 1.1;
+            color: #ffffff;
+            margin-bottom: 20px;
         }
-        .stat-label {
-            font-size: 12px;
-            color: #6b8f7a;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+        .hero-title span {
+            background: linear-gradient(135deg, #4CAF50, #81c784);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            font-size: 1.1rem;
+            color: #b0c4b8;
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+            line-height: 1.6;
         }
         .features-grid {
             display: grid;
@@ -1184,14 +1181,14 @@ if not st.session_state.logged_in:
             margin: 0 auto 40px auto;
         }
         .feature-card {
-            background: rgba(255,255,255,0.88);
-            border: 1px solid rgba(46,139,87,0.13);
-            border-radius: 18px;
-            padding: 28px 22px;
+            background: rgba(255,255,255,0.04);
+            border: 1.2px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 30px 24px;
             text-align: center;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 28px rgba(46,139,87,0.06);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
         }
         .feature-card:hover {
             transform: translateY(-5px);
@@ -1203,15 +1200,15 @@ if not st.session_state.logged_in:
             display: block;
         }
         .feature-title {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            color: #0f2d1e;
-            margin-bottom: 8px;
+            color: #ffffff;
+            margin-bottom: 10px;
         }
         .feature-desc {
-            font-size: 0.88rem;
-            color: #5a7a69;
-            line-height: 1.55;
+            font-size: 0.9rem;
+            color: #b0c4b8;
+            line-height: 1.5;
         }
         .footer-note {
             text-align: center;
@@ -1220,56 +1217,36 @@ if not st.session_state.logged_in:
             padding-bottom: 30px;
         }
         @media (max-width: 768px) {
-            .hero-title { font-size: 2.2rem; }
+            .hero-title { font-size: 2.4rem; }
             .features-grid { grid-template-columns: 1fr; }
-            .stats-bar { flex-direction: column; }
-            .stat-item { border-right: none; border-bottom: 1px solid rgba(46,139,87,0.1); }
         }
         </style>
 
-        <div class="hero-section">
-            <div class="hero-badge">🎓 Pentecost University · Official Recruitment Portal</div>
-            <div class="hero-title">Find Your Place at<br><span>Pentecost University</span></div>
-            <div class="hero-sub">
-                Apply for academic and administrative roles across our faculties and departments.
-                A transparent, fast, and modern recruitment experience — built for you.
+        <div class="styled-card">
+            <div class="hero-section">
+                <div class="hero-title">Find Your Place at<br><span>Pentecost University</span></div>
+                <div class="hero-sub">
+                    Apply for academic and administrative roles across our faculties and departments.
+                    A transparent, fast, and modern recruitment experience — built for you.
+                </div>
             </div>
-        </div>
 
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-num">50+</span>
-                <span class="stat-label">Open Positions</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-num">12</span>
-                <span class="stat-label">Departments</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-num">AI</span>
-                <span class="stat-label">CV Screening</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-num">Fast</span>
-                <span class="stat-label">Review Process</span>
-            </div>
-        </div>
-
-        <div class="features-grid">
-            <div class="feature-card">
-                <span class="feature-icon">🤖</span>
-                <div class="feature-title">AI-Powered CV Analysis</div>
-                <div class="feature-desc">Your CV is automatically screened and scored against the job description for accuracy and fit.</div>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">📅</span>
-                <div class="feature-title">Automated Scheduling</div>
-                <div class="feature-desc">Qualified applicants receive automatic interview invitations with Google Meet links.</div>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🔒</span>
-                <div class="feature-title">Secure & Verified</div>
-                <div class="feature-desc">Email and SMS verification ensures every account and application is genuine and secure.</div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🤖</span>
+                    <div class="feature-title">AI CV Analysis</div>
+                    <div class="feature-desc">Your CV is automatically screened and scored against the job description for accuracy.</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📅</span>
+                    <div class="feature-title">Automated Scheduling</div>
+                    <div class="feature-desc">Qualified applicants receive automatic invitations with unique Google Meet links.</div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🔒</span>
+                    <div class="feature-title">Secure & Verified</div>
+                    <div class="feature-desc">Email and SMS verification ensures every application is genuine and secure.</div>
+                </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
