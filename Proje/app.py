@@ -1189,30 +1189,45 @@ if not st.session_state.logged_in:
             margin: 0 auto 80px auto;
         }
         .feature-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 45px 35px;
             text-align: left;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(25px);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
             position: relative;
             overflow: hidden;
+            animation: fadeInUp 0.8s ease backwards;
         }
-        .feature-card::before {
+        .feature-card:nth-child(1) { animation-delay: 0.1s; }
+        .feature-card:nth-child(2) { animation-delay: 0.2s; }
+        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .feature-card::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at top left, rgba(76,175,80,0.15), transparent 70%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
+            bottom: -50px; right: -50px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, rgba(46,139,87,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            transition: all 0.5s ease;
         }
         .feature-card:hover {
-            transform: translateY(-12px) scale(1.02);
-            border-color: rgba(76,175,80,0.4);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 20px rgba(46,139,87,0.2);
+            transform: translateY(-15px);
+            border-color: rgba(76,175,80,0.5);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.6), 0 0 30px rgba(46,139,87,0.15);
         }
-        .feature-card:hover::before { opacity: 1; }
+        .feature-card:hover::after {
+            transform: scale(2);
+            opacity: 0.3;
+        }
         .feature-icon {
             font-size: 2.8rem;
             margin-bottom: 20px;
