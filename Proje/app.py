@@ -338,6 +338,8 @@ def get_applications_df():
         "interview_notes",
         "interview_passed",
         "hr_report_sent",
+        "pro_vc_approved",
+        "onboarding_status",
         "status"
     ]
     if not os.path.exists(APPLICATIONS_FILE):
@@ -514,8 +516,8 @@ def create_account(username, email, password):
         )
 
 
-def send_signup_confirmation_email(recipient_email, username):
-    """Send account creation confirmation email using SMTP settings."""
+def send_recruitment_email(recipient_email, subject, body_text):
+    """Universal SMTP email sender for recruitment notifications."""
     recipient_parsed = parseaddr(recipient_email)[1]
     if "@" not in recipient_parsed:
         return False, "invalid recipient email address"
@@ -536,27 +538,23 @@ def send_signup_confirmation_email(recipient_email, username):
         smtp_from = os.getenv("SMTP_FROM", smtp_user if smtp_user else "")
         use_ssl_raw = os.getenv("SMTP_USE_SSL", "false").lower()
         use_starttls_raw = os.getenv("SMTP_USE_STARTTLS", "true").lower()
+
     use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
     use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
 
     if not all([smtp_host, smtp_port_raw, smtp_user, smtp_password, smtp_from]):
         return False, "SMTP settings are not configured"
+    
     try:
         smtp_port = int(smtp_port_raw)
     except ValueError:
         return False, "invalid SMTP_PORT value"
 
     msg = EmailMessage()
-    msg["Subject"] = "Your Pentecost Recruiter account is ready"
+    msg["Subject"] = subject
     msg["From"] = smtp_from
     msg["To"] = recipient_parsed
-    msg.set_content(
-        f"Hello {username},\n\n"
-        "Your account has been created successfully on Pentecost University Recruiter.\n"
-        "You can now log in and continue your application journey.\n\n"
-        "If this wasn't you, please contact support.\n\n"
-        "Regards,\nPentecost University Recruiter"
-    )
+    msg.set_content(body_text)
 
     try:
         smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
@@ -572,65 +570,27 @@ def send_signup_confirmation_email(recipient_email, username):
         return False, f"{type(exc).__name__}: {exc}"
 
 
+def send_signup_confirmation_email(recipient_email, username):
+    subject = "Your Pentecost Recruiter account is ready"
+    body = (
+        f"Hello {username},\n\n"
+        "Your account has been created successfully on Pentecost University Recruiter.\n"
+        "You can now log in and continue your application journey.\n\n"
+        "Regards,\nPentecost University Recruiter"
+    )
+    return send_recruitment_email(recipient_email, subject, body)
+
+
 def send_signup_verification_code_email(recipient_email, username, verification_code):
-    """Send OTP code for signup verification."""
-    recipient_parsed = parseaddr(recipient_email)[1]
-    if "@" not in recipient_parsed:
-        return False, "invalid recipient email address"
-
-    _secrets_exc = ""
-    try:
-        smtp_host = st.secrets["smtp"]["host"]
-        smtp_port_raw = str(st.secrets["smtp"]["port"])
-        smtp_user = st.secrets["smtp"]["user"]
-        smtp_password = st.secrets["smtp"]["password"]
-        smtp_from = st.secrets["smtp"].get("from", smtp_user)
-        use_ssl_raw = str(st.secrets["smtp"].get("use_ssl", False)).lower()
-        use_starttls_raw = str(st.secrets["smtp"].get("use_starttls", True)).lower()
-    except Exception as _e:
-        _secrets_exc = f"{type(_e).__name__}: {_e}"
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_port_raw = os.getenv("SMTP_PORT", "587")
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        smtp_from = os.getenv("SMTP_FROM", smtp_user if smtp_user else "")
-        use_ssl_raw = os.getenv("SMTP_USE_SSL", "false").lower()
-        use_starttls_raw = os.getenv("SMTP_USE_STARTTLS", "true").lower()
-    use_ssl = use_ssl_raw in {"1", "true", "yes", "on"}
-    use_starttls = use_starttls_raw in {"1", "true", "yes", "on"}
-
-    if not all([smtp_host, smtp_port_raw, smtp_user, smtp_password, smtp_from]):
-        detail = f" (secrets error: {_secrets_exc})" if _secrets_exc else ""
-        return False, f"SMTP settings are not configured{detail}"
-    try:
-        smtp_port = int(smtp_port_raw)
-    except ValueError:
-        return False, "invalid SMTP_PORT value"
-
-    msg = EmailMessage()
-    msg["Subject"] = "Verify your Pentecost Recruiter signup"
-    msg["From"] = smtp_from
-    msg["To"] = recipient_parsed
-    msg.set_content(
+    subject = "Verify your Pentecost Recruiter signup"
+    body = (
         f"Hello {username},\n\n"
         "Use the verification code below to complete your signup:\n\n"
         f"{verification_code}\n\n"
         "This code expires in 10 minutes.\n\n"
         "Regards,\nPentecost University Recruiter"
     )
-
-    try:
-        smtp_cls = smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
-        with smtp_cls(smtp_host, smtp_port, timeout=20) as server:
-            server.ehlo()
-            if use_starttls and not use_ssl:
-                server.starttls()
-                server.ehlo()
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
-        return True, "sent"
-    except Exception as exc:
-        return False, f"{type(exc).__name__}: {exc}"
+    return send_recruitment_email(recipient_email, subject, body)
 
 
 def resolve_asset_path(candidates):
@@ -1683,6 +1643,8 @@ else:
                         "interview_notes": [""],
                         "interview_passed": [""],
                         "hr_report_sent": ["false"],
+                        "pro_vc_approved": [""],
+                        "onboarding_status": [""],
                         "status": ["CV Passed" if is_passed else "CV Not Passed"]
                     })
                     apps_df = pd.concat([apps_df, new_app], ignore_index=True)
@@ -1690,9 +1652,35 @@ else:
 
                     from utils.sms import send_sms
                     if is_passed:
-                        send_sms(phone, f"Congrats! Your CV for {job['title']} passed. Interview: {interview_time}. Link: {meet_link}")
+                        sms_msg = f"Congrats! Your CV for {job['title']} passed. Interview: {interview_time}. Link: {meet_link}"
+                        send_sms(phone, sms_msg)
+                        
+                        # Send Interview Invitation Email
+                        email_subject = f"Interview Invitation: {job['title']} - Pentecost University"
+                        email_body = (
+                            f"Hello {name},\n\n"
+                            f"Congratulations! Your application for the position of {job['title']} has passed our initial CV screening.\n\n"
+                            f"We would like to invite you for an interview. Here are the details:\n"
+                            f"- Date & Time: {interview_time}\n"
+                            f"- Meeting Link: {meet_link}\n\n"
+                            "Please ensure you have a stable internet connection and join the link on time.\n\n"
+                            "Regards,\nPentecost University Recruitment Team"
+                        )
+                        send_recruitment_email(email, email_subject, email_body)
                     else:
-                        send_sms(phone, f"Your application for {job['title']} has been submitted successfully.")
+                        sms_msg = f"Your application for {job['title']} has been submitted successfully."
+                        send_sms(phone, sms_msg)
+                        
+                        # Send Rejection Email
+                        email_subject = f"Application Status: {job['title']} - Pentecost University"
+                        email_body = (
+                            f"Hello {name},\n\n"
+                            f"Thank you for applying for the position of {job['title']} at Pentecost University.\n\n"
+                            "After carefully reviewing your profile, we regret to inform you that we will not be moving forward with your application at this time.\n"
+                            "We appreciate your interest and wish you the best in your future endeavors.\n\n"
+                            "Regards,\nPentecost University Recruitment Team"
+                        )
+                        send_recruitment_email(email, email_subject, email_body)
 
                     st.session_state.just_submitted = True
                     st.session_state.page = "my_apps"
@@ -1760,6 +1748,36 @@ else:
                 new_job.to_csv("data/jobs.csv", mode="a", header=False, index=False)
                 st.success("Vacancy published successfully.")
                 st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>📝 Edit Job Vacancy</h3>', unsafe_allow_html=True)
+        jobs_for_edit = safe_read_csv("data/jobs.csv")
+        if not jobs_for_edit.empty:
+            edit_job_id_str = st.selectbox(
+                "Select Job to Edit", 
+                options=jobs_for_edit['id'].astype(str) + " - " + jobs_for_edit['title'],
+                key="hr_edit_job_select"
+            )
+            job_id_to_edit = int(edit_job_id_str.split(" - ")[0])
+            job_to_edit = jobs_for_edit[jobs_for_edit['id'] == job_id_to_edit].iloc[0]
+            
+            with st.form("edit_vacancy_form"):
+                new_title = st.text_input("Job Title", value=job_to_edit['title'])
+                new_desc = st.text_area("Description", value=job_to_edit['description'])
+                new_reqs = st.text_area("Requirements", value=job_to_edit['requirements'])
+                new_sal = st.text_input("Salary", value=job_to_edit['salary'])
+                edit_submit = st.form_submit_button("Update Vacancy")
+                
+            if edit_submit:
+                jobs_for_edit.loc[jobs_for_edit['id'] == job_id_to_edit, 'title'] = new_title
+                jobs_for_edit.loc[jobs_for_edit['id'] == job_id_to_edit, 'description'] = new_desc
+                jobs_for_edit.loc[jobs_for_edit['id'] == job_id_to_edit, 'requirements'] = new_reqs
+                jobs_for_edit.loc[jobs_for_edit['id'] == job_id_to_edit, 'salary'] = new_sal
+                jobs_for_edit.to_csv("data/jobs.csv", index=False)
+                st.success("Vacancy updated successfully.")
+                st.rerun()
+        else:
+            st.info("No active jobs to edit.")
         st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="styled-card"><h3>🗑️ Remove Job Vacancy</h3>', unsafe_allow_html=True)
@@ -1833,21 +1851,44 @@ else:
             st.info("No applicant has passed the CV mark yet.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="styled-card"><h3>🎯 Interview Results & Reports</h3>', unsafe_allow_html=True)
-        scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""].copy()
-        if not scheduled_df.empty:
-            chosen_id = st.selectbox("Select Interviewed Applicant", scheduled_df["id"].tolist(), key="hr_interview_result")
-            result = st.radio("Interview Result", ["Passed", "Failed"], horizontal=True)
-            if st.button("Submit Interview Result and Send Report"):
-                passed = result == "Passed"
-                apps_df.loc[apps_df["id"] == chosen_id, "interview_passed"] = str(passed).lower()
-                apps_df.loc[apps_df["id"] == chosen_id, "hr_report_sent"] = "true" if passed else "false"
-                apps_df.loc[apps_df["id"] == chosen_id, "status"] = "Interview Passed" if passed else "Interview Failed"
-                save_applications_df(apps_df)
-                st.success("Report submitted. PRO-VC dashboard has been updated.")
-                st.rerun()
+        st.markdown('<div class="styled-card"><h3>🏆 Final Hiring Approval & Onboarding</h3>', unsafe_allow_html=True)
+        passed_interview_df = apps_df[bool_series(apps_df["interview_passed"])].copy()
+        if not passed_interview_df.empty:
+            st.write("Candidates who passed the interview and are ready for final selection.")
+            selected_hired_id = st.selectbox("Select Candidate for Hiring Approval", passed_interview_df["id"].tolist(), key="hr_final_hire")
+            
+            hired_row = apps_df[apps_df["id"] == selected_hired_id].iloc[0]
+            if str(hired_row.get("pro_vc_approved", "")).lower() == "true":
+                st.success("✨ This candidate has been recommended by the PRO-VC.")
+            
+            col_hire1, col_hire2 = st.columns(2)
+            with col_hire1:
+                if st.button("Approve for Hiring & Send Welcome Email", use_container_width=True, type="primary"):
+                    apps_df.loc[apps_df["id"] == selected_hired_id, "onboarding_status"] = "Started"
+                    apps_df.loc[apps_df["id"] == selected_hired_id, "status"] = "Awaiting Onboarding"
+                    save_applications_df(apps_df)
+                    
+                    # Send Welcome/Offer Email
+                    email_subject = "🎉 Welcome to Pentecost University - Official Offer"
+                    email_body = (
+                        f"Hello {hired_row['name']},\n\n"
+                        "We are thrilled to inform you that you have been selected for the position at Pentecost University!\n\n"
+                        "Your onboarding process has officially started. Our HR team will contact you shortly with the next steps regarding your contract and orientation.\n\n"
+                        "Welcome to the team!\n\n"
+                        "Regards,\nPentecost University HR Department"
+                    )
+                    send_recruitment_email(hired_row["email"], email_subject, email_body)
+                    st.success(f"Hiring approved for {hired_row['name']}! Offer email sent.")
+                    st.rerun()
+            with col_hire2:
+                if st.button("Complete Onboarding", use_container_width=True):
+                    apps_df.loc[apps_df["id"] == selected_hired_id, "onboarding_status"] = "Completed"
+                    apps_df.loc[apps_df["id"] == selected_hired_id, "status"] = "Hired / Onboarded"
+                    save_applications_df(apps_df)
+                    st.success("Onboarding marked as completed.")
+                    st.rerun()
         else:
-            st.info("No interviews scheduled yet.")
+            st.info("No candidates have passed the interview stage yet.")
         st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="styled-card"><h3>📂 All Applications</h3>', unsafe_allow_html=True)
@@ -1912,6 +1953,16 @@ else:
         ]
         if not report_df.empty:
             st.dataframe(report_df[["id", "name", "email", "phone", "job_id", "similarity", "interview_scheduled_at", "status"]])
+            
+            st.markdown('<div class="section-title">Review & Recommendation</div>', unsafe_allow_html=True)
+            selected_review_id = st.selectbox("Select Candidate to Review", report_df["id"].tolist(), key="pro_vc_review_select")
+            review_notes = st.text_area("Review Comments / Recommendations")
+            if st.button("Submit Recommendation to HR"):
+                apps_df.loc[apps_df["id"] == selected_review_id, "pro_vc_approved"] = "true"
+                apps_df.loc[apps_df["id"] == selected_review_id, "status"] = "Recommended by PRO-VC"
+                save_applications_df(apps_df)
+                st.success("Recommendation submitted to HR.")
+                st.rerun()
         else:
             st.info("No final passed candidates report from HR yet.")
         pro_vc_lines = ["PRO-VC Report: Passed CV and Interview", ""]
