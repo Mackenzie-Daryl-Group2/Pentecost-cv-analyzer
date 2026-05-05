@@ -1100,55 +1100,6 @@ if not st.session_state.logged_in:
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .hero-sub {
-            font-size: 1.15rem;
-            color: #4a6b5a;
-            max-width: 620px;
-            margin: 0 auto 40px auto;
-            line-height: 1.7;
-            font-weight: 400;
-        }
-        .hero-btns {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 55px;
-        }
-        .hero-btn-primary {
-            background: linear-gradient(135deg, #2E8B57, #4CAF50);
-            color: white !important;
-            padding: 14px 36px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 8px 25px rgba(46,139,87,0.35);
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-        .hero-btn-secondary {
-            background: rgba(255,255,255,0.85);
-            color: #1e5f3f !important;
-            padding: 14px 36px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            border: 2px solid rgba(46,139,87,0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            backdrop-filter: blur(8px);
-        }
-        .stats-bar {
-            display: flex;
-            justify-content: center;
-            gap: 0;
-            max-width: 700px;
-            margin: 0 auto 55px auto;
-            background: rgba(255,255,255,0.88);
-            border-radius: 18px;
         /* ── Advanced Futuristic Homepage ── */
         .hero-section {
             text-align: center;
