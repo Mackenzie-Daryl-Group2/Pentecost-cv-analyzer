@@ -297,9 +297,7 @@ def ensure_file_ends_with_newline(path):
             f.write(b"\n")
 
 
-# Load users and jobs
-users_df = safe_read_table("users", "data/users.csv", ["id", "username", "email", "password", "role"])
-jobs_df = safe_read_table("jobs", "data/jobs.csv")
+
 
 # Supabase Connection
 @st.cache_resource
@@ -348,6 +346,11 @@ def safe_read_table(table_name, fallback_csv, fallback_cols=None):
             st.warning(f"Supabase error ({table_name}): {e}. Falling back to CSV.")
     
     return safe_read_csv(fallback_csv, fallback_cols)
+
+
+# Load users and jobs
+users_df = safe_read_table("users", "data/users.csv", ["id", "username", "email", "password", "role"])
+jobs_df = safe_read_table("jobs", "data/jobs.csv")
 
 
 def normalize_role(role_value):
