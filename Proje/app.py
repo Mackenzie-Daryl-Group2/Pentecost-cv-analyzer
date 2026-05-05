@@ -25,6 +25,13 @@ st.set_page_config(
 # Custom CSS for professional look
 st.markdown("""
 <style>
+    /* Hide sidebar completely */
+    [data-testid="stSidebar"] {
+        display: none !important;
+    }
+    [data-testid="collapsedControl"] {
+        display: none !important;
+    }
     .main {
         background-color: #f5f5f5;
     }
