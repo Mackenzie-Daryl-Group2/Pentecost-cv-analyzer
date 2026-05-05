@@ -22,44 +22,463 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for professional look
+# ── Global Premium Design System ───────────────────────────────────────────
 st.markdown("""
 <style>
-    /* Hide sidebar completely */
-    [data-testid="stSidebar"] {
-        display: none !important;
-    }
-    [data-testid="collapsedControl"] {
-        display: none !important;
-    }
-    .main {
-        background-color: #f5f5f5;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-    .stTextInput>div>div>input {
-        border-radius: 4px;
-    }
-    .welcome-header {
-        text-align: center;
-        font-size: 3.5em;
-        color: #2E8B57;
-        font-weight: 900;
-        margin-top: 100px;
-        margin-bottom: 50px;
-        text-shadow: 0px 2px 4px rgba(255, 255, 255, 0.8), 0px 4px 10px rgba(0, 0, 0, 0.25);
-    }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* ── Hide Sidebar ── */
+[data-testid="stSidebar"]      { display: none !important; }
+[data-testid="collapsedControl"]{ display: none !important; }
+
+/* ── App Background ── */
+.stApp {
+    background: linear-gradient(145deg, #f0f7f2 0%, #e8f5ec 50%, #f4faf6 100%) !important;
+    min-height: 100vh;
+}
+[data-testid="stAppViewContainer"] { background: transparent !important; }
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
+    max-width: 1200px !important;
+}
+
+/* ── Typography ── */
+h1, h2, h3, h4, h5, h6 { font-family: 'Inter', sans-serif !important; }
+
+/* ── Global Buttons ── */
+[data-testid="stButton"] > button {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+    transition: all 0.25s ease !important;
+    border: 1.5px solid rgba(46,139,87,0.25) !important;
+    background: white !important;
+    color: #1e5f3f !important;
+    box-shadow: 0 2px 8px rgba(46,139,87,0.08) !important;
+    letter-spacing: 0.2px;
+}
+[data-testid="stButton"] > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(46,139,87,0.18) !important;
+    border-color: #2E8B57 !important;
+    background: linear-gradient(135deg, #f0fff6, #e8f8ef) !important;
+}
+[data-testid="stButton"] > button[kind="primary"] {
+    background: linear-gradient(135deg, #2E8B57, #3da668) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 18px rgba(46,139,87,0.35) !important;
+}
+[data-testid="stButton"] > button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #236b43, #2E8B57) !important;
+    box-shadow: 0 8px 28px rgba(46,139,87,0.45) !important;
+}
+
+/* ── Form Inputs ── */
+[data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea,
+[data-testid="stSelectbox"] > div > div {
+    font-family: 'Inter', sans-serif !important;
+    border-radius: 12px !important;
+    border: 1.5px solid rgba(46,139,87,0.2) !important;
+    background: white !important;
+    color: #1a3d2b !important;
+    font-size: 15px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stTextArea"] textarea:focus {
+    border-color: #2E8B57 !important;
+    box-shadow: 0 0 0 3px rgba(46,139,87,0.12) !important;
+}
+[data-testid="stTextInput"] label p,
+[data-testid="stTextArea"] label p,
+[data-testid="stSelectbox"] label p,
+[data-testid="stDateInput"] label p,
+[data-testid="stTimeInput"] label p,
+[data-testid="stFileUploader"] label p,
+[data-testid="stRadio"] label p {
+    color: #1e5f3f !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    font-family: 'Inter', sans-serif !important;
+}
+[data-testid="stFileUploader"] {
+    border: 2px dashed rgba(46,139,87,0.3) !important;
+    border-radius: 14px !important;
+    background: rgba(240,255,247,0.6) !important;
+    padding: 10px !important;
+}
+
+/* ── Alerts & Messages ── */
+[data-testid="stAlert"] {
+    border-radius: 12px !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Dataframes ── */
+[data-testid="stDataFrame"] { border-radius: 14px !important; overflow: hidden; }
+
+/* ── Top Navigation Bar ── */
+.top-nav {
+    background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(240,255,248,0.94)) !important;
+    padding: 14px 28px !important;
+    border-radius: 18px !important;
+    box-shadow: 0 4px 24px rgba(46,139,87,0.10) !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border: 1px solid rgba(46,139,87,0.12) !important;
+    backdrop-filter: blur(12px) !important;
+}
+.top-nav-user {
+    font-weight: 800 !important;
+    color: #1e5f3f !important;
+    font-size: 1.05rem !important;
+    letter-spacing: 0.3px !important;
+    font-family: 'Inter', sans-serif !important;
+}
+.nav-btn-container .stButton > button {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    min-height: 38px !important;
+    padding: 0 14px !important;
+}
+
+/* ── Dashboard Header ── */
+.dashboard-header {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #0f2d1e;
+    margin-bottom: 24px;
+    padding: 20px 28px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,255,248,0.9));
+    border-radius: 18px;
+    border-left: 5px solid #2E8B57;
+    box-shadow: 0 4px 20px rgba(46,139,87,0.08);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Metric Cards ── */
+.metric-container {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+.metric-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(245,255,250,0.95));
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(46,139,87,0.15);
+    border-radius: 20px;
+    padding: 28px 24px;
+    flex: 1;
+    min-width: 200px;
+    box-shadow: 0 6px 28px rgba(46,139,87,0.08);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #2E8B57, #4CAF50, #81C784);
+    border-radius: 20px 20px 0 0;
+}
+.metric-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 40px rgba(46,139,87,0.16);
+}
+.metric-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.78rem;
+    color: #6b8f7a;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+}
+.metric-card h2 {
+    margin: 0;
+    font-size: 2.6rem;
+    background: linear-gradient(135deg, #2E8B57, #4CAF50);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
+    font-family: 'Inter', sans-serif;
+    line-height: 1;
+}
+
+/* ── Styled Content Cards ── */
+.styled-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,255,252,0.96));
+    border-radius: 20px;
+    padding: 28px 32px;
+    box-shadow: 0 6px 30px rgba(46,139,87,0.07);
+    border: 1px solid rgba(46,139,87,0.1);
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+}
+.styled-card h3 {
+    color: #0f2d1e;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid rgba(46,139,87,0.12);
+}
+
+/* ── Status Badges ── */
+.status-badge {
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'Inter', sans-serif;
+}
+.status-passed {
+    background: rgba(76,175,80,0.12);
+    color: #2e7d32;
+    border: 1px solid rgba(76,175,80,0.3);
+}
+.status-failed {
+    background: rgba(244,67,54,0.1);
+    color: #c62828;
+    border: 1px solid rgba(244,67,54,0.25);
+}
+.status-pending {
+    background: rgba(255,152,0,0.1);
+    color: #e65100;
+    border: 1px solid rgba(255,152,0,0.28);
+}
+
+/* ── Login Panel ── */
+.login-page-wrap { position: relative; min-height: 100vh; }
+.login-video-bg {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; z-index: -3;
+}
+.login-video-dim {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.56); z-index: -2;
+}
+.login-panel {
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid rgba(255,255,255,0.32);
+    padding: 32px 36px 20px 36px;
+    border-radius: 24px;
+    max-width: 560px;
+    margin: 20px auto 18px auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.32);
+}
+.login-panel h3 {
+    color: #f5fff9;
+    text-align: center;
+    margin: 0 0 12px 0;
+    font-size: 32px;
+    font-weight: 800;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.3);
+    font-family: 'Inter', sans-serif;
+}
+.login-panel p {
+    text-align: center; margin: 0;
+    color: rgba(240,255,248,0.92);
+    font-size: 15px; line-height: 1.5;
+    font-family: 'Inter', sans-serif;
+}
+.login-badge {
+    width: fit-content;
+    margin: 0 auto 14px auto;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, rgba(185,255,223,0.28), rgba(148,230,188,0.34));
+    border: 1px solid rgba(210,255,231,0.42);
+    color: #e0fff0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+}
+.login-hint {
+    margin-top: 14px; text-align: center;
+    color: rgba(230,255,242,0.9);
+    font-size: 13px; opacity: 0.9;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    font-family: 'Inter', sans-serif;
+}
+body[data-login-mode="true"] .block-container {
+    max-width: 560px; margin-top: 6vh;
+    padding-top: 1rem; padding-bottom: 1.5rem;
+}
+body[data-login-mode="true"] [data-testid="stTextInput"] input {
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(200,255,228,0.75) !important;
+    background: linear-gradient(120deg, rgba(10,36,24,0.65), rgba(8,26,18,0.55)) !important;
+    color: #ffffff !important;
+    height: 50px; font-size: 16px; font-weight: 500;
+    backdrop-filter: blur(10px);
+}
+body[data-login-mode="true"] [data-testid="stTextInput"] input::placeholder { color: rgba(220,255,240,0.7) !important; }
+body[data-login-mode="true"] [data-testid="stTextInputLabel"] p {
+    color: #eafff4 !important; font-weight: 700 !important; font-size: 14px !important;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4) !important;
+}
+body[data-login-mode="true"] [data-testid="stButton"] button {
+    border-radius: 14px !important; font-weight: 700 !important; min-height: 50px !important;
+}
+body[data-login-mode="true"] [data-testid="stButton"] button[kind="primary"] {
+    background: linear-gradient(135deg, rgba(46,139,87,0.65), rgba(56,170,107,0.55)) !important;
+    border: 1px solid rgba(200,255,228,0.45) !important;
+    box-shadow: 0 10px 28px rgba(20,80,50,0.35) !important;
+    backdrop-filter: blur(8px) !important; color: white !important;
+}
+body[data-login-mode="true"] [data-testid="stButton"] button[kind="secondary"] {
+    background: linear-gradient(135deg, rgba(255,255,255,0.22), rgba(255,255,255,0.12)) !important;
+    color: #ebfff4 !important; border: 1px solid rgba(225,255,240,0.42) !important;
+    backdrop-filter: blur(8px) !important;
+}
+body[data-login-mode="true"] [data-testid="stButton"] button:hover {
+    transform: translateY(-2px) !important; filter: brightness(1.06) !important;
+}
+
+/* ── Signup Panel ── */
+body[data-signup-mode="true"] .block-container {
+    max-width: 620px; margin-top: 5vh; padding-top: 1rem; padding-bottom: 1rem;
+}
+body[data-signup-mode="true"] .signup-panel {
+    background: linear-gradient(135deg, rgba(255,255,255,0.20), rgba(255,255,255,0.08));
+    border: 1px solid rgba(255,255,255,0.38);
+    border-radius: 24px; padding: 26px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 22px 50px rgba(0,0,0,0.32);
+}
+body[data-signup-mode="true"] .signup-panel h3 {
+    margin: 0 0 8px 0; color: #f0fff8;
+    text-align: center; font-size: 30px; font-weight: 800;
+    text-shadow: 0 2px 14px rgba(0,0,0,0.3);
+    font-family: 'Inter', sans-serif;
+}
+body[data-signup-mode="true"] .signup-panel p {
+    margin: 0 0 14px 0; text-align: center;
+    color: rgba(240,255,248,0.95); font-size: 15px;
+    font-weight: 500; text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+}
+body[data-signup-mode="true"] [data-testid="stTextInputLabel"] p {
+    color: #f0fff8 !important; font-weight: 700 !important; font-size: 14px !important;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.4) !important;
+}
+body[data-signup-mode="true"] [data-testid="stTextInput"] input {
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(200,255,228,0.8) !important;
+    background: linear-gradient(120deg, rgba(10,36,24,0.65), rgba(8,26,18,0.55)) !important;
+    color: #ffffff !important; height: 50px; font-size: 15px;
+    backdrop-filter: blur(10px) !important;
+}
+body[data-signup-mode="true"] [data-testid="stTextInput"] input::placeholder { color: rgba(220,255,240,0.7) !important; }
+body[data-signup-mode="true"] [data-testid="stButton"] button {
+    min-height: 50px !important; border-radius: 14px !important;
+    font-weight: 700 !important; font-size: 15px !important; color: #ffffff !important;
+    background: linear-gradient(135deg, rgba(30,110,72,0.65), rgba(46,160,100,0.55)) !important;
+    border: 1px solid rgba(200,255,230,0.5) !important;
+    backdrop-filter: blur(8px) !important;
+    box-shadow: 0 6px 22px rgba(20,80,50,0.28) !important;
+}
+body[data-signup-mode="true"] [data-testid="stButton"] button:hover { filter: brightness(1.08) !important; }
+body[data-signup-mode="true"] [data-testid="stMarkdownContainer"] p,
+body[data-signup-mode="true"] [data-testid="stCaptionContainer"] { color: #f0fff8 !important; }
+
+/* ── Job Cards ── */
+.job-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(246,255,251,0.95));
+    border: 1px solid rgba(46,139,87,0.12);
+    border-radius: 18px; padding: 22px 20px; margin-bottom: 18px;
+    box-shadow: 0 4px 20px rgba(46,139,87,0.07);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative; overflow: hidden;
+}
+.job-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 4px; background: linear-gradient(180deg, #2E8B57, #81C784);
+    border-radius: 4px 0 0 4px;
+}
+.job-card:hover { transform: translateY(-4px); box-shadow: 0 10px 35px rgba(46,139,87,0.14); }
+.job-card .job-title {
+    color: #0f2d1e; font-size: 17px; font-weight: 800;
+    margin: 0 0 10px 0; font-family: 'Inter', sans-serif;
+}
+.job-card .job-meta {
+    color: #3d6b52; font-size: 13px; margin: 4px 0;
+    font-family: 'Inter', sans-serif;
+}
+.job-card .job-body {
+    color: #3a5a46; font-size: 13.5px; margin: 8px 0;
+    line-height: 1.5; font-family: 'Inter', sans-serif;
+}
+.job-card b { color: #1e5f3f; }
+
+/* ── Section Headers ── */
+.section-title {
+    font-size: 1.4rem; font-weight: 800; color: #0f2d1e;
+    margin: 28px 0 16px 0; font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+    content: ''; flex: 1; height: 2px;
+    background: linear-gradient(90deg, rgba(46,139,87,0.3), transparent);
+    border-radius: 2px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .block-container { padding: 0.8rem !important; }
+    .dashboard-header { font-size: 1.4rem; padding: 16px 18px; }
+    .metric-card { min-width: 140px; padding: 20px 16px; }
+    .metric-card h2 { font-size: 2rem; }
+    .styled-card { padding: 20px 18px; }
+    body[data-login-mode="true"] .block-container { max-width: 92%; margin-top: 1vh; }
+    body[data-signup-mode="true"] .block-container { max-width: 92%; margin-top: 1vh; }
+    .login-panel { padding: 22px 18px 16px 18px; border-radius: 16px; }
+    .login-panel h3 { font-size: 24px; }
+}
+
+/* ── Nav Buttons ── */
+.nav-btn-container { margin-bottom: 8px; }
+</style>
+""", unsafe_allow_html=True)
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     .button-container {
         display: flex;
         justify-content: center;
@@ -1787,41 +2206,6 @@ else:
     clear_login_video_bg_js()
     clear_signup_background_js()
     # Top Navigation Bar
-    st.markdown("""
-        <style>
-        .top-nav {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border: 1px solid rgba(46, 139, 87, 0.15);
-        }
-        .top-nav-user {
-            font-weight: 700;
-            color: #1e5f3f;
-            font-size: 1.2rem;
-            letter-spacing: 0.5px;
-        }
-        .nav-btn-container .stButton > button {
-            border-radius: 8px;
-            font-weight: 600;
-            border: 1px solid rgba(46, 139, 87, 0.2);
-            color: #1e5f3f;
-            background-color: transparent;
-            transition: all 0.3s ease;
-        }
-        .nav-btn-container .stButton > button:hover {
-            background-color: rgba(46, 139, 87, 0.1);
-            border-color: #2E8B57;
-            color: #2E8B57;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     st.markdown(
         f'<div class="top-nav"><span class="top-nav-user">🎓 Pentecost Recruiter &nbsp;|&nbsp; Logged in as: {st.session_state.username} ({str(st.session_state.user_role).upper()})</span></div>', 
         unsafe_allow_html=True
@@ -1879,23 +2263,51 @@ else:
         st.session_state.page = "home"
 
     if st.session_state.page == "home":
-        st.title("Home")
-        st.write(f"Welcome back, {st.session_state.username}!")
+        st.markdown('<div class="dashboard-header">🏠 Welcome Home</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="styled-card">
+            <h2>Hello, {st.session_state.username}!</h2>
+            <p style="font-size: 1.1rem; color: #4a6b5a;">
+                You are logged in as <b>{str(st.session_state.user_role).upper()}</b>. 
+                { "Explore available jobs and submit your applications using the navigation above." if st.session_state.user_role == "user" else "Access your administrative dashboard to manage vacancies, applications, and system settings." }
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
         if st.session_state.user_role == "user":
-            st.write("Explore available jobs and submit your applications.")
-        else:
-            st.write("Access your administrative dashboard.")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown('<div class="styled-card"><h3>🔍 Quick Actions</h3>', unsafe_allow_html=True)
+                if st.button("Browse Available Jobs", key="home_btn_jobs", use_container_width=True, type="primary"):
+                    st.session_state.page = "jobs"
+                    st.rerun()
+                if st.button("View My Applications", key="home_btn_apps", use_container_width=True):
+                    st.session_state.page = "my_apps"
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            with col2:
+                st.markdown('<div class="styled-card"><h3>📅 Interview Info</h3>', unsafe_allow_html=True)
+                st.info("Check 'My Applications' for any scheduled interviews and Google Meet links.")
+                st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.page == "jobs":
         # Jobs page
-        st.title("University Job Opportunities")
-        st.caption("Teaching and non-teaching vacancies across faculties and departments.")
+        st.markdown('<div class="dashboard-header">🔍 University Job Opportunities</div>', unsafe_allow_html=True)
+        st.write("Teaching and non-teaching vacancies across faculties and departments.")
+        
         jobs_df = pd.read_csv("data/jobs.csv")
         jobs_df = jobs_with_classification(jobs_df)
         all_faculties = sorted(jobs_df["faculty"].dropna().unique().tolist())
         all_departments = sorted(jobs_df["department"].dropna().unique().tolist())
-        selected_faculties = st.multiselect("Filter by Faculty", all_faculties)
-        selected_departments = st.multiselect("Filter by Department", all_departments)
+        
+        st.markdown('<div class="styled-card">', unsafe_allow_html=True)
+        col_f, col_d = st.columns(2)
+        with col_f:
+            selected_faculties = st.multiselect("Filter by Faculty", all_faculties)
+        with col_d:
+            selected_departments = st.multiselect("Filter by Department", all_departments)
+        st.markdown('</div>', unsafe_allow_html=True)
+
         filtered_jobs = jobs_df.copy()
         if selected_faculties:
             filtered_jobs = filtered_jobs[filtered_jobs["faculty"].isin(selected_faculties)]
@@ -1903,39 +2315,6 @@ else:
             filtered_jobs = filtered_jobs[filtered_jobs["department"].isin(selected_departments)]
         if filtered_jobs.empty:
             st.warning("No jobs match selected faculty/department filters.")
-        st.markdown(
-            """
-            <style>
-                .job-card {
-                    background: rgba(255, 255, 255, 0.96);
-                    border: 1px solid rgba(0, 0, 0, 0.08);
-                    border-radius: 14px;
-                    padding: 14px;
-                    margin-bottom: 14px;
-                    box-shadow: 0 8px 18px rgba(0,0,0,0.04);
-                }
-                .job-card .job-title {
-                    color: #111827;
-                    font-size: 18px;
-                    font-weight: 800;
-                    margin: 0 0 8px 0;
-                }
-                .job-card .job-meta {
-                    color: #111827;
-                    font-size: 13.5px;
-                    margin: 2px 0;
-                }
-                .job-card .job-body {
-                    color: #111827;
-                    font-size: 13.5px;
-                    margin: 8px 0;
-                    line-height: 1.35;
-                }
-                .job-card b { color: #111827; }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
 
         def is_lecturer_title(title_value):
             title_value = str(title_value or "").strip().lower()
@@ -1949,7 +2328,7 @@ else:
                 st.info(f"No {section_title.lower()} available for the current filters.")
                 return
 
-            st.subheader(section_title)
+            st.markdown(f'<div class="section-title">{section_title}</div>', unsafe_allow_html=True)
             jobs_records = df.to_dict(orient="records")
             for row_idx in range(0, len(jobs_records), 2):
                 col_left, col_right = st.columns(2)
@@ -2081,10 +2460,15 @@ else:
         if os.path.exists(APPLICATIONS_FILE):
             apps_df = pd.read_csv(APPLICATIONS_FILE)
             user_apps = apps_df[apps_df['email'] == user_email]
-            st.markdown('<div class="styled-card">', unsafe_allow_html=True)
-            display_columns = ["job_id", "submitted_at", "interview_scheduled_at", "interview_meet_link"]
+            
+            st.markdown('<div class="styled-card"><h3>Application History</h3>', unsafe_allow_html=True)
+            display_columns = ["job_id", "submitted_at", "similarity", "status", "interview_scheduled_at", "interview_meet_link"]
             available_cols = [col for col in display_columns if col in user_apps.columns]
-            st.dataframe(user_apps[available_cols], use_container_width=True)
+            
+            if not user_apps.empty:
+                st.dataframe(user_apps[available_cols], use_container_width=True)
+            else:
+                st.info("You haven't applied for any jobs yet.")
             st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.info("No applications yet.")
@@ -2176,7 +2560,7 @@ else:
             new_meet_link = st.text_input("Google Meet Link", value=str(current_link) if str(current_link).strip() else "https://meet.google.com/")
             interview_notes = st.text_area("Interview Notes / Venue", value=str(current_notes) if str(current_notes).strip() else "")
 
-            if st.button("Schedule / Reschedule Interview"):
+            if st.button("Schedule / Reschedule Interview", key="btn_hr_schedule"):
                 schedule_str = f"{interview_date} {interview_time}"
                 apps_df.loc[apps_df["id"] == selected_app_id, "interview_scheduled_at"] = schedule_str
                 apps_df.loc[apps_df["id"] == selected_app_id, "interview_meet_link"] = new_meet_link
@@ -2196,22 +2580,26 @@ else:
                 st.success("Interview scheduled successfully and applicant notified via SMS.")
                 st.rerun()
 
-            st.markdown('</div><div class="styled-card"><h3>🎯 Interview Results & Reports</h3>', unsafe_allow_html=True)
-            scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""].copy()
-            if not scheduled_df.empty:
-                chosen_id = st.selectbox("Select Interviewed Applicant", scheduled_df["id"].tolist(), key="hr_interview_result")
-                result = st.radio("Interview Result", ["Passed", "Failed"], horizontal=True)
-                if st.button("Submit Interview Result and Send Report"):
-                    passed = result == "Passed"
-                    apps_df.loc[apps_df["id"] == chosen_id, "interview_passed"] = str(passed).lower()
-                    apps_df.loc[apps_df["id"] == chosen_id, "hr_report_sent"] = "true" if passed else "false"
-                    apps_df.loc[apps_df["id"] == chosen_id, "status"] = "Interview Passed" if passed else "Interview Failed"
-                    save_applications_df(apps_df)
-                    st.success("Report submitted. PRO-VC dashboard has been updated.")
-                    st.rerun()
         else:
             st.info("No applicant has passed the CV mark yet.")
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="styled-card"><h3>🎯 Interview Results & Reports</h3>', unsafe_allow_html=True)
+        scheduled_df = apps_df[apps_df["interview_scheduled_at"].astype(str).str.strip() != ""].copy()
+        if not scheduled_df.empty:
+            chosen_id = st.selectbox("Select Interviewed Applicant", scheduled_df["id"].tolist(), key="hr_interview_result")
+            result = st.radio("Interview Result", ["Passed", "Failed"], horizontal=True)
+            if st.button("Submit Interview Result and Send Report"):
+                passed = result == "Passed"
+                apps_df.loc[apps_df["id"] == chosen_id, "interview_passed"] = str(passed).lower()
+                apps_df.loc[apps_df["id"] == chosen_id, "hr_report_sent"] = "true" if passed else "false"
+                apps_df.loc[apps_df["id"] == chosen_id, "status"] = "Interview Passed" if passed else "Interview Failed"
+                save_applications_df(apps_df)
+                st.success("Report submitted. PRO-VC dashboard has been updated.")
+                st.rerun()
+        else:
+            st.info("No interviews scheduled yet.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="styled-card"><h3>📂 All Applications</h3>', unsafe_allow_html=True)
         st.dataframe(apps_df.sort_values("submitted_at", ascending=False), use_container_width=True)
@@ -2310,13 +2698,13 @@ else:
 
         st.markdown('<div class="styled-card"><h3>👥 User Management</h3>', unsafe_allow_html=True)
         
-        st.subheader("Current Users")
+        st.markdown('<div class="section-title">Current System Users</div>', unsafe_allow_html=True)
         display_users = users_df_all[["id", "username", "email", "role"]].copy() if not users_df_all.empty else pd.DataFrame()
         st.dataframe(display_users, use_container_width=True)
         
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Add New User")
+            st.markdown('<div class="section-title">Add New User</div>', unsafe_allow_html=True)
             with st.form("admin_add_user"):
                 new_u_name = st.text_input("Username")
                 new_u_email = st.text_input("Email")
@@ -2345,7 +2733,7 @@ else:
                         st.rerun()
 
         with col2:
-            st.subheader("Edit User")
+            st.markdown('<div class="section-title">Edit User Credentials</div>', unsafe_allow_html=True)
             with st.form("admin_edit_user"):
                 if not users_df_all.empty:
                     edit_u_name = st.selectbox("Select User", users_df_all["username"].tolist())
