@@ -7,3 +7,5 @@ twilio
 streamlit-webrtc
 pandas
 numpy
+supabase
+python-dotenv

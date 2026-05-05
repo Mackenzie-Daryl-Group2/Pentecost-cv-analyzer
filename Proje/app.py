@@ -12,6 +12,10 @@ from io import BytesIO
 from pandas.errors import ParserError
 from streamlit.errors import StreamlitSecretNotFoundError
 import streamlit.components.v1 as components
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Ensure working directory is the same as the script location
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -294,12 +298,56 @@ def ensure_file_ends_with_newline(path):
 
 
 # Load users and jobs
-users_df = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
-jobs_df = safe_read_csv("data/jobs.csv")
+users_df = safe_read_table("users", "data/users.csv", ["id", "username", "email", "password", "role"])
+jobs_df = safe_read_table("jobs", "data/jobs.csv")
+
+# Supabase Connection
+@st.cache_resource
+def init_supabase():
+    try:
+        url = st.secrets["supabase"]["url"]
+        key = st.secrets["supabase"]["key"]
+        return create_client(url, key)
+    except Exception:
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_KEY")
+        if url and key:
+            return create_client(url, key)
+    return None
+
+supabase = init_supabase()
+
+
+def supabase_upload(bucket, file_obj, file_name):
+    """Upload file to Supabase Storage bucket and return public URL."""
+    if not supabase:
+        return None
+    try:
+        # Check if bucket exists (Supabase client doesn't have an easy 'exists', so we just try)
+        file_obj.seek(0)
+        supabase.storage.from_(bucket).upload(file_name, file_obj.read(), {"upsert": "true"})
+        return supabase.storage.from_(bucket).get_public_url(file_name)
+    except Exception as e:
+        st.warning(f"Supabase upload error ({bucket}): {e}")
+        return None
 
 # Common data paths and defaults
 APPLICATIONS_FILE = "data/applications.csv"
 SIMILARITY_PASS_MARK = 0.55
+
+
+def safe_read_table(table_name, fallback_csv, fallback_cols=None):
+    """Read from Supabase table if available, else fallback to CSV."""
+    if supabase:
+        try:
+            response = supabase.table(table_name).select("*").execute()
+            if response.data:
+                return pd.DataFrame(response.data)
+            return pd.DataFrame()
+        except Exception as e:
+            st.warning(f"Supabase error ({table_name}): {e}. Falling back to CSV.")
+    
+    return safe_read_csv(fallback_csv, fallback_cols)
 
 
 def normalize_role(role_value):
@@ -323,25 +371,26 @@ def role_home_page(role):
 
 def get_applications_df():
     required_columns = [
-        "id",
-        "name",
-        "email",
-        "phone",
-        "job_id",
-        "cv_path",
-        "image_path",
-        "submitted_at",
-        "similarity",
-        "cv_passed",
-        "interview_scheduled_at",
-        "interview_meet_link",
-        "interview_notes",
-        "interview_passed",
-        "hr_report_sent",
-        "pro_vc_approved",
-        "onboarding_status",
-        "status"
+        "id", "name", "email", "phone", "job_id", "cv_url", "image_url", 
+        "submitted_at", "similarity", "cv_passed", "interview_scheduled_at", 
+        "interview_meet_link", "interview_notes", "interview_passed", 
+        "hr_report_sent", "pro_vc_approved", "onboarding_status", "status"
     ]
+    
+    if supabase:
+        try:
+            response = supabase.table("applications").select("*").execute()
+            df = pd.DataFrame(response.data)
+            if df.empty:
+                return pd.DataFrame(columns=required_columns)
+            # Ensure all required columns exist
+            for col in required_columns:
+                if col not in df.columns:
+                    df[col] = ""
+            return df
+        except Exception as e:
+            st.warning(f"Supabase error (applications): {e}. Falling back to CSV.")
+
     if not os.path.exists(APPLICATIONS_FILE):
         return pd.DataFrame(columns=required_columns)
     apps = safe_read_csv(APPLICATIONS_FILE, required_columns)
@@ -352,6 +401,14 @@ def get_applications_df():
 
 
 def save_applications_df(apps_df):
+    if supabase:
+        try:
+            # Convert to list of dicts for upsert
+            records = apps_df.to_dict("records")
+            supabase.table("applications").upsert(records).execute()
+            return
+        except Exception as e:
+            st.warning(f"Supabase upsert error: {e}")
     apps_df.to_csv(APPLICATIONS_FILE, index=False)
 
 
@@ -463,10 +520,26 @@ if 'user_role' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state.username = None
 
-# Function to login
 def login(username, password):
     u = str(username).strip()
     p = str(password).strip()
+    
+    if supabase:
+        try:
+            response = supabase.table("users").select("*").eq("username", u).eq("password", p).execute()
+            if response.data:
+                user_data = response.data[0]
+                st.session_state.logged_in = True
+                st.session_state.user_role = normalize_role(user_data['role'])
+                st.session_state.username = user_data['username']
+                st.session_state.page = role_home_page(st.session_state.user_role)
+                st.session_state.show_login = False
+                st.rerun()
+                return
+        except Exception as e:
+            st.error(f"Supabase Login Error: {e}")
+
+    # Fallback to CSV
     match_df = users_df[
         (users_df['username'].astype(str).str.strip() == u) & 
         (users_df['password'].astype(str).str.strip() == p)
@@ -481,31 +554,34 @@ def login(username, password):
     else:
         st.error("Invalid credentials")
 
-# Function to create account
 def create_account(username, email, password):
-    latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
-    if username in latest_users['username'].values:
-        st.error("Username already exists")
-        return
-    if email in latest_users['email'].values:
-        st.error("Email already exists")
-        return
-    if latest_users.empty or latest_users["id"].isna().all():
-        next_id = 1
-    else:
-        next_id = int(pd.to_numeric(latest_users["id"], errors="coerce").dropna().max()) + 1
+    if supabase:
+        try:
+            # Check existing
+            check_u = supabase.table("users").select("id").eq("username", username).execute()
+            check_e = supabase.table("users").select("id").eq("email", email).execute()
+            if check_u.data:
+                st.error("Username already exists")
+                return
+            if check_e.data:
+                st.error("Email already exists")
+                return
+            
+            # Insert
+            supabase.table("users").insert({
+                "username": username,
+                "email": email,
+                "password": password,
+                "role": "user"
+            }).execute()
+            st.success("Account created! Please login.")
+            send_signup_confirmation_email(email, username)
+            return
+        except Exception as e:
+            st.error(f"Supabase Signup Error: {e}")
 
-    new_user = pd.DataFrame({
-        "id": [next_id],
-        "username": [username],
-        "email": [email],
-        "password": [password],
-        "role": ["user"]
-    })
-    ensure_file_ends_with_newline("data/users.csv")
-    new_user.to_csv("data/users.csv", mode='a', header=False, index=False)
-    st.success("Account created! Please login.")
-    sent, message = send_signup_confirmation_email(email, username)
+    # Fallback to CSV
+    latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
     if sent:
         st.info("A confirmation email has been sent to your address.")
     else:
@@ -1605,20 +1681,29 @@ else:
                     from datetime import datetime
 
                     app_id = str(uuid.uuid4())
+                    
+                    # 1. Supabase Storage Uploads (Preferred)
+                    cv_url = ""
+                    image_url = ""
+                    if supabase:
+                        cv_url = supabase_upload("cvs", cv_file, f"{app_id}_cv.pdf")
+                        image_url = supabase_upload("images", photo_file, f"{app_id}_photo.jpg")
+                    
+                    # 2. Local Fallbacks (Always do this for redundancy/processing)
                     cv_path = f"data/cvs/{app_id}.pdf"
+                    img_path = f"data/images/{app_id}.jpg"
                     os.makedirs("data/cvs", exist_ok=True)
+                    os.makedirs("data/images", exist_ok=True)
                     with open(cv_path, "wb") as f:
                         f.write(cv_file.getbuffer())
-
-                    image_path = f"data/images/{app_id}.jpg"
-                    os.makedirs("data/images", exist_ok=True)
-                    with open(image_path, "wb") as f:
+                    with open(img_path, "wb") as f:
                         f.write(photo_file.getbuffer())
 
+                    # 3. AI Screening
                     cv_text = extract_text_from_pdf(cv_path)
                     job_req = job['requirements']
-                    similarity = compute_similarity(cv_text, job_req)
-                    is_passed = similarity >= SIMILARITY_PASS_MARK
+                    score = compute_similarity(cv_text, job_req)
+                    is_passed = score >= SIMILARITY_PASS_MARK
                     
                     interview_time = ""
                     meet_link = ""
@@ -1626,20 +1711,22 @@ else:
                         interview_time = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d %I:%M %p")
                         meet_link = "https://meet.google.com/xyz-abcd-efg"
 
+                    # 4. Save to Database
                     apps_df = get_applications_df()
+                    new_app_id = str(random.randint(100000, 999999))
                     new_app = pd.DataFrame({
-                        "id": [app_id],
+                        "id": [new_app_id],
                         "name": [name],
                         "email": [email],
                         "phone": [phone],
                         "job_id": [job_id],
-                        "cv_path": [cv_path],
-                        "image_path": [image_path],
-                        "submitted_at": [datetime.now().isoformat()],
-                        "similarity": [similarity],
-                        "cv_passed": [str(is_passed)],
-                        "interview_scheduled_at": [interview_time],
-                        "interview_meet_link": [meet_link],
+                        "cv_url": [cv_url if cv_url else cv_path],
+                        "image_url": [image_url if image_url else img_path],
+                        "submitted_at": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
+                        "similarity": [float(score)],
+                        "cv_passed": [str(is_passed).lower()],
+                        "interview_scheduled_at": [interview_time if is_passed else ""],
+                        "interview_meet_link": [meet_link if is_passed else ""],
                         "interview_notes": [""],
                         "interview_passed": [""],
                         "hr_report_sent": ["false"],
@@ -1736,6 +1823,17 @@ else:
             if not vacancy_title or not vacancy_description or not vacancy_requirements or not vacancy_salary:
                 st.error("Please fill all vacancy fields.")
             else:
+                if supabase:
+                    try:
+                        supabase.table("jobs").insert({
+                            "title": vacancy_title,
+                            "description": vacancy_description,
+                            "requirements": vacancy_requirements,
+                            "salary": vacancy_salary
+                        }).execute()
+                    except Exception as e:
+                        st.error(f"Supabase job error: {e}")
+                
                 jobs = safe_read_csv("data/jobs.csv")
                 next_job_id = 1 if jobs.empty else int(pd.to_numeric(jobs["id"], errors="coerce").dropna().max()) + 1
                 new_job = pd.DataFrame({
@@ -1792,6 +1890,12 @@ else:
             
             if remove_submit:
                 job_id_to_remove = int(job_to_remove.split(" - ")[0])
+                if supabase:
+                    try:
+                        supabase.table("jobs").delete().eq("id", job_id_to_remove).execute()
+                    except Exception as e:
+                        st.error(f"Supabase delete error: {e}")
+                
                 jobs_for_removal = jobs_for_removal[jobs_for_removal['id'] != job_id_to_remove]
                 jobs_for_removal.to_csv("data/jobs.csv", index=False)
                 st.success("Job removed successfully.")
