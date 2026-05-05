@@ -1337,32 +1337,233 @@ if not st.session_state.logged_in:
         render_home_watermark_js("pentecost logo.jpg")
         clear_signup_background_js()
         clear_login_video_bg_js()
-        # Welcome heading
-        st.markdown('<h1 class="welcome-header">Welcome to Pentecost University Recruiter</h1>', unsafe_allow_html=True)
-        
-        # Buttons below heading
-        col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
-        
+
+        st.markdown("""
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+        .hero-section {
+            text-align: center;
+            padding: 60px 20px 40px 20px;
+            font-family: 'Inter', sans-serif;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(46,139,87,0.15), rgba(76,175,80,0.2));
+            border: 1px solid rgba(46,139,87,0.35);
+            color: #1e5f3f;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 6px 18px;
+            border-radius: 999px;
+            margin-bottom: 22px;
+        }
+        .hero-title {
+            font-size: 3.6rem;
+            font-weight: 900;
+            line-height: 1.12;
+            color: #0f2d1e;
+            margin-bottom: 18px;
+            text-shadow: 0 2px 20px rgba(46,139,87,0.08);
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #2E8B57, #4CAF50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            font-size: 1.15rem;
+            color: #4a6b5a;
+            max-width: 620px;
+            margin: 0 auto 40px auto;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+        .hero-btns {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 55px;
+        }
+        .hero-btn-primary {
+            background: linear-gradient(135deg, #2E8B57, #4CAF50);
+            color: white !important;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(46,139,87,0.35);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .hero-btn-secondary {
+            background: rgba(255,255,255,0.85);
+            color: #1e5f3f !important;
+            padding: 14px 36px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            border: 2px solid rgba(46,139,87,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            backdrop-filter: blur(8px);
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            max-width: 700px;
+            margin: 0 auto 55px auto;
+            background: rgba(255,255,255,0.88);
+            border-radius: 18px;
+            border: 1px solid rgba(46,139,87,0.15);
+            box-shadow: 0 8px 32px rgba(46,139,87,0.08);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+        }
+        .stat-item {
+            flex: 1;
+            padding: 22px 10px;
+            text-align: center;
+            border-right: 1px solid rgba(46,139,87,0.1);
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #2E8B57;
+            display: block;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b8f7a;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto 40px auto;
+        }
+        .feature-card {
+            background: rgba(255,255,255,0.88);
+            border: 1px solid rgba(46,139,87,0.13);
+            border-radius: 18px;
+            padding: 28px 22px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 28px rgba(46,139,87,0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 16px 40px rgba(46,139,87,0.14);
+        }
+        .feature-icon {
+            font-size: 2.4rem;
+            margin-bottom: 14px;
+            display: block;
+        }
+        .feature-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f2d1e;
+            margin-bottom: 8px;
+        }
+        .feature-desc {
+            font-size: 0.88rem;
+            color: #5a7a69;
+            line-height: 1.55;
+        }
+        .footer-note {
+            text-align: center;
+            color: #8aab98;
+            font-size: 13px;
+            padding-bottom: 30px;
+        }
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.2rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; }
+            .stat-item { border-right: none; border-bottom: 1px solid rgba(46,139,87,0.1); }
+        }
+        </style>
+
+        <div class="hero-section">
+            <div class="hero-badge">🎓 Pentecost University · Official Recruitment Portal</div>
+            <div class="hero-title">Find Your Place at<br><span>Pentecost University</span></div>
+            <div class="hero-sub">
+                Apply for academic and administrative roles across our faculties and departments.
+                A transparent, fast, and modern recruitment experience — built for you.
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-num">50+</span>
+                <span class="stat-label">Open Positions</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-num">12</span>
+                <span class="stat-label">Departments</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-num">AI</span>
+                <span class="stat-label">CV Screening</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-num">Fast</span>
+                <span class="stat-label">Review Process</span>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🤖</span>
+                <div class="feature-title">AI-Powered CV Analysis</div>
+                <div class="feature-desc">Your CV is automatically screened and scored against the job description for accuracy and fit.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📅</span>
+                <div class="feature-title">Automated Scheduling</div>
+                <div class="feature-desc">Qualified applicants receive automatic interview invitations with Google Meet links.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔒</span>
+                <div class="feature-title">Secure & Verified</div>
+                <div class="feature-desc">Email and SMS verification ensures every account and application is genuine and secure.</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # Action buttons using Streamlit (so they work)
+        col1, col2, col3, col4, col5 = st.columns([1.2, 1, 1, 1, 1.2])
         with col2:
-            if st.button("🔐 Login", key="btn_login_home", use_container_width=True):
+            if st.button("🔐 Login", key="btn_login_home", use_container_width=True, type="primary"):
                 st.session_state.show_login = True
                 st.rerun()
-        
         with col3:
             if st.button("📝 Sign Up", key="btn_signup_home", use_container_width=True):
                 st.session_state.show_signup = True
                 st.rerun()
-        
         with col4:
-            if st.button("🔍 Search", key="btn_search_home", use_container_width=True):
+            if st.button("🔍 Browse Jobs", key="btn_search_home", use_container_width=True):
                 st.session_state.show_search = True
                 st.rerun()
 
-        st.markdown("""
-            <p style="text-align:center; max-width:700px; margin:0 auto 30px auto; color:#444; font-size:18px;">
-                Quickly search available jobs by title, skills, or department. Create an account to save applications and track progress.
-            </p>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="footer-note">© 2025 Pentecost University · All applications are processed fairly and transparently.</div>', unsafe_allow_html=True)
 
 
     # Show login form
