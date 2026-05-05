@@ -1149,72 +1149,108 @@ if not st.session_state.logged_in:
             margin: 0 auto 55px auto;
             background: rgba(255,255,255,0.88);
             border-radius: 18px;
+        /* ── Advanced Futuristic Homepage ── */
         .hero-section {
             text-align: center;
-            padding: 40px 20px;
+            padding: 80px 20px 60px 20px;
+            position: relative;
+            overflow: hidden;
         }
         .hero-title {
-            font-size: 3.2rem;
+            font-size: 4.5rem;
             font-weight: 900;
-            line-height: 1.1;
+            line-height: 1;
+            letter-spacing: -2px;
             color: #ffffff;
-            margin-bottom: 20px;
-        }
-        .hero-title span {
-            background: linear-gradient(135deg, #4CAF50, #81c784);
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #ffffff 0%, #a5d6a7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #4CAF50, #2E8B57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .hero-sub {
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             color: #b0c4b8;
-            max-width: 700px;
-            margin: 0 auto 30px auto;
+            max-width: 800px;
+            margin: 0 auto 48px auto;
             line-height: 1.6;
+            font-weight: 400;
         }
         .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            max-width: 900px;
-            margin: 0 auto 40px auto;
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto 80px auto;
         }
         .feature-card {
-            background: rgba(255,255,255,0.04);
-            border: 1.2px solid rgba(255,255,255,0.08);
-            border-radius: 20px;
-            padding: 30px 24px;
-            text-align: center;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: left;
+            backdrop-filter: blur(20px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at top left, rgba(76,175,80,0.15), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 16px 40px rgba(46,139,87,0.14);
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(76,175,80,0.4);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 20px rgba(46,139,87,0.2);
         }
+        .feature-card:hover::before { opacity: 1; }
         .feature-icon {
-            font-size: 2.4rem;
-            margin-bottom: 14px;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
             display: block;
+            filter: drop-shadow(0 0 10px rgba(76,175,80,0.3));
         }
         .feature-title {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1.3rem;
+            font-weight: 800;
             color: #ffffff;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
         .feature-desc {
-            font-size: 0.9rem;
-            color: #b0c4b8;
-            line-height: 1.5;
+            font-size: 0.95rem;
+            color: #8fa196;
+            line-height: 1.6;
         }
+        .bg-blob {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(46,139,87,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(80px);
+            pointer-events: none;
+        }
+        .blob-1 { top: -10%; right: -10%; }
+        .blob-2 { bottom: -10%; left: -10%; }
+        
         .footer-note {
             text-align: center;
-            color: #8aab98;
-            font-size: 13px;
-            padding-bottom: 30px;
+            color: #5a7a69;
+            font-size: 14px;
+            font-weight: 500;
+            padding-bottom: 40px;
+            letter-spacing: 0.5px;
         }
         @media (max-width: 768px) {
             .hero-title { font-size: 2.4rem; }
@@ -1222,31 +1258,32 @@ if not st.session_state.logged_in:
         }
         </style>
 
-        <div class="styled-card">
-            <div class="hero-section">
-                <div class="hero-title">Find Your Place at<br><span>Pentecost University</span></div>
-                <div class="hero-sub">
-                    Apply for academic and administrative roles across our faculties and departments.
-                    A transparent, fast, and modern recruitment experience — built for you.
-                </div>
-            </div>
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
 
-            <div class="features-grid">
-                <div class="feature-card">
-                    <span class="feature-icon">🤖</span>
-                    <div class="feature-title">AI CV Analysis</div>
-                    <div class="feature-desc">Your CV is automatically screened and scored against the job description for accuracy.</div>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">📅</span>
-                    <div class="feature-title">Automated Scheduling</div>
-                    <div class="feature-desc">Qualified applicants receive automatic invitations with unique Google Meet links.</div>
-                </div>
-                <div class="feature-card">
-                    <span class="feature-icon">🔒</span>
-                    <div class="feature-title">Secure & Verified</div>
-                    <div class="feature-desc">Email and SMS verification ensures every application is genuine and secure.</div>
-                </div>
+        <div class="hero-section">
+            <div class="hero-title">Elevate Your Career at<br><span>Pentecost University</span></div>
+            <div class="hero-sub">
+                Experience the future of academic recruitment. Our AI-driven platform connects 
+                extraordinary talent with world-class opportunities in a seamless, transparent journey.
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">⚡</span>
+                <div class="feature-title">AI Precision Screening</div>
+                <div class="feature-desc">Next-gen neural analysis matching your unique skills to the perfect role with surgical accuracy.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌐</span>
+                <div class="feature-title">Instant Virtual Connect</div>
+                <div class="feature-desc">Automated, secure interview pipelines with zero friction. Connect globally, instantly.</div>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">💎</span>
+                <div class="feature-title">Elite Talent Portal</div>
+                <div class="feature-desc">A premium, verified ecosystem designed to protect your data while accelerating your hiring journey.</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
