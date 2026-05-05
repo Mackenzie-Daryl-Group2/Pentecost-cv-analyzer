@@ -1342,12 +1342,27 @@ if not st.session_state.logged_in:
             col_btn1, col_btn2 = st.columns([2, 1])
             with col_btn1:
                 if st.button("Send Verification Code", key="btn_signup_send_code", use_container_width=True):
-                    latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+                    if supabase:
+                        try:
+                            check_u = supabase.table("users").select("id").eq("username", new_username).execute()
+                            check_e = supabase.table("users").select("id").eq("email", new_email).execute()
+                            user_exists = len(check_u.data) > 0
+                            email_exists = len(check_e.data) > 0
+                        except Exception:
+                            # Fallback check
+                            latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+                            user_exists = new_username in latest_users["username"].values
+                            email_exists = new_email in latest_users["email"].values
+                    else:
+                        latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+                        user_exists = new_username in latest_users["username"].values
+                        email_exists = new_email in latest_users["email"].values
+
                     if not new_username or not new_email or not new_password:
                         st.error("Please fill username, email and password first.")
-                    elif new_username in latest_users["username"].values:
+                    elif user_exists:
                         st.error("Username already exists")
-                    elif new_email in latest_users["email"].values:
+                    elif email_exists:
                         st.error("Email already exists")
                     elif verification_method == "SMS" and not new_phone.strip():
                         st.error("Please enter a phone number to use SMS verification.")
@@ -1426,20 +1441,12 @@ if not st.session_state.logged_in:
                         elif verification_code_input.strip() != st.session_state.signup_verification_code:
                             st.error("Invalid verification code.")
                         else:
-                            # Create the account
-                            latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
-                            next_id = 1 if latest_users.empty else int(pd.to_numeric(latest_users["id"], errors="coerce").dropna().max()) + 1
-                            new_user = pd.DataFrame({
-                                "id": [next_id],
-                                "username": [st.session_state.pending_signup_username],
-                                "email": [st.session_state.pending_signup_email],
-                                "password": [st.session_state.pending_signup_password],
-                                "role": ["user"]
-                            })
-                            ensure_file_ends_with_newline("data/users.csv")
-                            new_user.to_csv("data/users.csv", mode='a', header=False, index=False)
-                            # Send welcome email silently
-                            send_signup_confirmation_email(st.session_state.pending_signup_email, st.session_state.pending_signup_username)
+                            # Create the account using the central function
+                            create_account(
+                                st.session_state.pending_signup_username,
+                                st.session_state.pending_signup_email,
+                                st.session_state.pending_signup_password
+                            )
                             
                             # Clean up and move to step 3
                             st.session_state.signup_verification_code = ""
