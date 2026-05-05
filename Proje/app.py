@@ -585,14 +585,33 @@ def create_account(username, email, password):
 
     # Fallback to CSV
     latest_users = safe_read_csv("data/users.csv", ["id", "username", "email", "password", "role"])
+    if username in latest_users['username'].values:
+        st.error("Username already exists")
+        return
+    if email in latest_users['email'].values:
+        st.error("Email already exists")
+        return
+    if latest_users.empty or latest_users["id"].isna().all():
+        next_id = 1
+    else:
+        next_id = int(pd.to_numeric(latest_users["id"], errors="coerce").dropna().max()) + 1
+
+    new_user = pd.DataFrame({
+        "id": [next_id],
+        "username": [username],
+        "email": [email],
+        "password": [password],
+        "role": ["user"]
+    })
+    ensure_file_ends_with_newline("data/users.csv")
+    new_user.to_csv("data/users.csv", mode='a', header=False, index=False)
+    st.success("Account created! Please login.")
+    
+    sent, message = send_signup_confirmation_email(email, username)
     if sent:
         st.info("A confirmation email has been sent to your address.")
     else:
         st.warning(f"Account created, but email notification was not sent: {message}")
-        st.caption(
-            "Configure SMTP via environment variables or Streamlit secrets "
-            "(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM)."
-        )
 
 
 def send_recruitment_email(recipient_email, subject, body_text):
