@@ -1810,6 +1810,8 @@ else:
             st.info("No applications yet.")
 
     elif st.session_state.page == "hr_dashboard":
+        db_status = '<span style="color: #4CAF50;">● Cloud Connected (Supabase)</span>' if supabase else '<span style="color: #ff9800;">● Local Storage Mode (CSV)</span>'
+        st.markdown(f'<div style="text-align: right; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Database Status: {db_status}</div>', unsafe_allow_html=True)
         st.markdown('<div class="dashboard-header">👥 Human Resources Dashboard</div>', unsafe_allow_html=True)
         apps_df = get_applications_df()
         jobs_df = safe_read_csv("data/jobs.csv")
@@ -2031,6 +2033,8 @@ else:
         st.markdown('</div>', unsafe_allow_html=True)
 
     elif st.session_state.page == "pro_vc_dashboard":
+        db_status = '<span style="color: #4CAF50;">● Cloud Connected (Supabase)</span>' if supabase else '<span style="color: #ff9800;">● Local Storage Mode (CSV)</span>'
+        st.markdown(f'<div style="text-align: right; font-size: 14px; font-weight: 600; margin-bottom: 10px;">Database Status: {db_status}</div>', unsafe_allow_html=True)
         st.markdown('<div class="dashboard-header">🏛️ PRO-VC Dashboard</div>', unsafe_allow_html=True)
         apps_df = get_applications_df()
         jobs_df = safe_read_csv("data/jobs.csv")
