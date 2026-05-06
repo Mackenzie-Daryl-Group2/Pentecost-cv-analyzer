@@ -557,7 +557,7 @@ def login(username, password):
     else:
         st.error("Invalid credentials")
 
-def create_account(username, email, password):
+def create_account(username, email, password, phone=""):
     if supabase:
         try:
             # Check existing
@@ -575,6 +575,7 @@ def create_account(username, email, password):
                 "username": username,
                 "email": email,
                 "password": password,
+                "phone": phone,
                 "role": "user"
             }).execute()
             st.success("Account created! Please login.")
@@ -601,6 +602,7 @@ def create_account(username, email, password):
         "username": [username],
         "email": [email],
         "password": [password],
+        "phone": [phone],
         "role": ["user"]
     })
     ensure_file_ends_with_newline("data/users.csv")
@@ -1444,7 +1446,8 @@ if not st.session_state.logged_in:
                             create_account(
                                 st.session_state.pending_signup_username,
                                 st.session_state.pending_signup_email,
-                                st.session_state.pending_signup_password
+                                st.session_state.pending_signup_password,
+                                st.session_state.get("pending_signup_phone", "")
                             )
                             
                             # Clean up and move to step 3
