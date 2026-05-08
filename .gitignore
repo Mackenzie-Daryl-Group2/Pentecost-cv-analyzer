@@ -1,0 +1,13 @@
+# Environment and caches
+.venv/
+__pycache__/
+*.pyc
+
+# Streamlit secrets
+Proje/.streamlit/secrets.toml
+
+# Databases and user uploads (optional depending on your preference, but usually good to ignore in production)
+# Proje/data/users.csv
+# Proje/data/applications.csv
+# Proje/data/cvs/
+# Proje/data/images/
