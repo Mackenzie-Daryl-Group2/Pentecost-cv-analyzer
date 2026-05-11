@@ -32,7 +32,7 @@ export default function MyApplicationsPage() {
       const { data, error } = await supabase
         .from('applications')
         .select('*')
-        .eq('full_name', user.user_metadata?.full_name || "") // Simplified for demo
+        .eq('email', user.email || "") // Using exact email to filter securely
         .order('submitted_at', { ascending: false });
 
       if (data) setApps(data);

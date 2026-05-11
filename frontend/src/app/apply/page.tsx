@@ -16,12 +16,18 @@ function ApplyForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [userEmail, setUserEmail] = useState("");
+
   useEffect(() => {
     setJobId(searchParams.get("jobId"));
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.push("/");
-      else setFullName(user.user_metadata?.full_name || "");
+      if (!user) {
+        router.push("/login?message=Please+log+in+to+apply");
+      } else {
+        setFullName(user.user_metadata?.full_name || "");
+        setUserEmail(user.email || "");
+      }
     };
     checkUser();
   }, [searchParams, router]);
@@ -53,14 +59,16 @@ function ApplyForm() {
       const score = analysisData.similarity || 0;
       const isPassed = score >= 0.55;
 
-      // 4. Save to Database
+      // 4. Save to Database using the exact columns from the original database schema
       const { error: dbError } = await supabase.from('applications').insert({
         job_id: parseInt(jobId),
-        full_name: fullName,
+        name: fullName,
+        email: userEmail,
         phone: `${countryCode}${phone}`,
-        cv_url: cvName,
-        photo_url: photoName,
+        cv_path: cvName,
+        image_path: photoName,
         similarity: score,
+        cv_passed: isPassed,
         status: isPassed ? 'CV Passed' : 'CV Not Passed',
         submitted_at: new Date().toISOString(),
         interview_scheduled_at: isPassed ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() : null,
@@ -69,8 +77,26 @@ function ApplyForm() {
 
       if (dbError) throw dbError;
 
-      // 4. Trigger Email (In production, this would call an Edge Function)
-      console.log("Sending confirmation email to candidate...");
+      // 5. Trigger Email
+      if (userEmail) {
+        await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: userEmail,
+            subject: `Application Received: Job #${jobId}`,
+            html: `
+              <h2>Application Received!</h2>
+              <p>Hi ${fullName},</p>
+              <p>We have successfully received your application for Job #${jobId}.</p>
+              <p>Our AI system has begun screening your CV. You can check the status of your application at any time in the <strong>My Applications</strong> section of your dashboard.</p>
+              <br/>
+              <p>Best Regards,</p>
+              <p>Pentecost Recruitment Team</p>
+            `
+          })
+        });
+      }
 
       router.push("/apply/success");
     } catch (error: any) {
