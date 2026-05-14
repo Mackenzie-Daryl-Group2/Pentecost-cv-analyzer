@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
+export const runtime = "nodejs";
 
 // Helper function to extract words and compute term frequency
 function getTermFrequency(text: string) {
@@ -54,11 +57,18 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await cvFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Extract text from PDF using dynamic import to bypass Turbopack CJS issues
-    const pdfParseModule = await import('pdf-parse');
-    const pdfParse = (pdfParseModule as any).default || pdfParseModule;
-    const pdfData = await pdfParse(buffer);
-    const cvText = pdfData.text;
+    // pdf-parse v2 exposes a PDFParse class instead of the old default function.
+    const { PDFParse } = await import('pdf-parse');
+    const workerPath = join(process.cwd(), "node_modules", "pdf-parse", "dist", "pdf-parse", "esm", "pdf.worker.mjs");
+    PDFParse.setWorker(pathToFileURL(workerPath).href);
+    const parser = new PDFParse({ data: buffer });
+    let cvText = "";
+    try {
+      const pdfData = await parser.getText();
+      cvText = pdfData.text;
+    } finally {
+      await parser.destroy();
+    }
 
     const cvTextClean = (cvText || "").trim();
     const jobTextClean = (jobDescription || "").trim();

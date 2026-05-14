@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import PentecostChatbot from "@/components/PentecostChatbot";
+import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pentecost University | AI Recruitment Platform",
-  description: "Modern AI-powered CV analysis and recruitment platform for Pentecost University.",
+  title: "Pentecost University Recruitment",
+  description: "Recruitment workflow, CV review, interview scheduling, and hiring approvals for Pentecost University.",
 };
 
 export default function RootLayout({
@@ -20,6 +22,8 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <PentecostChatbot />
+        <ThemeToggle />
       </body>
     </html>
   );

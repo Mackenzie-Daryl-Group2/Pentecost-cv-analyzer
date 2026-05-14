@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "seed:auth": "node scripts/seed-supabase-users.mjs",
     "lint": "next lint"
   },
   "keywords": [],

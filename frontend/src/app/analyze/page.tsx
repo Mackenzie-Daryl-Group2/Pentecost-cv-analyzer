@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
+import { getMatchDecision, getMatchStyle } from "@/utils/match";
+import UserBadge from "@/components/UserBadge";
 
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -63,16 +65,16 @@ export default function AnalyzePage() {
         alignItems: "center",
         marginBottom: "60px",
         padding: "20px 40px",
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--topbar-bg)",
         borderRadius: "20px",
         backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.05)"
+        border: "1px solid var(--line-soft)"
       }}>
-        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "white" }}>
-          PENTECOST <span style={{ color: "var(--accent-neon)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>RECRUITER</span>
+        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "var(--text-primary)" }}>
+          PENTECOST <span style={{ color: "var(--accent-gold)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>UNIVERSITY</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>{user?.email}</span>
+          <UserBadge user={user} label="Account" onUserUpdated={setUser} />
           <button 
             onClick={handleLogout}
             style={{ 
@@ -91,9 +93,9 @@ export default function AnalyzePage() {
       </div>
 
       <div style={{ maxWidth: "800px", width: "100%" }}>
-        <h1 style={{ fontSize: "2.5rem", marginBottom: "16px", textAlign: "center" }}>AI CV Analyzer</h1>
+        <h1 style={{ fontSize: "2.5rem", marginBottom: "16px", textAlign: "center" }}>CV Match Review</h1>
         <p style={{ color: "var(--text-secondary)", textAlign: "center", marginBottom: "40px" }}>
-          Upload your CV and compare it with the job requirements using our advanced neural matching engine.
+          Upload a CV and compare it with the job requirements using the same matching signal used in applications.
         </p>
 
         <div className="glass-card" style={{ padding: "40px" }}>
@@ -114,7 +116,7 @@ export default function AnalyzePage() {
               <label style={{ display: "block", marginBottom: "12px", color: "var(--accent-neon)", fontWeight: "600" }}>UPLOAD CV (PDF)</label>
               <div 
                 style={{ 
-                  border: "2px dashed rgba(46, 139, 87, 0.3)", 
+                  border: "2px dashed var(--success-border)", 
                   borderRadius: "16px", 
                   padding: "40px", 
                   textAlign: "center",
@@ -135,7 +137,7 @@ export default function AnalyzePage() {
                 <p style={{ fontWeight: "600", marginBottom: "4px" }}>
                   {file ? file.name : "Click to upload or drag and drop"}
                 </p>
-                <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.4)" }}>PDF files only (max 5MB)</p>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>PDF files only (max 5MB)</p>
               </div>
             </div>
 
@@ -145,39 +147,31 @@ export default function AnalyzePage() {
               disabled={isAnalyzing || !file || !jobDescription}
               style={{ width: "100%", height: "56px", fontSize: "1.1rem", opacity: (isAnalyzing || !file || !jobDescription) ? 0.6 : 1 }}
             >
-              {isAnalyzing ? "Processing with AI..." : "Run Analysis"}
+              {isAnalyzing ? "Processing match..." : "Run Review"}
             </button>
           </form>
 
-          {result && (
-            <div style={{ marginTop: "40px", padding: "24px", borderRadius: "16px", background: "rgba(46, 139, 87, 0.1)", border: "1px solid rgba(46, 139, 87, 0.3)" }}>
-              <h3 style={{ marginBottom: "16px", color: "white" }}>Analysis Result</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                <div style={{ 
-                  width: "80px", 
-                  height: "80px", 
-                  borderRadius: "50%", 
-                  border: "4px solid var(--accent-neon)", 
-                  display: "flex", 
-                  alignItems: "center", 
-                  justifyContent: "center",
-                  fontSize: "1.5rem",
-                  fontWeight: "800",
-                  color: "var(--accent-neon)"
-                }}>
-                  {Math.round(result.similarity * 100)}%
-                </div>
-                <div>
-                  <p style={{ fontWeight: "700", color: "white", fontSize: "1.1rem" }}>
-                    {result.similarity > 0.7 ? "High Match" : result.similarity > 0.4 ? "Potential Match" : "Low Match"}
-                  </p>
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-                    Your CV has a {Math.round(result.similarity * 100)}% similarity with the job description.
-                  </p>
+          {result && (() => {
+            const decision = getMatchDecision(result.similarity);
+            return (
+              <div style={{ marginTop: "40px", padding: "24px", borderRadius: "16px", background: "var(--success-soft-bg)", border: "1px solid var(--success-border)" }}>
+                <h3 style={{ marginBottom: "16px", color: "var(--text-primary)" }}>Analysis Result</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", alignItems: "center", gap: "20px" }}>
+                  <div style={{ width: "64px", height: "64px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--success-bg)", border: "1px solid var(--success-border)", color: "var(--accent-neon)", fontSize: "1.6rem", fontWeight: "900" }}>
+                    ✓
+                  </div>
+                  <div>
+                    <span style={{ ...getMatchStyle(decision.tone), display: "inline-block", padding: "8px 12px", borderRadius: "999px", fontSize: "0.82rem", fontWeight: "800", marginBottom: "10px" }}>
+                      {decision.label}
+                    </span>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: "1.6" }}>
+                      {decision.detail}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       </div>
     </main>

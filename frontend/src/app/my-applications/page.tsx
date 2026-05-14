@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
+import { getMatchDecision, getMatchStyle } from "@/utils/match";
+import { getJobById } from "@/utils/jobs";
+import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
+import UserBadge from "@/components/UserBadge";
 
 interface Application {
   id: number;
@@ -27,6 +31,13 @@ export default function MyApplicationsPage() {
         router.push("/");
         return;
       }
+
+      const role = getUserRole(user);
+      if (!isApplicantRole(role)) {
+        router.replace(getRoleHome(role));
+        return;
+      }
+
       setUser(user);
 
       const { data, error } = await supabase
@@ -57,26 +68,26 @@ export default function MyApplicationsPage() {
         alignItems: "center",
         marginBottom: "40px",
         padding: "20px 40px",
-        background: "rgba(255,255,255,0.03)",
+        background: "var(--topbar-bg)",
         borderRadius: "20px",
         backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255,255,255,0.05)"
+        border: "1px solid var(--line-soft)"
       }}>
-        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "white", cursor: "pointer" }} onClick={() => router.push("/jobs")}>
-          PENTECOST <span style={{ color: "var(--accent-neon)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>RECRUITER</span>
+        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "var(--text-primary)", cursor: "pointer" }} onClick={() => router.push("/jobs")}>
+          PENTECOST <span style={{ color: "var(--accent-gold)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>UNIVERSITY</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <button onClick={() => router.push("/jobs")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Available Jobs</button>
-          <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "white", fontWeight: "600" }}>My Applications</button>
+          <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "var(--text-primary)", fontWeight: "600" }}>My Applications</button>
           <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.1)" }}></div>
-          <span style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>{user?.email}</span>
+          <UserBadge user={user} label="Applicant account" onUserUpdated={setUser} />
           <button onClick={handleLogout} style={{ background: "rgba(255,0,0,0.1)", color: "#ff8a80", border: "1px solid rgba(255,0,0,0.2)", padding: "8px 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600" }}>Logout</button>
         </div>
       </div>
 
       <div style={{ maxWidth: "1000px", width: "100%" }}>
         <h1 style={{ fontSize: "2.5rem", marginBottom: "8px" }}>My Applications</h1>
-        <p style={{ color: "var(--text-secondary)", marginBottom: "40px" }}>Track your application progress and interview schedules.</p>
+        <p style={{ color: "var(--text-secondary)", marginBottom: "40px" }}>Track your CV review, interview details, and final decision updates.</p>
 
         {loading ? (
           <p>Loading history...</p>
@@ -87,17 +98,28 @@ export default function MyApplicationsPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            {apps.map((app) => (
-              <div key={app.id} className="glass-card" style={{ padding: "24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div>
-                  <h3 style={{ fontSize: "1.1rem", color: "white", marginBottom: "4px" }}>Job #{app.job_id}</h3>
-                  <p style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.4)" }}>Submitted: {new Date(app.submitted_at).toLocaleDateString()}</p>
-                </div>
-                
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: "0.75rem", color: "var(--accent-neon)", fontWeight: "700", marginBottom: "4px" }}>AI SCORE</p>
-                  <p style={{ fontSize: "1.2rem", color: "white", fontWeight: "800" }}>{Math.round(app.similarity * 100)}%</p>
-                </div>
+            {apps.map((app) => {
+              const jobTitle = getJobById(app.job_id)?.title || "Unknown role";
+
+              return (
+                <div key={app.id} className="glass-card" style={{ padding: "24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "24px", alignItems: "center" }}>
+                  <div>
+                    <h3 style={{ fontSize: "1.1rem", color: "var(--text-primary)", marginBottom: "4px" }}>{jobTitle}</h3>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Submitted: {new Date(app.submitted_at).toLocaleDateString()}</p>
+                  </div>
+
+                {(() => {
+                  const decision = getMatchDecision(app.similarity);
+                  return (
+                    <div style={{ textAlign: "left" }}>
+                      <p style={{ fontSize: "0.75rem", color: "var(--accent-neon)", fontWeight: "700", marginBottom: "8px" }}>INITIAL CV REVIEW</p>
+                      <span style={{ ...getMatchStyle(decision.tone), display: "inline-block", padding: "8px 12px", borderRadius: "999px", fontSize: "0.78rem", fontWeight: "800" }}>
+                        {decision.label}
+                      </span>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.78rem", lineHeight: "1.5", marginTop: "8px" }}>{decision.detail}</p>
+                    </div>
+                  );
+                })()}
 
                 <div style={{ textAlign: "right" }}>
                   <span style={{ 
@@ -105,8 +127,8 @@ export default function MyApplicationsPage() {
                     borderRadius: "999px", 
                     fontSize: "0.75rem", 
                     fontWeight: "700",
-                    background: app.status.includes("Passed") ? "rgba(46, 139, 87, 0.2)" : "rgba(255, 255, 255, 0.05)",
-                    color: app.status.includes("Passed") ? "var(--accent-neon)" : "white",
+                    background: app.status.includes("Scheduled") || app.status.includes("screening") || app.status.includes("alignment") ? "var(--success-bg)" : "rgba(255, 255, 255, 0.05)",
+                    color: app.status.includes("Scheduled") || app.status.includes("screening") || app.status.includes("alignment") ? "var(--accent-neon)" : "var(--text-primary)",
                     border: "1px solid rgba(255,255,255,0.1)"
                   }}>
                     {app.status.toUpperCase()}
@@ -114,14 +136,19 @@ export default function MyApplicationsPage() {
                   
                   {app.interview_scheduled_at && (
                     <div style={{ marginTop: "12px", textAlign: "right" }}>
-                      <p style={{ fontSize: "0.8rem", color: "white", fontWeight: "600" }}>Interview Scheduled</p>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: "600" }}>Interview Scheduled</p>
                       <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{new Date(app.interview_scheduled_at).toLocaleString()}</p>
-                      <a href={app.interview_meet_link!} target="_blank" style={{ fontSize: "0.75rem", color: "var(--accent-neon)", textDecoration: "underline" }}>Join Meeting</a>
+                      {app.interview_meet_link ? (
+                        <a href={app.interview_meet_link} target="_blank" rel="noreferrer" style={{ fontSize: "0.75rem", color: "var(--accent-neon)", textDecoration: "underline" }}>Join Meeting</a>
+                      ) : (
+                        <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Meeting link pending</p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

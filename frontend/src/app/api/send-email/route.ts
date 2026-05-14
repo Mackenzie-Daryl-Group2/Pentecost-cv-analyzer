@@ -1,30 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   try {
     const { to, subject, html } = await req.json();
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpSecure = process.env.SMTP_SECURE === "true";
+    const smtpFrom = process.env.SMTP_FROM || smtpUser;
 
-    // Nodemailer configuration using Gmail SMTP
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        // We will tell the user to put their Gmail credentials in .env.local
-        // For fallback we can grab it from existing env variables if they match
-        user: process.env.SMTP_USER || process.env.NEXT_PUBLIC_SMTP_USER,
-        pass: process.env.SMTP_PASSWORD || process.env.NEXT_PUBLIC_SMTP_PASSWORD,
-      },
-    });
-
-    // Check if credentials exist
-    if (!transporter.options.auth?.user || !transporter.options.auth?.pass) {
-      console.warn("SMTP credentials not configured in .env.local. Simulating email send.");
-      console.log(`[SIMULATED EMAIL] To: ${to}\nSubject: ${subject}\nHTML: ${html}`);
-      return NextResponse.json({ success: true, simulated: true });
+    if (!to || !subject || !html) {
+      return NextResponse.json({ error: "Missing email recipient, subject, or body" }, { status: 400 });
     }
 
+    if (!smtpUser || !smtpPassword) {
+      return NextResponse.json(
+        { error: "SMTP credentials are not configured. Add SMTP_USER and SMTP_PASSWORD in Vercel environment variables." },
+        { status: 503 }
+      );
+    }
+
+    const transporter = nodemailer.createTransport(
+      smtpHost
+        ? {
+            host: smtpHost,
+            port: Number.isFinite(smtpPort) ? smtpPort : 587,
+            secure: smtpSecure,
+            auth: { user: smtpUser, pass: smtpPassword },
+          }
+        : {
+            service: 'gmail',
+            auth: { user: smtpUser, pass: smtpPassword },
+          }
+    );
+
     await transporter.sendMail({
-      from: `"Pentecost Recruitment" <${transporter.options.auth.user}>`,
+      from: `"Pentecost Recruitment" <${smtpFrom}>`,
       to,
       subject,
       html,
@@ -33,6 +48,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error sending email:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Email could not be sent" }, { status: 500 });
   }
 }
