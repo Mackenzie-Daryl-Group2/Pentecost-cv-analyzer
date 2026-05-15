@@ -606,6 +606,142 @@ td {
   border-color: var(--line-soft);
 }
 
+.best-three-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.best-three-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.best-three-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.best-three-header h3 {
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.best-three-header > span {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: 999px;
+  color: var(--accent-neon);
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 6px 9px;
+}
+
+.best-three-list {
+  display: grid;
+  gap: 8px;
+}
+
+.best-three-row {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 10px;
+}
+
+.best-rank {
+  align-items: center;
+  background: var(--accent-neon);
+  border-radius: 999px;
+  color: var(--button-text);
+  display: inline-flex;
+  font-weight: 900;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.job-modal-backdrop {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.74);
+  backdrop-filter: blur(8px);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 10000;
+}
+
+.job-modal {
+  background: var(--bg-gradient);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+  color: var(--text-primary);
+  max-height: min(760px, calc(100vh - 36px));
+  max-width: 780px;
+  overflow-y: auto;
+  width: min(780px, 100%);
+}
+
+.job-modal-hero {
+  background: linear-gradient(135deg, rgba(20, 63, 143, 0.74), rgba(248, 181, 27, 0.18));
+  border-bottom: 1px solid var(--line-soft);
+  min-height: 220px;
+  padding: 28px;
+  position: relative;
+}
+
+.job-modal-hero .modal-icon-button {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+}
+
+.job-modal-hero h2 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  margin: 40px 0 12px;
+  max-width: 620px;
+}
+
+.job-modal-hero p:last-child {
+  color: var(--accent-neon);
+  font-weight: 900;
+}
+
+.job-modal-body {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+}
+
+.job-modal-body h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.job-modal-body p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.job-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .section-heading {
   align-items: center;
   display: flex;

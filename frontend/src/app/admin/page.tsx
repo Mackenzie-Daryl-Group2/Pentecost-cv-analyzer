@@ -10,7 +10,6 @@ import {
   cvAiSummary,
   interviewRecommendation,
   onboardingEmailForStep,
-  onboardingProgress,
   onboardingSteps,
   parseInterviewScore,
 } from "@/utils/recruitment-insights";
@@ -36,7 +35,7 @@ interface Application {
   onboarding_status?: string | null;
 }
 
-type AdminPanel = "overview" | "applications" | "vacancies" | "roles" | "reports";
+type AdminPanel = "overview" | "applications" | "recommendations" | "vacancies" | "roles" | "reports";
 type JobForm = Omit<Job, "id">;
 
 const emptyJobForm: JobForm = {
@@ -181,6 +180,17 @@ export default function AdminDashboard() {
         .some((value) => value.toLowerCase().includes(term))
     );
   }, [apps, jobs, search]);
+  const bestApplicationsByRole = useMemo(() => {
+    return jobs
+      .map((job) => ({
+        job,
+        applicants: apps
+          .filter((app) => Number(app.job_id) === Number(job.id))
+          .sort((a, b) => Number(b.similarity || 0) - Number(a.similarity || 0))
+          .slice(0, 3),
+      }))
+      .filter((group) => group.applicants.length);
+  }, [apps, jobs]);
 
   async function updateApplication(app: Application, updates: Partial<Application>, successMessage: string) {
     setBusyAction(`app-${app.id}`);
@@ -385,6 +395,7 @@ export default function AdminDashboard() {
   const panels: Array<{ id: AdminPanel; label: string; count: number }> = [
     { id: "overview", label: "Overview", count: apps.length },
     { id: "applications", label: "Applications", count: filteredApps.length },
+    { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "roles", label: "Roles", count: roleMatrix.length },
     { id: "reports", label: "Reports", count: apps.length },
@@ -491,7 +502,6 @@ export default function AdminDashboard() {
                 const decision = getMatchDecision(Number(app.similarity || 0));
                 const interviewScore = parseInterviewScore(app.interview_notes);
                 const recommendation = interviewRecommendation(interviewScore);
-                const progress = onboardingProgress(app.onboarding_status);
 
                 return (
                   <article key={app.id} className="admin-application-card">
@@ -558,20 +568,17 @@ export default function AdminDashboard() {
                           <strong>Onboarding</strong>
                           <span>{app.onboarding_status || "Not started"}</span>
                         </div>
-                        <div className="onboarding-timeline">
-                          {onboardingSteps.map((step, index) => (
-                            <button
-                              key={step}
-                              type="button"
-                              data-complete={index <= progress}
-                              onClick={() => handleOnboardingStep(app, step)}
-                              disabled={busyAction === `app-${app.id}`}
-                            >
-                              <span />
-                              {step}
-                            </button>
+                        <select
+                          className="input-field"
+                          value={app.onboarding_status || ""}
+                          onChange={(event) => handleOnboardingStep(app, event.target.value)}
+                          disabled={busyAction === `app-${app.id}`}
+                        >
+                          <option value="">Not started</option>
+                          {onboardingSteps.map((step) => (
+                            <option key={step} value={step}>{step}</option>
                           ))}
-                        </div>
+                        </select>
                       </div>
                     </div>
                   </article>
@@ -579,6 +586,51 @@ export default function AdminDashboard() {
               })}
             </div>
             {!filteredApps.length && <p className="status-note">No applications match that search.</p>}
+          </section>
+        )}
+
+        {activePanel === "recommendations" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <h2>Best Three Applicants by Position</h2>
+                <p className="status-note">Top candidates are ranked by CV match score for each vacancy.</p>
+              </div>
+            </div>
+            {bestApplicationsByRole.length ? (
+              <div className="best-three-grid">
+                {bestApplicationsByRole.map(({ job, applicants }) => (
+                  <article key={job.id} className="best-three-card">
+                    <div className="best-three-header">
+                      <div>
+                        <p className="eyebrow">Position</p>
+                        <h3>{job.title}</h3>
+                      </div>
+                      <span>{applicants.length}/3</span>
+                    </div>
+                    <div className="best-three-list">
+                      {applicants.map((app, index) => {
+                        const decision = getMatchDecision(Number(app.similarity || 0));
+                        return (
+                          <div key={app.id} className="best-three-row">
+                            <div className="best-rank">{index + 1}</div>
+                            <div>
+                              <strong>{candidateName(app)}</strong>
+                              <p className="status-note">{app.email || app.phone || "No contact"} · {app.status}</p>
+                            </div>
+                            <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
+                              {Math.round(Number(app.similarity || 0) * 100)}%
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="status-note">No applications have been submitted yet.</p>
+            )}
           </section>
         )}
 

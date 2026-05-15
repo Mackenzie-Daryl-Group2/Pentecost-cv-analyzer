@@ -12,6 +12,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -87,12 +88,41 @@ export default function JobsPage() {
                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{job.requirements}</p>
                   </div>
                 </div>
-                <button className="premium-button" style={{ width: "100%" }} onClick={() => handleApply(job.id)}>Apply Now</button>
+                <button className="premium-button" style={{ width: "100%" }} onClick={() => setSelectedJob(job)}>View More</button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {selectedJob && (
+        <div className="job-modal-backdrop" onClick={() => setSelectedJob(null)}>
+          <section className="job-modal" onClick={(event) => event.stopPropagation()} aria-label={`${selectedJob.title} details`}>
+            <div className="job-modal-hero">
+              <button className="modal-icon-button" type="button" onClick={() => setSelectedJob(null)} aria-label="Close job details">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
+              <p className="eyebrow">Open Role</p>
+              <h2>{selectedJob.title}</h2>
+              <p>{selectedJob.salary}</p>
+            </div>
+            <div className="job-modal-body">
+              <div>
+                <h3>Description</h3>
+                <p>{selectedJob.description}</p>
+              </div>
+              <div>
+                <h3>Requirements</h3>
+                <p>{selectedJob.requirements}</p>
+              </div>
+              <div className="job-modal-actions">
+                <button className="premium-button" onClick={() => handleApply(selectedJob.id)}>Apply for this role</button>
+                <button className="secondary-button" onClick={() => setSelectedJob(null)}>Back to roles</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
