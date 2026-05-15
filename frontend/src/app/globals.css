@@ -671,6 +671,28 @@ td {
   width: 28px;
 }
 
+.job-card-details {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  margin: 18px 0 22px;
+  padding: 16px;
+}
+
+.job-card-details p:not(.eyebrow) {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.job-card-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+}
+
 .job-modal-backdrop {
   align-items: center;
   background:
@@ -1496,6 +1518,10 @@ td {
   }
 
   .chatbot-form {
+    grid-template-columns: 1fr;
+  }
+
+  .job-card-actions {
     grid-template-columns: 1fr;
   }
 
