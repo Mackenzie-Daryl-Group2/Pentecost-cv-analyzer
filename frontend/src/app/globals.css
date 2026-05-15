@@ -712,7 +712,7 @@ td {
   display: flex;
   inset: 0;
   justify-content: center;
-  padding: 22px;
+  padding: 24px;
   position: fixed;
   z-index: 10000;
 }
@@ -723,11 +723,11 @@ td {
   border-radius: 22px;
   box-shadow: 0 34px 100px rgba(0, 0, 0, 0.56);
   color: var(--text-primary);
-  max-height: min(680px, calc(100vh - 36px));
-  max-width: 720px;
+  max-height: min(720px, calc(100vh - 40px));
+  max-width: 540px;
   overflow-y: auto;
   position: relative;
-  width: min(720px, 100%);
+  width: min(540px, 100%);
 }
 
 .job-modal-hero {
@@ -738,8 +738,8 @@ td {
   border-bottom: 1px solid var(--line-soft);
   border-radius: 22px 22px 0 0;
   display: flex;
-  min-height: 230px;
-  padding: 26px;
+  min-height: 160px;
+  padding: 22px;
   position: relative;
   align-items: flex-end;
 }
@@ -759,9 +759,9 @@ td {
 }
 
 .job-modal-hero h2 {
-  font-size: clamp(1.7rem, 4vw, 2.7rem);
+  font-size: clamp(1.45rem, 4vw, 2.1rem);
   line-height: 1.02;
-  margin: 12px 0 18px;
+  margin: 10px 0 14px;
   max-width: 620px;
 }
 
@@ -778,20 +778,20 @@ td {
   color: #ffffff;
   font-size: 0.78rem;
   font-weight: 900;
-  padding: 8px 12px;
+  padding: 7px 10px;
 }
 
 .job-modal-body {
   display: grid;
-  gap: 14px;
-  padding: 20px;
+  gap: 12px;
+  padding: 18px;
 }
 
 .job-detail-section {
   background: var(--surface-1);
   border: 1px solid var(--line-soft);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
 }
 
 .job-modal-body h3 {
@@ -811,8 +811,8 @@ td {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin: 4px -20px -20px;
-  padding: 14px 20px;
+  margin: 2px -18px -18px;
+  padding: 14px 18px;
   position: sticky;
   border-radius: 0 0 22px 22px;
 }
