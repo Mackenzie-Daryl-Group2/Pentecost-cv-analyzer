@@ -6,6 +6,7 @@ import { supabase } from "@/utils/supabase";
 import { getJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 interface Application {
   id: number;
@@ -97,10 +98,13 @@ export default function ProVcDashboard() {
     <main className="app-shell">
       <div className="page-container">
         <header className="app-topbar">
-          <div>
+          <div className="dashboard-brand-title">
+            <UniversityBrand />
+            <div>
             <p className="eyebrow">PRO-VC</p>
             <h1 className="page-title">Recommendation Review</h1>
             <p className="page-subtitle">Review HR recommendations, interview schedules, and final candidate records.</p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <UserBadge user={currentUser} label="PRO-VC account" onUserUpdated={setCurrentUser} />

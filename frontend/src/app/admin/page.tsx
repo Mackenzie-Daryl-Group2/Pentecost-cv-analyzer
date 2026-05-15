@@ -15,6 +15,7 @@ import {
   parseInterviewScore,
 } from "@/utils/recruitment-insights";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 interface Application {
   id: number;
@@ -401,10 +402,13 @@ export default function AdminDashboard() {
     <main className="app-shell">
       <div className="page-container">
         <header className="app-topbar">
-          <div>
+          <div className="dashboard-brand-title">
+            <UniversityBrand />
+            <div>
             <p className="eyebrow">Administration</p>
             <h1 className="page-title">Recruitment Command Center</h1>
             <p className="page-subtitle">Control vacancies, applications, candidate decisions, role visibility, onboarding, and reports.</p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
             <UserBadge user={currentUser} label="Admin account" onUserUpdated={setCurrentUser} />

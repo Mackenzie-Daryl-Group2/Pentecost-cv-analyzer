@@ -20,6 +20,7 @@ import {
   type InterviewScoreForm,
 } from "@/utils/recruitment-insights";
 import UserBadge, { Avatar } from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 interface Application {
   id: number;
@@ -719,10 +720,13 @@ export default function HRDashboard() {
     <main className="app-shell">
       <div className="page-container">
         <header className="app-topbar">
-          <div>
+          <div className="dashboard-brand-title">
+            <UniversityBrand />
+            <div>
             <p className="eyebrow">Human Resources</p>
             <h1 className="page-title">HR Operations</h1>
             <p className="page-subtitle">Manage vacancies, CV decisions, interviews, hiring approvals, onboarding, and final reports.</p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <UserBadge user={currentUser} label="HR account" onUserUpdated={setCurrentUser} />

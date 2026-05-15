@@ -258,6 +258,17 @@ td {
   width: 150px;
 }
 
+.dashboard-brand-title {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  min-width: 0;
+}
+
+.dashboard-brand-title .university-brand {
+  flex: 0 0 auto;
+}
+
 .eyebrow {
   color: var(--accent-neon);
   font-size: 0.74rem;
@@ -1134,6 +1145,11 @@ td {
   }
 
   .app-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-brand-title {
     align-items: flex-start;
     flex-direction: column;
   }

@@ -6,6 +6,7 @@ import { supabase } from "@/utils/supabase";
 import { getJobById } from "@/utils/jobs";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 interface Application {
   id: number;
@@ -57,10 +58,13 @@ export default function RegistrarDashboard() {
     <main className="app-shell">
       <div className="page-container">
         <header className="app-topbar">
-          <div>
+          <div className="dashboard-brand-title">
+            <UniversityBrand />
+            <div>
             <p className="eyebrow">Registrar</p>
             <h1 className="page-title">Application Records</h1>
             <p className="page-subtitle">Track submitted applications, interview schedules, and final recruitment status.</p>
+            </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <UserBadge user={currentUser} label="Registrar account" onUserUpdated={setCurrentUser} />
