@@ -720,7 +720,7 @@ td {
 .job-modal {
   background: var(--surface-2);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
+  border-radius: 22px;
   box-shadow: 0 34px 100px rgba(0, 0, 0, 0.56);
   color: var(--text-primary);
   max-height: min(760px, calc(100vh - 36px));
@@ -736,6 +736,7 @@ td {
     radial-gradient(circle at 16% 22%, rgba(248, 181, 27, 0.35), transparent 28%),
     linear-gradient(135deg, rgba(20, 63, 143, 0.92), rgba(7, 20, 48, 0.96));
   border-bottom: 1px solid var(--line-soft);
+  border-radius: 22px 22px 0 0;
   display: flex;
   min-height: 300px;
   padding: 32px;
@@ -748,6 +749,7 @@ td {
   border-color: rgba(255, 255, 255, 0.22);
   color: #ffffff;
   position: absolute;
+  border-radius: 999px !important;
   right: 18px;
   top: 18px;
 }
@@ -788,7 +790,7 @@ td {
 .job-detail-section {
   background: var(--surface-1);
   border: 1px solid var(--line-soft);
-  border-radius: 8px;
+  border-radius: 16px;
   padding: 16px;
 }
 
@@ -812,6 +814,7 @@ td {
   margin: 4px -24px -24px;
   padding: 16px 24px;
   position: sticky;
+  border-radius: 0 0 22px 22px;
 }
 
 .section-heading {
