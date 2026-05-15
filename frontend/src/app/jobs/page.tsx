@@ -17,18 +17,15 @@ export default function JobsPage() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/");
-        return;
-      }
+      if (user) {
+        const role = getUserRole(user);
+        if (!isApplicantRole(role)) {
+          router.replace(getRoleHome(role));
+          return;
+        }
 
-      const role = getUserRole(user);
-      if (!isApplicantRole(role)) {
-        router.replace(getRoleHome(role));
-        return;
+        setUser(user);
       }
-
-      setUser(user);
 
       setJobs(await loadJobs(supabase));
       setLoading(false);
@@ -37,6 +34,11 @@ export default function JobsPage() {
   }, [router]);
 
   const handleApply = (jobId: number) => {
+    if (!user) {
+      router.push(`/login?message=${encodeURIComponent("Please create an account or sign in to apply for a job.")}`);
+      return;
+    }
+
     router.push(`/apply?jobId=${jobId}`);
   };
 
@@ -63,9 +65,18 @@ export default function JobsPage() {
         <UniversityBrand />
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <button onClick={() => router.push("/jobs")} style={{ background: "none", border: "none", color: "var(--text-primary)", fontWeight: "600" }}>Jobs</button>
-          <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Applications</button>
-          <UserBadge user={user} label="Applicant account" onUserUpdated={setUser} />
-          <button onClick={handleLogout} style={{ background: "rgba(255,0,0,0.1)", color: "#ff8a80", border: "1px solid rgba(255,0,0,0.2)", padding: "8px 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600" }}>Logout</button>
+          {user ? (
+            <>
+              <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Applications</button>
+              <UserBadge user={user} label="Applicant account" onUserUpdated={setUser} />
+              <button onClick={handleLogout} style={{ background: "rgba(255,0,0,0.1)", color: "#ff8a80", border: "1px solid rgba(255,0,0,0.2)", padding: "8px 16px", borderRadius: "8px", fontSize: "0.85rem", fontWeight: "600" }}>Logout</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => router.push("/login")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Sign In</button>
+              <button className="premium-button" onClick={() => router.push("/signup")} style={{ padding: "10px 18px" }}>Create Account</button>
+            </>
+          )}
         </div>
       </div>
 
