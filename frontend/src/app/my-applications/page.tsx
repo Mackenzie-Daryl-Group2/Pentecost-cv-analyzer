@@ -7,6 +7,7 @@ import { getMatchDecision, getMatchStyle } from "@/utils/match";
 import { getJobById } from "@/utils/jobs";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 interface Application {
   id: number;
@@ -73,9 +74,9 @@ export default function MyApplicationsPage() {
         backdropFilter: "blur(10px)",
         border: "1px solid var(--line-soft)"
       }}>
-        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "var(--text-primary)", cursor: "pointer" }} onClick={() => router.push("/jobs")}>
-          PENTECOST <span style={{ color: "var(--accent-gold)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>UNIVERSITY</span>
-        </div>
+        <button type="button" className="brand-button" onClick={() => router.push("/jobs")}>
+          <UniversityBrand />
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <button onClick={() => router.push("/jobs")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Available Jobs</button>
           <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "var(--text-primary)", fontWeight: "600" }}>My Applications</button>

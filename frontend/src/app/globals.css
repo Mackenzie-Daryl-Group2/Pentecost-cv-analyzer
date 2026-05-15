@@ -1,68 +1,72 @@
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg-dark: #020504;
-  --bg-gradient: radial-gradient(circle at top left, #0a1a12 0%, #050d09 42%, #020504 100%);
+  --bg-dark: #050914;
+  --bg-gradient: radial-gradient(circle at top left, #102a5f 0%, #07142f 44%, #050914 100%);
   --surface-1: rgba(255, 255, 255, 0.055);
   --surface-2: rgba(255, 255, 255, 0.085);
   --line-soft: rgba(255, 255, 255, 0.12);
-  --accent-emerald: #2e8b57;
-  --accent-neon: #81c784;
-  --accent-gold: #d8b45f;
-  --accent-blue: #78a7d8;
+  --accent-emerald: #16418f;
+  --accent-neon: #f8b51b;
+  --accent-gold: #f8b51b;
+  --accent-blue: #2f61b7;
+  --brand-navy: #143f8f;
+  --brand-gold: #f8b51b;
   --text-primary: #ffffff;
-  --text-secondary: #b0c4b8;
+  --text-secondary: #c3cce0;
   --glass-bg: rgba(255, 255, 255, 0.055);
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-blur: blur(16px);
   --field-bg: rgba(255, 255, 255, 0.06);
   --field-border: rgba(255, 255, 255, 0.14);
-  --option-bg: #101412;
+  --option-bg: #091329;
   --topbar-bg: rgba(255, 255, 255, 0.045);
-  --primary-button-bg: linear-gradient(135deg, var(--accent-emerald), #1b5e20);
-  --primary-button-shadow: rgba(46, 139, 87, 0.24);
-  --focus-ring: rgba(129, 199, 132, 0.16);
-  --success-bg: rgba(46, 139, 87, 0.16);
-  --success-border: rgba(129, 199, 132, 0.28);
-  --success-soft-bg: rgba(46, 139, 87, 0.1);
-  --hero-overlay: linear-gradient(135deg, rgba(7, 16, 13, 0.96), rgba(16, 20, 18, 0.94));
+  --primary-button-bg: linear-gradient(135deg, var(--brand-navy), #0a2a67);
+  --primary-button-shadow: rgba(20, 63, 143, 0.28);
+  --focus-ring: rgba(248, 181, 27, 0.18);
+  --success-bg: rgba(248, 181, 27, 0.14);
+  --success-border: rgba(248, 181, 27, 0.3);
+  --success-soft-bg: rgba(20, 63, 143, 0.13);
+  --hero-overlay: linear-gradient(135deg, rgba(5, 12, 30, 0.95), rgba(8, 20, 48, 0.92));
   --landing-background: var(--hero-overlay), url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=80') center/cover;
-  --landing-nav-bg: rgba(7, 16, 13, 0.72);
-  --avatar-gradient: linear-gradient(135deg, rgba(129, 199, 132, 0.92), rgba(46, 139, 87, 0.9));
-  --avatar-text: #06120b;
+  --landing-nav-bg: rgba(5, 12, 30, 0.74);
+  --avatar-gradient: linear-gradient(135deg, rgba(248, 181, 27, 0.95), rgba(20, 63, 143, 0.9));
+  --avatar-text: #061024;
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg-dark: #f4f7f1;
-  --bg-gradient: linear-gradient(135deg, #f4f7f1 0%, #edf4eb 48%, #ffffff 100%);
+  --bg-dark: #f5f7fb;
+  --bg-gradient: linear-gradient(135deg, #f5f7fb 0%, #eef3fb 48%, #ffffff 100%);
   --surface-1: rgba(255, 255, 255, 0.86);
   --surface-2: rgba(255, 255, 255, 0.96);
-  --line-soft: rgba(30, 85, 54, 0.14);
-  --accent-emerald: #2e8b57;
-  --accent-neon: #1f7a49;
-  --accent-gold: #8b6f28;
-  --accent-blue: #4f7d9e;
-  --text-primary: #112018;
-  --text-secondary: #526158;
+  --line-soft: rgba(20, 63, 143, 0.14);
+  --accent-emerald: #143f8f;
+  --accent-neon: #143f8f;
+  --accent-gold: #a37100;
+  --accent-blue: #2f61b7;
+  --brand-navy: #143f8f;
+  --brand-gold: #f8b51b;
+  --text-primary: #0d1730;
+  --text-secondary: #5c6578;
   --glass-bg: rgba(255, 255, 255, 0.82);
-  --glass-border: rgba(30, 85, 54, 0.15);
+  --glass-border: rgba(20, 63, 143, 0.15);
   --glass-blur: blur(14px);
   --field-bg: rgba(255, 255, 255, 0.92);
-  --field-border: rgba(30, 85, 54, 0.18);
+  --field-border: rgba(20, 63, 143, 0.18);
   --option-bg: #ffffff;
   --topbar-bg: rgba(255, 255, 255, 0.82);
-  --primary-button-bg: linear-gradient(135deg, #2e8b57, #1f6b43);
-  --primary-button-shadow: rgba(46, 139, 87, 0.22);
-  --focus-ring: rgba(46, 139, 87, 0.16);
-  --success-bg: rgba(46, 139, 87, 0.11);
-  --success-border: rgba(46, 139, 87, 0.24);
-  --success-soft-bg: rgba(46, 139, 87, 0.08);
-  --hero-overlay: linear-gradient(135deg, rgba(244, 247, 241, 0.92), rgba(255, 255, 255, 0.88));
+  --primary-button-bg: linear-gradient(135deg, #143f8f, #0d2f73);
+  --primary-button-shadow: rgba(20, 63, 143, 0.22);
+  --focus-ring: rgba(248, 181, 27, 0.24);
+  --success-bg: rgba(248, 181, 27, 0.16);
+  --success-border: rgba(248, 181, 27, 0.34);
+  --success-soft-bg: rgba(20, 63, 143, 0.08);
+  --hero-overlay: linear-gradient(135deg, rgba(245, 247, 251, 0.92), rgba(255, 255, 255, 0.88));
   --landing-background: var(--hero-overlay), url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=80') center/cover;
   --landing-nav-bg: rgba(255, 255, 255, 0.82);
-  --avatar-gradient: linear-gradient(135deg, rgba(46, 139, 87, 0.9), rgba(216, 180, 95, 0.84));
+  --avatar-gradient: linear-gradient(135deg, rgba(20, 63, 143, 0.92), rgba(248, 181, 27, 0.88));
   --avatar-text: #ffffff;
 }
 
@@ -201,6 +205,57 @@ td {
   color: var(--accent-gold);
   font-size: 0.82em;
   margin-left: 8px;
+}
+
+.brand-button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.brand-button:hover {
+  transform: translateY(-1px);
+}
+
+.university-brand {
+  align-items: center;
+  color: var(--text-primary);
+  display: inline-flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.university-brand img {
+  background: #ffffff;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: block;
+  height: 48px;
+  object-fit: contain;
+  padding: 5px 8px;
+  width: 172px;
+}
+
+.university-brand strong {
+  display: block;
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.university-brand span {
+  color: var(--text-secondary);
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.university-brand[data-compact="true"] img {
+  height: 42px;
+  width: 150px;
 }
 
 .eyebrow {

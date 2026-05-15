@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
+import UniversityBrand from "@/components/UniversityBrand";
 
 export default function SignupPage() {
   const [username, setUsername] = useState("");
@@ -152,6 +153,9 @@ export default function SignupPage() {
       }}>
         <div style={{ width: "100%", maxWidth: "450px" }}>
           <div style={{ marginBottom: "40px", textAlign: "center" }}>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: "18px" }}>
+              <UniversityBrand compact />
+            </div>
             <h2 style={{ fontSize: "2rem", fontWeight: "700", marginBottom: "8px" }}>Create Account</h2>
             <p style={{ color: "var(--text-secondary)" }}>Join the Pentecost Recruitment Platform</p>
           </div>

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -59,9 +60,7 @@ export default function JobsPage() {
         backdropFilter: "blur(10px)",
         border: "1px solid var(--line-soft)"
       }}>
-        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "var(--text-primary)" }}>
-          PENTECOST <span style={{ color: "var(--accent-gold)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>UNIVERSITY</span>
-        </div>
+        <UniversityBrand />
         <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
           <button onClick={() => router.push("/jobs")} style={{ background: "none", border: "none", color: "var(--text-primary)", fontWeight: "600" }}>Jobs</button>
           <button onClick={() => router.push("/my-applications")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontWeight: "600" }}>Applications</button>

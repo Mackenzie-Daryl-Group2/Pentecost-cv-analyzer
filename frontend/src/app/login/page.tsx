@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import { getRoleHome, getUserRole } from "@/utils/roles";
+import UniversityBrand from "@/components/UniversityBrand";
 
 type AuthMode = "login" | "forgot" | "reset";
 
@@ -191,7 +192,9 @@ export default function LoginPage() {
       <div style={{ width: "100%", maxWidth: "980px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "28px", alignItems: "stretch" }}>
         <section className="glass-card" style={{ padding: "42px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "520px" }}>
           <div>
-            <p style={{ color: "var(--accent-neon)", fontSize: "0.75rem", fontWeight: "800", marginBottom: "16px" }}>PENTECOST UNIVERSITY</p>
+            <div style={{ marginBottom: "18px" }}>
+              <UniversityBrand />
+            </div>
             <h1 style={{ fontSize: "2.8rem", lineHeight: "1.05", color: "var(--text-primary)", marginBottom: "18px" }}>
               Continue your recruitment workflow.
             </h1>

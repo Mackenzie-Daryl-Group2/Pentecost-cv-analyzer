@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase";
 import { getRoleHome, getUserRole } from "@/utils/roles";
+import UniversityBrand from "@/components/UniversityBrand";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -24,11 +25,9 @@ export default function LandingPage() {
       color: "var(--text-primary)",
       background: "var(--landing-background)",
       fontFamily: "'Inter', sans-serif",
-    }}>
+      }}>
       <nav className="app-topbar" style={{ maxWidth: "1180px", margin: "0 auto", borderTop: "none", borderLeft: "none", borderRight: "none", background: "var(--landing-nav-bg)" }}>
-        <div className="brand-mark" style={{ fontSize: "1.1rem" }}>
-          PENTECOST <span>UNIVERSITY</span>
-        </div>
+        <UniversityBrand />
         <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
           <button className="quiet-link-button" onClick={() => router.push("/login")}>Sign In</button>
           <button className="premium-button" onClick={() => router.push("/signup")} style={{ padding: "10px 18px" }}>Create Account</button>

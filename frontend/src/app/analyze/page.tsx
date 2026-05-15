@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import { getMatchDecision, getMatchStyle } from "@/utils/match";
 import UserBadge from "@/components/UserBadge";
+import UniversityBrand from "@/components/UniversityBrand";
 
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
@@ -70,9 +71,7 @@ export default function AnalyzePage() {
         backdropFilter: "blur(10px)",
         border: "1px solid var(--line-soft)"
       }}>
-        <div style={{ fontWeight: "800", fontSize: "1.2rem", color: "var(--text-primary)" }}>
-          PENTECOST <span style={{ color: "var(--accent-gold)", fontSize: "0.8rem", verticalAlign: "middle", marginLeft: "8px" }}>UNIVERSITY</span>
-        </div>
+        <UniversityBrand />
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <UserBadge user={user} label="Account" onUserUpdated={setUser} />
           <button 
