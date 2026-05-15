@@ -102,16 +102,21 @@ export default function JobsPage() {
               <button className="modal-icon-button" type="button" onClick={() => setSelectedJob(null)} aria-label="Close job details">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
               </button>
-              <p className="eyebrow">Open Role</p>
-              <h2>{selectedJob.title}</h2>
-              <p>{selectedJob.salary}</p>
+              <div className="job-modal-hero-content">
+                <p className="eyebrow">Open Role</p>
+                <h2>{selectedJob.title}</h2>
+                <div className="job-modal-meta">
+                  <span>Recruitment Portal</span>
+                  <span>{selectedJob.salary}</span>
+                </div>
+              </div>
             </div>
             <div className="job-modal-body">
-              <div>
+              <div className="job-detail-section">
                 <h3>Description</h3>
                 <p>{selectedJob.description}</p>
               </div>
-              <div>
+              <div className="job-detail-section">
                 <h3>Requirements</h3>
                 <p>{selectedJob.requirements}</p>
               </div>
