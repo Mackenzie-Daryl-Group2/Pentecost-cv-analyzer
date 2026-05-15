@@ -230,12 +230,12 @@ td {
 .university-brand img {
   background: #ffffff;
   border: 1px solid var(--line-soft);
-  border-radius: 8px;
+  border-radius: 999px;
   display: block;
-  height: 48px;
+  height: 62px;
   object-fit: contain;
-  padding: 5px 8px;
-  width: 172px;
+  padding: 8px;
+  width: 62px;
 }
 
 .university-brand strong {
@@ -254,8 +254,8 @@ td {
 }
 
 .university-brand[data-compact="true"] img {
-  height: 42px;
-  width: 150px;
+  height: 52px;
+  width: 52px;
 }
 
 .dashboard-brand-title {
