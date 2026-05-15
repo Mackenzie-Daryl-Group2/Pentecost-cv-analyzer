@@ -1534,6 +1534,60 @@ td {
     grid-template-columns: 1fr;
   }
 
+  .job-card-actions {
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+  }
+
+  .job-arrow-button {
+    min-height: 44px;
+  }
+
+  .job-modal-backdrop {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .job-modal {
+    border-radius: 18px;
+    max-height: calc(100vh - 28px);
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .job-modal-hero {
+    border-radius: 18px 18px 0 0;
+    min-height: 140px;
+    padding: 18px;
+  }
+
+  .job-modal-hero h2 {
+    font-size: clamp(1.35rem, 8vw, 1.85rem);
+    margin: 8px 0 12px;
+  }
+
+  .job-modal-meta {
+    gap: 7px;
+  }
+
+  .job-modal-meta span {
+    font-size: 0.68rem;
+    padding: 6px 8px;
+  }
+
+  .job-modal-body {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .job-detail-section {
+    padding: 12px;
+  }
+
+  .job-modal-actions {
+    margin: 2px -14px -14px;
+    padding: 12px 14px;
+  }
+
   .admin-application-card {
     grid-template-columns: 1fr;
   }
@@ -1613,6 +1667,18 @@ td {
   .chatbot-toggle {
     height: 42px;
     padding: 0 12px;
+  }
+
+  .job-modal-hero .modal-icon-button {
+    height: 34px;
+    right: 12px;
+    top: 12px;
+    width: 34px;
+  }
+
+  .job-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }
 
