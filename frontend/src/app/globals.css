@@ -369,6 +369,37 @@ td {
   color: var(--text-primary);
 }
 
+.home-open-roles-button {
+  align-items: center;
+  background: var(--primary-button-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 34px var(--primary-button-shadow);
+  color: white;
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: center;
+  min-height: 52px;
+  padding: 14px 24px;
+}
+
+.home-open-roles-button:hover {
+  box-shadow: 0 18px 40px var(--primary-button-shadow);
+  filter: brightness(1.05);
+  transform: translateY(-2px);
+}
+
+.home-open-roles-button svg {
+  fill: none;
+  height: 19px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 19px;
+}
+
 .status-note {
   color: var(--text-secondary);
   font-size: 0.85rem;

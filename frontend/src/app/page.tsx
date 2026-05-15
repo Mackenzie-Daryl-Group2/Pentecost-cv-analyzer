@@ -54,8 +54,12 @@ export default function LandingPage() {
           </div>
 
           <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", justifyContent: "center" }}>
-            <button className="premium-button" onClick={() => router.push("/jobs")} style={{ padding: "14px 24px" }}>
-              View Open Roles
+            <button className="home-open-roles-button" onClick={() => router.push("/jobs")}>
+              <span>View Open Roles</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
             </button>
           </div>
         </div>
