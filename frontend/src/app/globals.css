@@ -193,6 +193,7 @@ td {
   justify-content: space-between;
   margin-bottom: 24px;
   padding: 18px 20px;
+  width: 100%;
 }
 
 .brand-mark {
@@ -224,6 +225,7 @@ td {
   color: var(--text-primary);
   display: inline-flex;
   gap: 12px;
+  max-width: 100%;
   min-width: 0;
 }
 
@@ -242,6 +244,7 @@ td {
   display: block;
   font-size: 0.96rem;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .university-brand span {
@@ -267,6 +270,10 @@ td {
 
 .dashboard-brand-title .university-brand {
   flex: 0 0 auto;
+}
+
+.dashboard-brand-title > div:last-child {
+  min-width: 0;
 }
 
 .eyebrow {
@@ -1147,15 +1154,40 @@ td {
   .app-topbar {
     align-items: flex-start;
     flex-direction: column;
+    gap: 14px;
+    padding: 14px;
   }
 
   .dashboard-brand-title {
     align-items: flex-start;
-    flex-direction: column;
+    gap: 12px;
+  }
+
+  .university-brand {
+    gap: 10px;
+  }
+
+  .university-brand img,
+  .university-brand[data-compact="true"] img {
+    height: 50px;
+    padding: 7px;
+    width: 50px;
+  }
+
+  .university-brand strong {
+    font-size: 0.88rem;
+  }
+
+  .university-brand span {
+    font-size: 0.66rem;
   }
 
   .page-title {
     font-size: 1.75rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem;
   }
 
   .account-modal-backdrop {
@@ -1176,6 +1208,7 @@ td {
   .notification-panel {
     right: -54px;
     top: 52px;
+    width: min(340px, calc(100vw - 28px));
   }
 
   .chatbot-shell {
@@ -1185,6 +1218,7 @@ td {
 
   .chatbot-panel {
     max-height: calc(100vh - 90px);
+    width: min(340px, calc(100vw - 28px));
   }
 
   .chatbot-form {
@@ -1201,5 +1235,74 @@ td {
 
   .application-intelligence {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .app-topbar {
+    margin-bottom: 16px;
+  }
+
+  .university-brand img,
+  .university-brand[data-compact="true"] img {
+    height: 44px;
+    width: 44px;
+  }
+
+  .university-brand strong {
+    font-size: 0.82rem;
+  }
+
+  .university-brand span {
+    display: none;
+  }
+
+  .dashboard-brand-title {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .theme-toggle {
+    height: 40px;
+    right: 12px;
+    top: 12px;
+    width: 40px;
+  }
+
+  .notification-shell {
+    right: 58px;
+    top: 12px;
+  }
+
+  .notification-toggle {
+    height: 40px;
+    width: 40px;
+  }
+
+  .notification-panel {
+    right: -46px;
+    width: calc(100vw - 24px);
+  }
+
+  .chatbot-shell {
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .chatbot-panel {
+    width: calc(100vw - 24px);
+  }
+
+  .chatbot-toggle {
+    height: 42px;
+    padding: 0 12px;
   }
 }
