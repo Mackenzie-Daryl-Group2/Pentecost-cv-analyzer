@@ -12,7 +12,6 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -88,54 +87,12 @@ export default function JobsPage() {
                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{job.requirements}</p>
                   </div>
                 </div>
-                <div className="job-card-actions">
-                  <button className="premium-button" onClick={() => handleApply(job.id)}>Apply</button>
-                  <button className="job-arrow-button" onClick={() => setSelectedJob(job)} aria-label={`View more about ${job.title}`} title="View more">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 5v14" />
-                      <path d="m6 13 6 6 6-6" />
-                    </svg>
-                  </button>
-                </div>
+                <button className="premium-button" style={{ width: "100%" }} onClick={() => handleApply(job.id)}>Apply Now</button>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {selectedJob && (
-        <div className="job-modal-backdrop" onClick={() => setSelectedJob(null)}>
-          <section className="job-modal" onClick={(event) => event.stopPropagation()} aria-label={`${selectedJob.title} details`}>
-            <div className="job-modal-hero">
-              <button className="modal-icon-button" type="button" onClick={() => setSelectedJob(null)} aria-label="Close job details">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-              </button>
-              <div className="job-modal-hero-content">
-                <p className="eyebrow">Open Role</p>
-                <h2>{selectedJob.title}</h2>
-                <div className="job-modal-meta">
-                  <span>Recruitment Portal</span>
-                  <span>{selectedJob.salary}</span>
-                </div>
-              </div>
-            </div>
-            <div className="job-modal-body">
-              <div className="job-detail-section">
-                <h3>Description</h3>
-                <p>{selectedJob.description}</p>
-              </div>
-              <div className="job-detail-section">
-                <h3>Requirements</h3>
-                <p>{selectedJob.requirements}</p>
-              </div>
-              <div className="job-modal-actions">
-                <button className="premium-button" onClick={() => handleApply(selectedJob.id)}>Apply for this role</button>
-                <button className="secondary-button" onClick={() => setSelectedJob(null)}>Back to roles</button>
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
     </main>
   );
 }
