@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ApplicationNotifications from "@/components/ApplicationNotifications";
 import PentecostChatbot from "@/components/PentecostChatbot";
 import ThemeToggle from "@/components/ThemeToggle";
 import "./globals.css";
@@ -22,6 +23,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <ApplicationNotifications />
         <PentecostChatbot />
         <ThemeToggle />
       </body>
