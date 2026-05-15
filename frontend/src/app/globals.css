@@ -1146,7 +1146,105 @@ td {
   font-weight: 900;
 }
 
+@media (min-width: 761px) and (max-width: 1100px) {
+  main[style] {
+    padding: 24px !important;
+  }
+
+  .app-shell {
+    padding: 24px;
+  }
+
+  .page-container {
+    max-width: 100%;
+  }
+
+  .app-topbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .admin-application-card,
+  .hr-screening-card {
+    grid-template-columns: 1fr;
+  }
+
+  .application-intelligence {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  div[style*="minmax(320px"] {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  }
+}
+
 @media (max-width: 760px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  main[style] {
+    padding: 16px !important;
+  }
+
+  main > div[style*="max-width"] {
+    width: 100% !important;
+  }
+
+  h1[style] {
+    font-size: clamp(1.7rem, 9vw, 2.35rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  h2[style] {
+    font-size: clamp(1.25rem, 6vw, 1.8rem) !important;
+  }
+
+  .glass-card[style],
+  section.glass-card[style],
+  div.glass-card[style] {
+    padding: 20px !important;
+  }
+
+  div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  div[style*="display: flex"],
+  nav[style*="display: flex"] {
+    flex-wrap: wrap !important;
+  }
+
+  div[style*="justify-content: space-between"],
+  nav[style*="justify-content: space-between"] {
+    gap: 14px !important;
+  }
+
+  div[style*="text-align: right"] {
+    text-align: left !important;
+  }
+
+  table {
+    min-width: 720px;
+  }
+
+  .data-table {
+    min-width: 720px;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    max-width: 100%;
+  }
+
+  .premium-button,
+  .secondary-button,
+  .danger-button {
+    min-height: 40px;
+  }
+
   .app-shell {
     padding: 18px;
   }
@@ -1304,5 +1402,33 @@ td {
   .chatbot-toggle {
     height: 42px;
     padding: 0 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  main[style] {
+    padding: 10px !important;
+  }
+
+  .glass-card[style],
+  section.glass-card[style],
+  div.glass-card[style] {
+    padding: 16px !important;
+  }
+
+  .university-brand strong {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notification-panel,
+  .chatbot-panel {
+    width: calc(100vw - 16px);
+  }
+
+  .chatbot-toggle span {
+    display: none;
   }
 }
