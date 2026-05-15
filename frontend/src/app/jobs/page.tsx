@@ -92,8 +92,8 @@ export default function JobsPage() {
                   <button className="premium-button" onClick={() => handleApply(job.id)}>Apply</button>
                   <button className="job-arrow-button" onClick={() => setSelectedJob(job)} aria-label={`View more about ${job.title}`} title="View more">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M5 12h14" />
-                      <path d="m13 6 6 6-6 6" />
+                      <path d="M12 5v14" />
+                      <path d="m6 13 6 6 6-6" />
                     </svg>
                   </button>
                 </div>
