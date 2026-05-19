@@ -4,6 +4,68 @@ import { pathToFileURL } from 'node:url';
 
 export const runtime = "nodejs";
 
+function installPdfDomPolyfills() {
+  const globalScope = globalThis as any;
+
+  if (!globalScope.DOMMatrix) {
+    globalScope.DOMMatrix = class DOMMatrix {
+      a = 1;
+      b = 0;
+      c = 0;
+      d = 1;
+      e = 0;
+      f = 0;
+
+      constructor(init?: number[] | string) {
+        if (Array.isArray(init)) {
+          [this.a, this.b, this.c, this.d, this.e, this.f] = [
+            Number(init[0] ?? 1),
+            Number(init[1] ?? 0),
+            Number(init[2] ?? 0),
+            Number(init[3] ?? 1),
+            Number(init[4] ?? 0),
+            Number(init[5] ?? 0),
+          ];
+        }
+      }
+
+      multiply() {
+        return this;
+      }
+
+      translate() {
+        return this;
+      }
+
+      scale() {
+        return this;
+      }
+
+      rotate() {
+        return this;
+      }
+    };
+  }
+
+  if (!globalScope.ImageData) {
+    globalScope.ImageData = class ImageData {
+      data: Uint8ClampedArray;
+      width: number;
+      height: number;
+
+      constructor(data: Uint8ClampedArray | number, width: number, height?: number) {
+        this.width = typeof data === "number" ? data : width;
+        this.height = typeof data === "number" ? width : Number(height || 0);
+        this.data = data instanceof Uint8ClampedArray ? data : new Uint8ClampedArray(this.width * this.height * 4);
+      }
+    };
+  }
+
+  if (!globalScope.Path2D) {
+    globalScope.Path2D = class Path2D {};
+  }
+}
+
 // Helper function to extract words and compute term frequency
 function getTermFrequency(text: string) {
   // Remove common stop words for better matching
@@ -58,6 +120,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(arrayBuffer);
 
     // pdf-parse v2 exposes a PDFParse class instead of the old default function.
+    installPdfDomPolyfills();
     const { PDFParse } = await import('pdf-parse');
     const workerPath = join(process.cwd(), "node_modules", "pdf-parse", "dist", "pdf-parse", "esm", "pdf.worker.mjs");
     PDFParse.setWorker(pathToFileURL(workerPath).href);
