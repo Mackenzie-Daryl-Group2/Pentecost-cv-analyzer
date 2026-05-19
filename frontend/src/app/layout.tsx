@@ -7,6 +7,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Pentecost University Recruitment",
   description: "Recruitment workflow, CV review, interview scheduling, and hiring approvals for Pentecost University.",
+  icons: {
+    icon: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
+    shortcut: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
+    apple: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
+  },
 };
 
 export default function RootLayout({
