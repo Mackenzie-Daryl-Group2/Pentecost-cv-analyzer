@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: "Pentecost University Recruitment",
   description: "Recruitment workflow, CV review, interview scheduling, and hiring approvals for Pentecost University.",
   icons: {
-    icon: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
-    shortcut: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
-    apple: "https://pentvars.edu.gh/wp-content/themes/eduma-child/images/pentecost-university-logo-alt.png",
+    icon: "/pentecost-badge.png",
+    shortcut: "/pentecost-badge.png",
+    apple: "/pentecost-badge.png",
   },
 };
 
