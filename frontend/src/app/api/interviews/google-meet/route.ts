@@ -27,10 +27,6 @@ function splitEmails(value: string) {
     .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 }
 
-function uniqueEmails(values: Array<string | undefined | null>) {
-  return Array.from(new Set(values.flatMap((value) => splitEmails(String(value || "")))));
-}
-
 function extractMeetLink(event: CalendarEvent) {
   return (
     event.hangoutLink ||
@@ -100,11 +96,7 @@ export async function POST(req: NextRequest) {
     const timeZone = env("INTERVIEW_TIMEZONE") || "Africa/Accra";
     const durationMinutes = Number(env("INTERVIEW_DURATION_MINUTES") || 30);
     const end = new Date(start.getTime() + (Number.isFinite(durationMinutes) ? durationMinutes : 30) * 60 * 1000);
-    const attendees = uniqueEmails([
-      candidateEmail,
-      organizerEmail,
-      env("INTERVIEW_STAKEHOLDER_EMAILS"),
-    ]);
+    const staffDashboardEmails = splitEmails(`${organizerEmail || ""},${env("INTERVIEW_STAKEHOLDER_EMAILS")}`);
 
     const eventBody = {
       summary: `Interview: ${String(candidateName || "Applicant")} - ${String(roleTitle || "Role")}`,
@@ -116,7 +108,6 @@ export async function POST(req: NextRequest) {
       ].filter(Boolean).join("\n"),
       start: { dateTime: start.toISOString(), timeZone },
       end: { dateTime: end.toISOString(), timeZone },
-      attendees: attendees.map((email) => ({ email })),
       conferenceData: {
         createRequest: {
           requestId: randomUUID(),
@@ -128,7 +119,7 @@ export async function POST(req: NextRequest) {
     };
 
     const createResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=all`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
       {
         method: "POST",
         headers: {
@@ -162,7 +153,7 @@ export async function POST(req: NextRequest) {
       meetLink,
       eventId: event.id,
       htmlLink: event.htmlLink,
-      attendeeEmails: attendees,
+      dashboardStaffEmails: staffDashboardEmails,
     });
   } catch (error: any) {
     console.error("Google Meet creation failed:", error);
