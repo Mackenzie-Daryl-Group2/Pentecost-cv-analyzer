@@ -556,6 +556,39 @@ td {
   height: 100%;
 }
 
+.upcoming-interviews {
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.meeting-list {
+  display: grid;
+  gap: 10px;
+}
+
+.meeting-row {
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, auto) auto;
+  padding: 12px;
+}
+
+.meeting-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.meeting-actions a {
+  text-decoration: none;
+}
+
 .application-operations {
   display: grid;
   gap: 10px;
@@ -1429,6 +1462,20 @@ td {
 
   .application-intelligence {
     grid-template-columns: 1fr;
+  }
+
+  .meeting-row {
+    grid-template-columns: 1fr;
+  }
+
+  .meeting-actions {
+    justify-content: stretch;
+  }
+
+  .meeting-actions .premium-button,
+  .meeting-actions .secondary-button {
+    justify-content: center;
+    width: 100%;
   }
 }
 

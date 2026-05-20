@@ -737,6 +737,50 @@ export default function HRDashboard() {
           ))}
         </section>
 
+        {scheduledApps.length > 0 && (
+          <section className="glass-card upcoming-interviews">
+            <div className="section-heading">
+              <div>
+                <h2>Upcoming Interview Meetings</h2>
+                <p className="status-note">Join scheduled meetings directly from the HR dashboard.</p>
+              </div>
+              <button className="secondary-button" type="button" onClick={() => setActivePanel("interviews")}>
+                View Interviews
+              </button>
+            </div>
+            <div className="meeting-list">
+              {scheduledApps.map((app) => (
+                <article key={app.id} className="meeting-row">
+                  <CandidateSummary app={app} jobs={jobs} detail={roleTitle(app, jobs)} />
+                  <div>
+                    <p className="eyebrow">Scheduled Time</p>
+                    <strong>{formatDate(app.interview_scheduled_at)}</strong>
+                  </div>
+                  <div className="meeting-actions">
+                    {app.interview_meet_link ? (
+                      <a className="premium-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">
+                        Join Meeting
+                      </a>
+                    ) : (
+                      <span className="status-note">No meeting link saved</span>
+                    )}
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => {
+                        setSelectedScheduleId(app.id);
+                        setActivePanel("interviews");
+                      }}
+                    >
+                      Details
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="tab-strip" aria-label="HR workflow sections">
           {panels.map((panel) => (
             <button

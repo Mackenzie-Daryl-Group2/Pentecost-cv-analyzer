@@ -442,6 +442,50 @@ export default function AdminDashboard() {
           ))}
         </section>
 
+        {scheduledApps.length > 0 && (
+          <section className="glass-card upcoming-interviews">
+            <div className="section-heading">
+              <div>
+                <h2>Upcoming Interview Meetings</h2>
+                <p className="status-note">Admin can join scheduled interviews directly from the dashboard.</p>
+              </div>
+              <button className="secondary-button" type="button" onClick={() => setActivePanel("applications")}>
+                View Applications
+              </button>
+            </div>
+            <div className="meeting-list">
+              {scheduledApps.map((app) => (
+                <article key={app.id} className="meeting-row">
+                  <div className="application-profile">
+                    <div className="application-avatar">{candidateName(app).slice(0, 2).toUpperCase()}</div>
+                    <div>
+                      <p className="eyebrow">Candidate</p>
+                      <h3>{candidateName(app)}</h3>
+                      <p className="status-note">{roleTitle(app, jobs)}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="eyebrow">Scheduled Time</p>
+                    <strong>{formatDate(app.interview_scheduled_at)}</strong>
+                  </div>
+                  <div className="meeting-actions">
+                    {app.interview_meet_link ? (
+                      <a className="premium-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">
+                        Join Meeting
+                      </a>
+                    ) : (
+                      <span className="status-note">No meeting link saved</span>
+                    )}
+                    <button className="secondary-button" type="button" onClick={() => setActivePanel("applications")}>
+                      Details
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
         <div className="tab-strip" aria-label="Admin sections">
           {panels.map((panel) => (
             <button
