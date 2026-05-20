@@ -391,6 +391,13 @@ export default function AdminDashboard() {
     { label: "Interviews", value: scheduledApps.length },
     { label: "Ready / Hired", value: interviewPassedApps.length + hiredApps.length },
   ];
+  const metricAccentClasses = [
+    "from-[#143f8f]/35 to-transparent",
+    "from-[#f8b51b]/25 to-transparent",
+    "from-emerald-500/20 to-transparent",
+    "from-sky-500/20 to-transparent",
+    "from-violet-500/20 to-transparent",
+  ];
 
   const panels: Array<{ id: AdminPanel; label: string; count: number }> = [
     { id: "overview", label: "Overview", count: apps.length },
@@ -412,13 +419,14 @@ export default function AdminDashboard() {
   return (
     <main className="app-shell">
       <div className="page-container">
-        <header className="app-topbar">
+        <header className="app-topbar relative overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(20,63,143,0.28),rgba(248,181,27,0.10),rgba(255,255,255,0.04))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.22)]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#f8b51b]/70 to-transparent" />
           <div className="dashboard-brand-title">
             <UniversityBrand />
             <div>
-            <p className="eyebrow">Administration</p>
-            <h1 className="page-title">Recruitment Command Center</h1>
-            <p className="page-subtitle">Control vacancies, applications, candidate decisions, role visibility, onboarding, and reports.</p>
+              <p className="eyebrow">Administration</p>
+              <h1 className="page-title">Recruitment Command Center</h1>
+              <p className="page-subtitle max-w-3xl">Control vacancies, applications, candidate decisions, role visibility, onboarding, and reports.</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -428,22 +436,23 @@ export default function AdminDashboard() {
         </header>
 
         {message && (
-          <div className="glass-card" style={{ marginBottom: "18px", padding: "14px 16px" }}>
+          <div className="glass-card mb-5 rounded-xl border border-[#f8b51b]/25 bg-[#f8b51b]/10 px-4 py-3 text-sm font-semibold text-[var(--text-primary)]">
             {message}
           </div>
         )}
 
         <section className="metric-grid">
-          {metricCards.map((metric) => (
-            <div key={metric.label} className="glass-card metric-card">
-              <p>{metric.label}</p>
-              <h2>{metric.value}</h2>
+          {metricCards.map((metric, index) => (
+            <div key={metric.label} className={`glass-card metric-card group relative overflow-hidden rounded-2xl border-white/10 bg-gradient-to-br ${metricAccentClasses[index]} transition duration-200 hover:-translate-y-1 hover:border-[#f8b51b]/40 hover:shadow-[0_18px_55px_rgba(0,0,0,0.24)]`}>
+              <div className="absolute right-4 top-4 h-10 w-10 rounded-full border border-white/10 bg-white/5 opacity-70 transition group-hover:scale-110" />
+              <p className="relative uppercase tracking-[0.16em]">{metric.label}</p>
+              <h2 className="relative">{metric.value}</h2>
             </div>
           ))}
         </section>
 
         {scheduledApps.length > 0 && (
-          <section className="glass-card upcoming-interviews">
+          <section className="glass-card upcoming-interviews rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(20,63,143,0.12))]">
             <div className="section-heading">
               <div>
                 <h2>Upcoming Interview Meetings</h2>
@@ -455,7 +464,7 @@ export default function AdminDashboard() {
             </div>
             <div className="meeting-list">
               {scheduledApps.map((app) => (
-                <article key={app.id} className="meeting-row">
+                <article key={app.id} className="meeting-row transition duration-200 hover:border-[#f8b51b]/40 hover:bg-white/[0.075]">
                   <div className="application-profile">
                     <div className="application-avatar">{candidateName(app).slice(0, 2).toUpperCase()}</div>
                     <div>
@@ -486,12 +495,12 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        <div className="tab-strip" aria-label="Admin sections">
+        <div className="tab-strip rounded-2xl border border-white/10 bg-white/[0.035] p-1" aria-label="Admin sections">
           {panels.map((panel) => (
             <button
               key={panel.id}
               type="button"
-              className="tab-button"
+              className="tab-button transition duration-200 data-[active=true]:shadow-[0_10px_28px_rgba(248,181,27,0.18)]"
               data-active={activePanel === panel.id}
               onClick={() => setActivePanel(panel.id)}
             >
@@ -502,34 +511,49 @@ export default function AdminDashboard() {
         </div>
 
         {activePanel === "overview" && (
-          <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
-            <div className="glass-card ops-section">
-              <h2>Admin Powers</h2>
-              <div style={{ display: "grid", gap: "12px" }}>
+          <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="glass-card ops-section rounded-2xl border-white/10 bg-white/[0.045]">
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Control Surface</p>
+                  <h2>Admin Powers</h2>
+                </div>
+                <span className="rounded-full border border-[#f8b51b]/30 bg-[#f8b51b]/10 px-3 py-1 text-xs font-black text-[#f8b51b]">Full access</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
                 {["Create, edit, and remove vacancies", "Approve or reject CVs", "Mark interview outcomes", "Recommend or approve hiring", "Override application status", "Download institution-wide reports"].map((power) => (
-                  <div key={power} className="row-card">
+                  <div key={power} className="row-card border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
                     <strong>{power}</strong>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="glass-card ops-section">
-              <h2>Pipeline Snapshot</h2>
-              <div style={{ display: "grid", gap: "12px" }}>
-                <p className="status-note">Pending CV decisions: {apps.filter((app) => !passedCv(app) && !String(app.status || "").toLowerCase().includes("not passed")).length}</p>
-                <p className="status-note">Scheduled interviews: {scheduledApps.length}</p>
-                <p className="status-note">Passed interviews: {interviewPassedApps.length}</p>
-                <p className="status-note">Onboarding started: {apps.filter((app) => app.onboarding_status === "Started").length}</p>
-                <button className="premium-button" onClick={() => setActivePanel("applications")}>Review Applications</button>
+            <div className="glass-card ops-section rounded-2xl border-white/10 bg-[linear-gradient(180deg,rgba(248,181,27,0.10),rgba(255,255,255,0.04))]">
+              <p className="eyebrow">Pipeline Snapshot</p>
+              <h2 className="mb-5">Current Movement</h2>
+              <div className="grid gap-3">
+                {[
+                  ["Pending CV decisions", apps.filter((app) => !passedCv(app) && !String(app.status || "").toLowerCase().includes("not passed")).length],
+                  ["Scheduled interviews", scheduledApps.length],
+                  ["Passed interviews", interviewPassedApps.length],
+                  ["Onboarding started", apps.filter((app) => app.onboarding_status === "Started").length],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-black/10 px-4 py-3">
+                    <span className="status-note">{label}</span>
+                    <strong className="text-lg text-[#f8b51b]">{value}</strong>
+                  </div>
+                ))}
+                <button className="premium-button mt-1" onClick={() => setActivePanel("applications")}>Review Applications</button>
               </div>
             </div>
           </section>
         )}
 
         {activePanel === "applications" && (
-          <section className="glass-card ops-section">
+          <section className="glass-card ops-section rounded-2xl border-white/10 bg-white/[0.045]">
             <div className="section-heading">
               <div>
+                <p className="eyebrow">Decision Desk</p>
                 <h2>Application Control</h2>
                 <p className="status-note">Admin has HR-level action controls plus direct status override.</p>
               </div>
@@ -548,9 +572,9 @@ export default function AdminDashboard() {
                 const recommendation = interviewRecommendation(interviewScore);
 
                 return (
-                  <article key={app.id} className="admin-application-card">
+                  <article key={app.id} className="admin-application-card rounded-2xl border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
                     <div className="application-profile">
-                      <div className="application-avatar">{candidateName(app).slice(0, 2).toUpperCase()}</div>
+                      <div className="application-avatar shadow-[0_10px_24px_rgba(0,0,0,0.22)]">{candidateName(app).slice(0, 2).toUpperCase()}</div>
                       <div>
                         <p className="eyebrow">Candidate</p>
                         <h3>{candidateName(app)}</h3>
