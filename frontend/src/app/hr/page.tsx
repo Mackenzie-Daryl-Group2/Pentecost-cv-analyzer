@@ -467,27 +467,7 @@ export default function HRDashboard() {
         }).catch(() => null);
       }
 
-      const staffResponse = await fetch("/api/interviews/notify-staff", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          candidateName: candidateName(selectedScheduleApp),
-          candidateEmail: selectedScheduleApp.email,
-          candidatePhone: selectedScheduleApp.phone,
-          roleTitle: roleTitle(selectedScheduleApp, jobs),
-          scheduledAt: interviewIso,
-          meetLink,
-          calendarEventLink,
-          notes: scheduleForm.notes,
-          organizerEmail: currentUser?.email,
-        }),
-      }).catch(() => null);
-
-      setMessage(
-        staffResponse?.ok
-          ? "Interview scheduled. Meeting details were sent to the applicant and staff involved."
-          : "Interview scheduled and applicant notified, but staff email notification could not be sent."
-      );
+      setMessage("Interview scheduled. The applicant was notified, and staff can join from their dashboards.");
       await fetchData();
     } catch (error: any) {
       setMessage(error.message || "Interview could not be scheduled.");
@@ -872,6 +852,17 @@ export default function HRDashboard() {
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginBottom: "6px" }}>Selected applicant</p>
                   <h3>{candidateName(selectedScheduleApp)} - {roleTitle(selectedScheduleApp, jobs)}</h3>
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "6px" }}>Current schedule: {formatDate(selectedScheduleApp.interview_scheduled_at)}</p>
+                  {selectedScheduleApp.interview_meet_link && (
+                    <a
+                      className="secondary-button"
+                      href={selectedScheduleApp.interview_meet_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}
+                    >
+                      Join Meeting
+                    </a>
+                  )}
                 </div>
                 <input className="input-field" type="datetime-local" value={scheduleForm.datetime} onChange={(e) => setScheduleForm({ ...scheduleForm, datetime: e.target.value })} required />
                 <input className="input-field" placeholder="Google Meet link will be generated automatically, or paste one manually" value={scheduleForm.meetLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetLink: e.target.value })} />
@@ -906,6 +897,17 @@ export default function HRDashboard() {
                           Mark score: {savedScore === null ? "Not scored" : `${savedScore}/100`}
                         </p>
                         <p className="status-note">{recommendation.label} - {recommendation.detail}</p>
+                        {app.interview_meet_link && (
+                          <a
+                            href={app.interview_meet_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="secondary-button"
+                            style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}
+                          >
+                            Join Meeting
+                          </a>
+                        )}
                       </div>
                       <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", flexWrap: "wrap" }}>
                         <button onClick={() => handleInterviewResult(app, true)} style={{ background: "var(--success-bg)", color: "var(--accent-neon)", border: "1px solid var(--success-border)", padding: "9px 12px", borderRadius: "8px", fontWeight: "800" }}>Passed</button>

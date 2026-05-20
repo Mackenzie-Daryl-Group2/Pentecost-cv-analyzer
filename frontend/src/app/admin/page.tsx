@@ -535,6 +535,17 @@ export default function AdminDashboard() {
                           <span style={{ width: `${interviewScore === null ? 0 : interviewScore}%` }} />
                         </div>
                         <p className="status-note"><strong>{interviewScore === null ? "Not scored" : `${interviewScore}/100`}</strong> · {recommendation.label}</p>
+                        {app.interview_meet_link && (
+                          <a
+                            className="secondary-button"
+                            href={app.interview_meet_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}
+                          >
+                            Join Meeting
+                          </a>
+                        )}
                       </div>
                     </div>
 
