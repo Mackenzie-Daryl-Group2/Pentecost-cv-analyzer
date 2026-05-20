@@ -9,6 +9,7 @@ export default function SignupPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [countryCode, setCountryCode] = useState("+233");
   const [phone, setPhone] = useState("");
   const [verificationMethod, setVerificationMethod] = useState("Email");
@@ -203,7 +204,39 @@ export default function SignupPage() {
 
                   <div style={{ marginBottom: "32px" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>CREATE PASSWORD</label>
-                    <input type="password" className="input-field" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        className="input-field"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        style={{ paddingRight: "92px" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((current) => !current)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        style={{
+                          position: "absolute",
+                          right: "10px",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "var(--surface-2)",
+                          border: "1px solid var(--line-soft)",
+                          borderRadius: "8px",
+                          color: "var(--text-primary)",
+                          cursor: "pointer",
+                          fontSize: "0.78rem",
+                          fontWeight: "800",
+                          padding: "7px 10px",
+                        }}
+                      >
+                        {showPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
                   </div>
 
                   <button type="submit" style={{ width: "100%", padding: "16px", background: "var(--primary-button-bg)", color: "white", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "1rem", cursor: "pointer", transition: "opacity 0.2s" }} disabled={loading}>
