@@ -423,11 +423,49 @@ export default function HRDashboard() {
 
       if (scheduleError) throw scheduleError;
 
+      let applicantEmailSent = false;
+      if (meetLink && selectedScheduleApp.email) {
+        applicantEmailSent = await sendApplicantEmail(
+          selectedScheduleApp,
+          `Interview Scheduled: ${roleTitle(selectedScheduleApp, jobs)}`,
+          `
+            <h2>Interview Scheduled</h2>
+            <p>Hi ${escapeHtml(candidateName(selectedScheduleApp))},</p>
+            <p>Your interview for <strong>${escapeHtml(roleTitle(selectedScheduleApp, jobs))}</strong> is scheduled for <strong>${escapeHtml(formatDate(interviewIso))}</strong>.</p>
+            <p><strong>Meeting link:</strong> <a href="${escapeHtml(meetLink)}">${escapeHtml(meetLink)}</a></p>
+            ${scheduleForm.notes ? `<p><strong>Notes:</strong> ${escapeHtml(scheduleForm.notes)}</p>` : ""}
+            <p>Please join a few minutes early and keep this email for your records.</p>
+            <p>Pentecost Recruitment Team</p>
+          `
+        );
+      }
+
+      if (meetLink) {
+        await fetch("/api/interviews/notify-staff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidateName: candidateName(selectedScheduleApp),
+            candidateEmail: selectedScheduleApp.email,
+            candidatePhone: selectedScheduleApp.phone,
+            roleTitle: roleTitle(selectedScheduleApp, jobs),
+            scheduledAt: interviewIso,
+            meetLink,
+            notes: scheduleForm.notes,
+            organizerEmail: currentUser?.email,
+          }),
+        }).catch(() => null);
+      }
+
       await fetchData();
       setMessage(
-        meetLink
-          ? "Interview scheduled and meeting link saved. HR and admins can join from their dashboards."
-          : "Interview scheduled. Add a meeting link when it is ready."
+        !meetLink
+          ? "Interview scheduled. Add a meeting link when it is ready."
+          : selectedScheduleApp.email
+            ? applicantEmailSent
+              ? "Interview scheduled. The applicant was emailed, and HR/admins can join from their dashboards."
+              : "Interview scheduled and meeting link saved, but the applicant email could not be sent."
+            : "Interview scheduled and meeting link saved, but the applicant has no email address on file."
       );
     } catch (error: any) {
       setMessage(error.message || "Interview could not be scheduled.");
