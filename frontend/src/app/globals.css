@@ -615,6 +615,51 @@ td {
   margin: 8px 0 0;
 }
 
+.ai-score-review {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  margin: 8px 0 10px;
+}
+
+.ai-score-review p {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.ai-score-circle {
+  --score: 0%;
+  align-items: center;
+  background:
+    radial-gradient(circle at center, var(--surface-2) 58%, transparent 59%),
+    conic-gradient(var(--accent-neon) var(--score), rgba(255, 255, 255, 0.12) 0);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
+}
+
+.ai-score-circle span {
+  color: var(--accent-neon);
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.ai-score-circle.compact {
+  height: 54px;
+  width: 54px;
+}
+
+.ai-score-circle.compact span {
+  font-size: 0.78rem;
+}
+
 .ai-review-summary {
   display: -webkit-box;
   line-clamp: 3;

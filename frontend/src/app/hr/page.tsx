@@ -1070,6 +1070,9 @@ export default function HRDashboard() {
               const interviewScore = parseInterviewScore(app.interview_notes);
               const recommendation = interviewRecommendation(interviewScore);
               const interviewState = truthy(app.interview_passed) ? "Passed" : app.interview_scheduled_at ? "Scheduled" : "Not scheduled";
+              const matchPercent = Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)));
+              const aiSummary = cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status);
+              const shortAiSummary = aiSummary.length > 120 ? `${aiSummary.slice(0, 117)}...` : aiSummary;
 
               return (
                 <article key={app.id} className="hr-screening-card">
@@ -1093,7 +1096,16 @@ export default function HRDashboard() {
                     </div>
                     <div className="insight-card">
                       <p className="eyebrow">AI Screening Summary</p>
-                      <p className="status-note">{cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status)}</p>
+                      <div className="ai-score-review">
+                        <div className="ai-score-circle" style={{ "--score": `${matchPercent}%` } as React.CSSProperties} aria-label={`AI CV match score ${matchPercent}%`}>
+                          <span>{matchPercent}%</span>
+                        </div>
+                        <div>
+                          <strong>CV match</strong>
+                          <p>{decision.label}</p>
+                        </div>
+                      </div>
+                      <p className="status-note ai-review-summary">{shortAiSummary}</p>
                     </div>
                     <div className="insight-card">
                       <p className="eyebrow">Pipeline</p>

@@ -606,6 +606,7 @@ export default function AdminDashboard() {
                 const recommendation = interviewRecommendation(interviewScore);
                 const aiSummary = cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status);
                 const shortAiSummary = aiSummary.length > 120 ? `${aiSummary.slice(0, 117)}...` : aiSummary;
+                const matchPercent = Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)));
 
                 return (
                   <article key={app.id} className="admin-application-card rounded-2xl border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
@@ -632,12 +633,14 @@ export default function AdminDashboard() {
                       </div>
                       <div className="insight-card">
                         <p className="eyebrow">AI Review</p>
-                        <div className="ai-score-header">
-                          <strong>{Math.round(Number(app.similarity || 0) * 100)}% CV match</strong>
-                          <span>{decision.label}</span>
-                        </div>
-                        <div className="ai-score-bar" aria-label="AI CV match score">
-                          <span style={{ width: `${Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)))}%` }} />
+                        <div className="ai-score-review">
+                          <div className="ai-score-circle" style={{ "--score": `${matchPercent}%` } as React.CSSProperties} aria-label={`AI CV match score ${matchPercent}%`}>
+                            <span>{matchPercent}%</span>
+                          </div>
+                          <div>
+                            <strong>CV match</strong>
+                            <p>{decision.label}</p>
+                          </div>
                         </div>
                         <p className="status-note ai-review-summary">{shortAiSummary}</p>
                       </div>
@@ -754,13 +757,13 @@ export default function AdminDashboard() {
                               <strong>{candidateName(app)}</strong>
                               <span className="best-three-email">{app.email || "No email on file"}</span>
                               <p className="status-note">{app.email || app.phone || "No contact"} · {app.status}</p>
-                              <div className="ai-score-bar compact" aria-label="Best three CV match score">
-                                <span style={{ width: `${Math.max(0, Math.min(100, matchPercent))}%` }} />
-                              </div>
                             </div>
                             <div className="best-three-actions">
+                              <div className="ai-score-circle compact" style={{ "--score": `${Math.max(0, Math.min(100, matchPercent))}%` } as React.CSSProperties} aria-label={`Best three CV match score ${matchPercent}%`}>
+                                <span>{matchPercent}%</span>
+                              </div>
                               <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
-                                {matchPercent}%
+                                {decision.label}
                               </span>
                               <select
                                 className="input-field"
