@@ -459,6 +459,50 @@ td {
   gap: 12px;
 }
 
+.hr-schedule-workspace {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.9fr);
+}
+
+.hr-schedule-candidate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.hr-schedule-candidate {
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.75fr) minmax(160px, 0.7fr);
+  padding: 12px;
+  text-align: left;
+  transition: 160ms ease;
+}
+
+.hr-schedule-candidate:hover,
+.hr-schedule-candidate[data-active="true"] {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.hr-schedule-form {
+  align-content: start;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 14px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  position: sticky;
+  top: 18px;
+}
+
 .admin-application-card {
   background: linear-gradient(180deg, var(--surface-1), rgba(255, 255, 255, 0.025));
   border: 1px solid var(--line-soft);
@@ -1733,6 +1777,15 @@ td {
 
   .hr-screening-card {
     grid-template-columns: 1fr;
+  }
+
+  .hr-schedule-workspace,
+  .hr-schedule-candidate {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-schedule-form {
+    position: static;
   }
 
   .application-intelligence {

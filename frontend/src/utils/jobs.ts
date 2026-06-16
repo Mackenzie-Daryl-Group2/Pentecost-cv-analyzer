@@ -52,12 +52,6 @@ export function mergeJobs(remoteJobs: any[] | null | undefined): Job[] {
     const normalized = normalizeJob(job);
     if (!Number.isFinite(normalized.id)) return;
 
-    if (merged.has(normalized.id)) {
-      const offsetId = Math.max(...merged.keys()) + 1;
-      merged.set(offsetId, { ...normalized, id: offsetId });
-      return;
-    }
-
     merged.set(normalized.id, normalized);
   });
 
