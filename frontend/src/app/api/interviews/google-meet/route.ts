@@ -35,6 +35,43 @@ function extractMeetLink(event: CalendarEvent) {
   );
 }
 
+function parseJson(value: string) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function googleErrorMessage(response: Response, rawBody: string) {
+  const parsed = parseJson(rawBody) as
+    | {
+        error?: {
+          message?: string;
+          status?: string;
+          errors?: Array<{ message?: string; reason?: string; domain?: string }>;
+        };
+      }
+    | null;
+  const googleReason = parsed?.error?.errors?.find((entry) => entry.message || entry.reason);
+  const details = [
+    parsed?.error?.message,
+    googleReason?.message || googleReason?.reason,
+    googleReason?.domain,
+  ]
+    .filter(Boolean)
+    .join(": ");
+
+  if (details && details.toLowerCase() !== "bad request") {
+    return details;
+  }
+
+  const bodyPreview = rawBody.trim().slice(0, 500);
+  return bodyPreview
+    ? `Google Calendar rejected the request (${response.status} ${response.statusText}): ${bodyPreview}`
+    : `Google Calendar rejected the request (${response.status} ${response.statusText}).`;
+}
+
 async function getAccessToken() {
   const clientId = env("GOOGLE_CLIENT_ID");
   const clientSecret = env("GOOGLE_CLIENT_SECRET");
@@ -130,19 +167,10 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const event = (await createResponse.json().catch(() => ({}))) as CalendarEvent & {
-      error?: {
-        message?: string;
-        status?: string;
-        errors?: Array<{ message?: string; reason?: string }>;
-      };
-    };
+    const rawEventBody = await createResponse.text();
+    const event = (parseJson(rawEventBody) || {}) as CalendarEvent;
     if (!createResponse.ok) {
-      const googleReason = event.error?.errors?.find((entry) => entry.message || entry.reason);
-      const details = [event.error?.message, googleReason?.message || googleReason?.reason]
-        .filter(Boolean)
-        .join(": ");
-      throw new Error(details || "Google Meet event could not be created.");
+      throw new Error(googleErrorMessage(createResponse, rawEventBody));
     }
 
     let meetLink = extractMeetLink(event);
