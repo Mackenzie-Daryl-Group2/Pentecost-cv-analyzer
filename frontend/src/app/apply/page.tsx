@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loadJobById, type Job } from "@/utils/jobs";
+import { loadJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getMatchDecision } from "@/utils/match";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 
@@ -20,6 +20,8 @@ function ApplyForm() {
   const [message, setMessage] = useState("");
   const [submitStep, setSubmitStep] = useState<SubmitStep>("idle");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -45,10 +47,26 @@ function ApplyForm() {
         setUserEmail(user.email || user.user_metadata?.email || "");
       }
 
-      setSelectedJob(await loadJobById(supabase, requestedJobId));
+      const [jobs, job] = await Promise.all([
+        loadJobs(supabase),
+        loadJobById(supabase, requestedJobId),
+      ]);
+      setAvailableJobs(jobs);
+      setSelectedJob(job);
+      setJobsLoading(false);
     };
     checkUser();
   }, [searchParams, router]);
+
+  function handleJobChange(nextJobId: string) {
+    const nextJob = availableJobs.find((job) => String(job.id) === nextJobId) || null;
+    setJobId(nextJobId || null);
+    setSelectedJob(nextJob);
+    setMessage("");
+    if (nextJob) {
+      router.replace(`/apply?jobId=${nextJob.id}`);
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +197,25 @@ function ApplyForm() {
         </div>
       )}
 
+      <div style={{ marginBottom: "24px" }}>
+        <label style={{ display: "block", marginBottom: "8px", color: "var(--accent-neon)", fontSize: "0.8rem", fontWeight: "700" }}>SELECT JOB VACANCY</label>
+        <select
+          className="input-field"
+          value={jobId || ""}
+          onChange={(event) => handleJobChange(event.target.value)}
+          disabled={jobsLoading || !availableJobs.length}
+          required
+        >
+          <option value="">{jobsLoading ? "Loading vacancies..." : "Choose a vacancy"}</option>
+          {availableJobs.map((job) => (
+            <option key={job.id} value={job.id}>{job.title}</option>
+          ))}
+        </select>
+        {!jobsLoading && !availableJobs.length && (
+          <p style={{ marginTop: "8px", color: "#ff8a80", fontSize: "0.82rem" }}>No vacancies could be loaded. Please contact HR.</p>
+        )}
+      </div>
+
       {message && (
         <div style={{ marginBottom: "24px", padding: "16px", borderRadius: "12px", background: "var(--surface-1)", color: "var(--text-primary)", border: "1px solid var(--line-soft)" }}>
           {message}
@@ -232,8 +269,8 @@ function ApplyForm() {
           </div>
         </div>
 
-        <button type="submit" className="premium-button" style={{ width: "100%", height: "56px" }} disabled={isSubmitting || !selectedJob}>
-          {isSubmitting ? stepLabels[submitStep] : selectedJob ? "Submit Application" : "Select a Valid Job First"}
+        <button type="submit" className="premium-button" style={{ width: "100%", height: "56px" }} disabled={isSubmitting || jobsLoading || !selectedJob}>
+          {isSubmitting ? stepLabels[submitStep] : selectedJob ? "Submit Application" : jobsLoading ? "Loading Jobs..." : "Select a Valid Job First"}
         </button>
       </form>
     </div>
