@@ -495,20 +495,42 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        <div className="tab-strip rounded-2xl border border-white/10 bg-white/[0.035] p-1" aria-label="Admin sections">
-          {panels.map((panel) => (
-            <button
-              key={panel.id}
-              type="button"
-              className="tab-button transition duration-200 data-[active=true]:shadow-[0_10px_28px_rgba(248,181,27,0.18)]"
-              data-active={activePanel === panel.id}
-              onClick={() => setActivePanel(panel.id)}
-            >
-              {panel.label}
-              <span className="tab-count">{panel.count}</span>
-            </button>
-          ))}
-        </div>
+        <div className="admin-workspace">
+          <aside className="admin-sidebar">
+            <div>
+              <p className="eyebrow">Admin Sections</p>
+              <h2>Control Keys</h2>
+              <p className="status-note">Move between the main recruitment controls.</p>
+            </div>
+            <label className="admin-section-select">
+              Quick switch
+              <select className="input-field" value={activePanel} onChange={(event) => setActivePanel(event.target.value as AdminPanel)}>
+                {panels.map((panel) => (
+                  <option key={panel.id} value={panel.id}>{panel.label} ({panel.count})</option>
+                ))}
+              </select>
+            </label>
+            <nav className="admin-section-list" aria-label="Admin sections">
+              {panels.map((panel, index) => (
+                <button
+                  key={panel.id}
+                  type="button"
+                  className="admin-section-key"
+                  data-active={activePanel === panel.id}
+                  onClick={() => setActivePanel(panel.id)}
+                >
+                  <span className="admin-section-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="admin-section-copy">
+                    <strong>{panel.label}</strong>
+                    <small>{panel.id === "recommendations" ? "Top candidates" : panel.id === "vacancies" ? "Open roles" : panel.id}</small>
+                  </span>
+                  <span className="admin-section-count">{panel.count}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="admin-panel-surface">
 
         {activePanel === "overview" && (
           <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -797,6 +819,8 @@ export default function AdminDashboard() {
             </div>
           </section>
         )}
+          </div>
+        </div>
       </div>
     </main>
   );
