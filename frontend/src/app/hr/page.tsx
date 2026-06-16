@@ -462,7 +462,7 @@ export default function HRDashboard() {
       }
 
       let applicantEmailSent = false;
-      if (meetLink && selectedScheduleApp.email) {
+      if (selectedScheduleApp.email) {
         applicantEmailSent = await sendApplicantEmail(
           selectedScheduleApp,
           `Interview Scheduled: ${roleTitle(selectedScheduleApp, jobs)}`,
@@ -470,7 +470,7 @@ export default function HRDashboard() {
             <h2>Interview Scheduled</h2>
             <p>Hi ${escapeHtml(candidateName(selectedScheduleApp))},</p>
             <p>Your interview for <strong>${escapeHtml(roleTitle(selectedScheduleApp, jobs))}</strong> is scheduled for <strong>${escapeHtml(formatDate(interviewIso))}</strong>.</p>
-            <p><strong>Meeting link:</strong> <a href="${escapeHtml(meetLink)}">${escapeHtml(meetLink)}</a></p>
+            ${meetLink ? `<p><strong>Meeting link:</strong> <a href="${escapeHtml(meetLink)}">${escapeHtml(meetLink)}</a></p>` : "<p>The meeting link will be shared once it is available.</p>"}
             ${calendarEventLink ? `<p><strong>Calendar event:</strong> <a href="${escapeHtml(calendarEventLink)}">Open event</a></p>` : ""}
             ${scheduleForm.notes ? `<p><strong>Notes:</strong> ${escapeHtml(scheduleForm.notes)}</p>` : ""}
             <p>Please join a few minutes early and keep this email for your records.</p>
@@ -479,30 +479,31 @@ export default function HRDashboard() {
         );
       }
 
-      if (meetLink) {
-        await fetch("/api/interviews/notify-staff", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            candidateName: candidateName(selectedScheduleApp),
-            candidateEmail: selectedScheduleApp.email,
-            candidatePhone: selectedScheduleApp.phone,
-            roleTitle: roleTitle(selectedScheduleApp, jobs),
-            scheduledAt: interviewIso,
-            meetLink,
-            calendarEventLink,
-            notes: scheduleForm.notes,
-            organizerEmail: currentUser?.email,
-          }),
-        }).catch(() => null);
-      }
+      const staffResponse = await fetch("/api/interviews/notify-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateName: candidateName(selectedScheduleApp),
+          candidateEmail: selectedScheduleApp.email,
+          candidatePhone: selectedScheduleApp.phone,
+          roleTitle: roleTitle(selectedScheduleApp, jobs),
+          scheduledAt: interviewIso,
+          meetLink,
+          calendarEventLink,
+          notes: scheduleForm.notes,
+          organizerEmail: currentUser?.email,
+        }),
+      }).catch(() => null);
+      const staffEmailSent = Boolean(staffResponse?.ok);
 
       await fetchData();
       setMessage(
         meetError
-          ? `Interview time was saved, but the Meet link and emails were not sent: ${meetError}`
+          ? `Interview time was saved, but the Meet link was not generated: ${meetError}. ${applicantEmailSent || staffEmailSent ? "Schedule email was still sent." : "Schedule email could not be sent."}`
           : !meetLink
-          ? "Interview scheduled. Add a meeting link when it is ready."
+          ? applicantEmailSent || staffEmailSent
+            ? "Interview scheduled and schedule email sent. Add a meeting link when it is ready."
+            : "Interview scheduled, but the schedule email could not be sent."
           : selectedScheduleApp.email
             ? applicantEmailSent
               ? "Interview scheduled. The applicant was emailed, and HR/admins can join from their dashboards."
