@@ -20,24 +20,40 @@ export default function LandingPage() {
   }, [router]);
 
   return (
-    <main className="landing-page">
-      <nav className="app-topbar landing-nav">
+    <main style={{
+      minHeight: "100vh",
+      color: "var(--text-primary)",
+      background: "var(--landing-background)",
+      fontFamily: "'Inter', sans-serif",
+      }}>
+      <nav className="app-topbar" style={{ maxWidth: "1180px", margin: "0 auto", borderTop: "none", borderLeft: "none", borderRight: "none", background: "var(--landing-nav-bg)" }}>
         <UniversityBrand />
-        <div className="landing-nav-actions">
+        <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
           <button className="quiet-link-button" onClick={() => router.push("/login")}>Sign In</button>
-          <button className="premium-button" onClick={() => router.push("/signup")}>Create Account</button>
+          <button className="premium-button" onClick={() => router.push("/signup")} style={{ padding: "10px 18px" }}>Create Account</button>
         </div>
       </nav>
 
-      <section className="landing-hero">
-        <div className="landing-hero-content">
-          <p className="landing-kicker">Pentecost University Recruitment</p>
-          <h1>Find your place in a purpose-led university community.</h1>
-          <p className="landing-copy">
-            Explore current vacancies, submit your application securely, and follow each stage of the recruitment process from one focused portal.
-          </p>
+      <section style={{
+        minHeight: "calc(100vh - 76px)",
+        display: "grid",
+        alignItems: "center",
+        justifyItems: "center",
+        padding: "44px 24px 84px",
+        textAlign: "center",
+      }}>
+        <div style={{ width: "100%", maxWidth: "840px", margin: "0 auto" }}>
+          <div style={{ maxWidth: "840px", margin: "0 auto 34px" }}>
+            <p className="eyebrow">Pentecost University Recruitment</p>
+            <h1 style={{ fontSize: "4.2rem", lineHeight: "1.04", marginBottom: "22px" }}>
+              A clearer way to manage hiring from CV review to onboarding.
+            </h1>
+            <p className="page-subtitle" style={{ fontSize: "1.08rem", maxWidth: "680px", margin: "0 auto" }}>
+              A secure recruitment portal for discovering open roles, submitting applications, coordinating interviews, and keeping every hiring decision easy to track.
+            </p>
+          </div>
 
-          <div className="landing-actions">
+          <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", justifyContent: "center" }}>
             <button className="home-open-roles-button" onClick={() => router.push("/jobs")}>
               <span>View Open Roles</span>
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -45,43 +61,15 @@ export default function LandingPage() {
                 <path d="m13 6 6 6-6 6" />
               </svg>
             </button>
-            <button className="landing-secondary-action" onClick={() => router.push("/signup")}>
-              Create Applicant Account
-            </button>
-          </div>
-
-          <div className="landing-proof" aria-label="Recruitment portal highlights">
-            <div>
-              <strong>Open roles</strong>
-              <span>Browse vacancies before applying</span>
-            </div>
-            <div>
-              <strong>Application tracking</strong>
-              <span>Follow review, interview, and onboarding progress</span>
-            </div>
-            <div>
-              <strong>Secure access</strong>
-              <span>Applicant and staff dashboards stay separated by role</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="landing-status-panel" aria-label="Recruitment portal summary">
-          <div>
-            <p className="eyebrow">Portal Focus</p>
-            <h2>Recruitment made organized</h2>
-            <p>
-              Designed for applicants, HR, and university stakeholders to keep decisions visible without crowding the process.
-            </p>
-          </div>
-          <div className="landing-status-list">
-            <span>CV review</span>
-            <span>Interview coordination</span>
-            <span>Final approvals</span>
-            <span>Onboarding updates</span>
           </div>
         </div>
       </section>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 760px) {
+          h1 { font-size: 2.45rem !important; }
+        }
+      ` }} />
     </main>
   );
 }
