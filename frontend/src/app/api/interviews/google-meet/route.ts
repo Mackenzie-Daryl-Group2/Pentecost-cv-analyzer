@@ -130,9 +130,19 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const event = (await createResponse.json().catch(() => ({}))) as CalendarEvent & { error?: { message?: string } };
+    const event = (await createResponse.json().catch(() => ({}))) as CalendarEvent & {
+      error?: {
+        message?: string;
+        status?: string;
+        errors?: Array<{ message?: string; reason?: string }>;
+      };
+    };
     if (!createResponse.ok) {
-      throw new Error(event.error?.message || "Google Meet event could not be created.");
+      const googleReason = event.error?.errors?.find((entry) => entry.message || entry.reason);
+      const details = [event.error?.message, googleReason?.message || googleReason?.reason]
+        .filter(Boolean)
+        .join(": ");
+      throw new Error(details || "Google Meet event could not be created.");
     }
 
     let meetLink = extractMeetLink(event);

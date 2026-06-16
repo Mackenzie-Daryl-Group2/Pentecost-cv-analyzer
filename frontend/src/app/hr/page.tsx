@@ -398,56 +398,71 @@ export default function HRDashboard() {
     e.preventDefault();
     if (!selectedScheduleApp) return;
 
-    const interviewIso = scheduleForm.datetime ? new Date(scheduleForm.datetime).toISOString() : null;
+    const interviewDate = new Date(scheduleForm.datetime || "");
+    const interviewIso = Number.isNaN(interviewDate.getTime()) ? null : interviewDate.toISOString();
     if (!interviewIso) {
       setMessage("Interview date and time are required.");
       return;
     }
 
     setBusyAction(`app-${selectedScheduleApp.id}`);
-    setMessage("Scheduling interview and preparing meeting details...");
+    setMessage("Saving interview schedule...");
 
     try {
       let meetLink = scheduleForm.meetLink.trim();
       let calendarEventLink = "";
+      let meetError = "";
 
-      if (!meetLink) {
-        const meetResponse = await fetch("/api/interviews/google-meet", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            candidateName: candidateName(selectedScheduleApp),
-            candidateEmail: selectedScheduleApp.email,
-            candidatePhone: selectedScheduleApp.phone,
-            roleTitle: roleTitle(selectedScheduleApp, jobs),
-            scheduledAt: interviewIso,
-            notes: scheduleForm.notes,
-            organizerEmail: currentUser?.email,
-          }),
-        });
-        const meetData = await meetResponse.json().catch(() => ({}));
-        if (!meetResponse.ok) {
-          throw new Error(meetData.error || "Google Meet link could not be created.");
-        }
-
-        meetLink = meetData.meetLink;
-        calendarEventLink = meetData.htmlLink || "";
-        setScheduleForm((current) => ({ ...current, meetLink }));
-      }
-
-      const { error } = await supabase
+      const { error: scheduleError } = await supabase
         .from("applications")
         .update({
           status: "Interview Scheduled",
           interview_scheduled_at: interviewIso,
-          interview_meet_link: meetLink,
+          interview_meet_link: meetLink || selectedScheduleApp.interview_meet_link || null,
           interview_notes: scheduleForm.notes,
         })
         .eq("id", selectedScheduleApp.id);
 
-      if (error) throw error;
+      if (scheduleError) throw scheduleError;
 
-      if (selectedScheduleApp.email) {
+      if (!meetLink) {
+        setMessage("Schedule saved. Generating Google Meet link...");
+        try {
+          const meetResponse = await fetch("/api/interviews/google-meet", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              candidateName: candidateName(selectedScheduleApp),
+              candidateEmail: selectedScheduleApp.email,
+              candidatePhone: selectedScheduleApp.phone,
+              roleTitle: roleTitle(selectedScheduleApp, jobs),
+              scheduledAt: interviewIso,
+              notes: scheduleForm.notes,
+              organizerEmail: currentUser?.email,
+            }),
+          });
+          const meetData = await meetResponse.json().catch(() => ({}));
+          if (!meetResponse.ok) {
+            throw new Error(meetData.error || "Google Meet link could not be created.");
+          }
+
+          meetLink = meetData.meetLink;
+          calendarEventLink = meetData.htmlLink || "";
+          setScheduleForm((current) => ({ ...current, meetLink }));
+
+          const { error: linkError } = await supabase
+            .from("applications")
+            .update({ interview_meet_link: meetLink })
+            .eq("id", selectedScheduleApp.id);
+
+          if (linkError) throw linkError;
+        } catch (error: any) {
+          meetError = error.message || "Google Meet link could not be created.";
+        }
+      }
+
+      let applicantEmailSent = false;
+      if (meetLink && selectedScheduleApp.email) {
         await fetch("/api/send-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -465,15 +480,44 @@ export default function HRDashboard() {
               <p>Pentecost Recruitment Team</p>
             `,
           }),
+        })
+          .then((response) => {
+            applicantEmailSent = response.ok;
+          })
+          .catch(() => null);
+      }
+
+      if (meetLink) {
+        await fetch("/api/interviews/notify-staff", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidateName: candidateName(selectedScheduleApp),
+            candidateEmail: selectedScheduleApp.email,
+            candidatePhone: selectedScheduleApp.phone,
+            roleTitle: roleTitle(selectedScheduleApp, jobs),
+            scheduledAt: interviewIso,
+            meetLink,
+            calendarEventLink,
+            notes: scheduleForm.notes,
+            organizerEmail: currentUser?.email,
+          }),
         }).catch(() => null);
       }
 
-      setMessage(
-        selectedScheduleApp.email
-          ? "Interview scheduled. The applicant was notified, and staff can join from their dashboards."
-          : "Interview scheduled and meeting link saved, but the applicant has no email address on file."
-      );
       await fetchData();
+
+      if (meetError) {
+        setMessage(`Interview time was saved, but the Meet link and emails were not sent: ${meetError}`);
+      } else if (!meetLink) {
+        setMessage("Interview time was saved. Add a meeting link manually to notify the applicant.");
+      } else if (selectedScheduleApp.email && applicantEmailSent) {
+        setMessage("Interview scheduled. The applicant was notified, and staff can join from their dashboards.");
+      } else if (selectedScheduleApp.email) {
+        setMessage("Interview scheduled and meeting link saved, but the applicant email could not be sent.");
+      } else {
+        setMessage("Interview scheduled and meeting link saved, but the applicant has no email address on file.");
+      }
     } catch (error: any) {
       setMessage(error.message || "Interview could not be scheduled.");
     } finally {
