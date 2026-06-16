@@ -52,10 +52,18 @@ function ApplyForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cvFile || !photoFile || !jobId || !selectedJob) {
-      setMessage("Please choose a valid job and upload both required files.");
+    const missingItems = [
+      !jobId ? "a job vacancy" : "",
+      jobId && !selectedJob ? "a valid job vacancy" : "",
+      !photoFile ? "a passport photo" : "",
+      !cvFile ? "your CV PDF" : "",
+    ].filter(Boolean);
+
+    if (missingItems.length) {
+      setMessage(`Please choose ${missingItems.join(", ")} before submitting.`);
       return;
     }
+    if (!cvFile || !photoFile || !jobId || !selectedJob) return;
 
     setIsSubmitting(true);
     setMessage("");
@@ -224,8 +232,8 @@ function ApplyForm() {
           </div>
         </div>
 
-        <button type="submit" className="premium-button" style={{ width: "100%", height: "56px" }} disabled={isSubmitting}>
-          {isSubmitting ? stepLabels[submitStep] : "Submit Application"}
+        <button type="submit" className="premium-button" style={{ width: "100%", height: "56px" }} disabled={isSubmitting || !selectedJob}>
+          {isSubmitting ? stepLabels[submitStep] : selectedJob ? "Submit Application" : "Select a Valid Job First"}
         </button>
       </form>
     </div>
