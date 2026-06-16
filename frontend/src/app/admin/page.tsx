@@ -327,6 +327,18 @@ export default function AdminDashboard() {
     await updateApplication(app, { status }, `Status overridden to "${status}".`);
   }
 
+  async function handleDecisionAction(app: Application, action: string) {
+    if (!action) return;
+
+    if (action === "approve-cv") await handleApproveCv(app);
+    if (action === "reject-cv") await handleRejectCv(app);
+    if (action === "pass-interview") await handleInterviewResult(app, true);
+    if (action === "not-pass-interview") await handleInterviewResult(app, false);
+    if (action === "recommend-hire") await handleRecommendForHire(app);
+    if (action === "approve-hire") await handleApproveHire(app);
+    if (action === "complete-onboarding") await handleOnboardingStep(app, "Completed");
+  }
+
   async function handleOnboardingStep(app: Application, step: string) {
     const updated = await updateApplication(
       app,
@@ -595,13 +607,16 @@ export default function AdminDashboard() {
 
                 return (
                   <article key={app.id} className="admin-application-card rounded-2xl border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
-                    <div className="application-profile">
-                      <div className="application-avatar shadow-[0_10px_24px_rgba(0,0,0,0.22)]">{candidateName(app).slice(0, 2).toUpperCase()}</div>
+                    <div className="application-profile admin-candidate-profile">
+                      <div className="application-avatar admin-candidate-avatar shadow-[0_10px_24px_rgba(0,0,0,0.22)]">{candidateName(app).slice(0, 2).toUpperCase()}</div>
                       <div>
                         <p className="eyebrow">Candidate</p>
                         <h3>{candidateName(app)}</h3>
-                        <p className="status-note">{app.email || app.phone || "No contact on file"}</p>
                         <span className="status-pill">{app.status}</span>
+                        <div className="admin-contact-stack">
+                          <span>{app.email || "No email on file"}</span>
+                          <span>{app.phone || "No phone on file"}</span>
+                        </div>
                       </div>
                     </div>
 
@@ -655,14 +670,24 @@ export default function AdminDashboard() {
                         </select>
                       </label>
 
-                      <div className="action-grid">
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleApproveCv(app)} className="secondary-button">Approve CV</button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleRejectCv(app)} className="secondary-button">Reject CV</button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleInterviewResult(app, true)} className="secondary-button">Pass Interview</button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleRecommendForHire(app)} className="secondary-button">Recommend Hire</button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleApproveHire(app)} className="premium-button">Approve Hire</button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleOnboardingStep(app, "Completed")} className="secondary-button">Complete Onboarding</button>
-                      </div>
+                      <label className="control-label">
+                        Decision action
+                        <select
+                          className="input-field"
+                          value=""
+                          onChange={(event) => handleDecisionAction(app, event.target.value)}
+                          disabled={busyAction === `app-${app.id}`}
+                        >
+                          <option value="">Choose action...</option>
+                          <option value="approve-cv">Approve CV</option>
+                          <option value="reject-cv">Reject CV</option>
+                          <option value="pass-interview">Pass interview</option>
+                          <option value="not-pass-interview">Reject after interview</option>
+                          <option value="recommend-hire">Recommend for hire</option>
+                          <option value="approve-hire">Approve hire</option>
+                          <option value="complete-onboarding">Complete onboarding</option>
+                        </select>
+                      </label>
 
                       <div>
                         <div className="onboarding-header">
