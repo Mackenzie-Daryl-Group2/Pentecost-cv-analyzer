@@ -410,114 +410,25 @@ export default function HRDashboard() {
 
     try {
       let meetLink = scheduleForm.meetLink.trim();
-      let calendarEventLink = "";
-      let meetError = "";
 
       const { error: scheduleError } = await supabase
         .from("applications")
         .update({
           status: "Interview Scheduled",
           interview_scheduled_at: interviewIso,
-          interview_meet_link: meetLink || selectedScheduleApp.interview_meet_link || null,
+          interview_meet_link: meetLink || null,
           interview_notes: scheduleForm.notes,
         })
         .eq("id", selectedScheduleApp.id);
 
       if (scheduleError) throw scheduleError;
 
-      if (!meetLink) {
-        setMessage("Schedule saved. Generating Google Meet link...");
-        try {
-          const meetResponse = await fetch("/api/interviews/google-meet", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              candidateName: candidateName(selectedScheduleApp),
-              candidateEmail: selectedScheduleApp.email,
-              candidatePhone: selectedScheduleApp.phone,
-              roleTitle: roleTitle(selectedScheduleApp, jobs),
-              scheduledAt: interviewIso,
-              notes: scheduleForm.notes,
-              organizerEmail: currentUser?.email,
-            }),
-          });
-          const meetData = await meetResponse.json().catch(() => ({}));
-          if (!meetResponse.ok) {
-            throw new Error(meetData.error || "Google Meet link could not be created.");
-          }
-
-          meetLink = meetData.meetLink;
-          calendarEventLink = meetData.htmlLink || "";
-          setScheduleForm((current) => ({ ...current, meetLink }));
-
-          const { error: linkError } = await supabase
-            .from("applications")
-            .update({ interview_meet_link: meetLink })
-            .eq("id", selectedScheduleApp.id);
-
-          if (linkError) throw linkError;
-        } catch (error: any) {
-          meetError = error.message || "Google Meet link could not be created.";
-        }
-      }
-
-      let applicantEmailSent = false;
-      if (meetLink && selectedScheduleApp.email) {
-        await fetch("/api/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to: selectedScheduleApp.email,
-            subject: `Interview Scheduled: ${roleTitle(selectedScheduleApp, jobs)}`,
-            html: `
-              <h2>Interview Scheduled</h2>
-              <p>Hi ${escapeHtml(candidateName(selectedScheduleApp))},</p>
-              <p>Your interview for <strong>${escapeHtml(roleTitle(selectedScheduleApp, jobs))}</strong> is scheduled for <strong>${escapeHtml(formatDate(interviewIso))}</strong>.</p>
-              <p><strong>Meeting link:</strong> <a href="${escapeHtml(meetLink)}">${escapeHtml(meetLink)}</a></p>
-              ${calendarEventLink ? `<p><strong>Calendar event:</strong> <a href="${escapeHtml(calendarEventLink)}">Open event</a></p>` : ""}
-              ${scheduleForm.notes ? `<p><strong>Notes:</strong> ${escapeHtml(scheduleForm.notes)}</p>` : ""}
-              <p>Please join a few minutes early and keep this email for your records.</p>
-              <p>Pentecost Recruitment Team</p>
-            `,
-          }),
-        })
-          .then((response) => {
-            applicantEmailSent = response.ok;
-          })
-          .catch(() => null);
-      }
-
-      if (meetLink) {
-        await fetch("/api/interviews/notify-staff", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            candidateName: candidateName(selectedScheduleApp),
-            candidateEmail: selectedScheduleApp.email,
-            candidatePhone: selectedScheduleApp.phone,
-            roleTitle: roleTitle(selectedScheduleApp, jobs),
-            scheduledAt: interviewIso,
-            meetLink,
-            calendarEventLink,
-            notes: scheduleForm.notes,
-            organizerEmail: currentUser?.email,
-          }),
-        }).catch(() => null);
-      }
-
       await fetchData();
-
-      if (meetError) {
-        setMessage(`Interview time was saved, but the Meet link and emails were not sent: ${meetError}`);
-      } else if (!meetLink) {
-        setMessage("Interview time was saved. Add a meeting link manually to notify the applicant.");
-      } else if (selectedScheduleApp.email && applicantEmailSent) {
-        setMessage("Interview scheduled. The applicant was notified, and staff can join from their dashboards.");
-      } else if (selectedScheduleApp.email) {
-        setMessage("Interview scheduled and meeting link saved, but the applicant email could not be sent.");
-      } else {
-        setMessage("Interview scheduled and meeting link saved, but the applicant has no email address on file.");
-      }
+      setMessage(
+        meetLink
+          ? "Interview scheduled and meeting link saved. HR and admins can join from their dashboards."
+          : "Interview scheduled. Add a meeting link when it is ready."
+      );
     } catch (error: any) {
       setMessage(error.message || "Interview could not be scheduled.");
     } finally {
@@ -963,10 +874,10 @@ export default function HRDashboard() {
                   </p>
                 )}
                 <input className="input-field" type="datetime-local" value={scheduleForm.datetime} onChange={(e) => setScheduleForm({ ...scheduleForm, datetime: e.target.value })} required />
-                <input className="input-field" placeholder="Google Meet link will be generated automatically, or paste one manually" value={scheduleForm.meetLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetLink: e.target.value })} />
+                <input className="input-field" placeholder="Paste meeting link for dashboard access" value={scheduleForm.meetLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetLink: e.target.value })} />
                 <textarea className="input-field" placeholder="Interview notes or venue" rows={4} value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} />
                 <button className="premium-button" type="submit" disabled={busyAction === `app-${selectedScheduleApp.id}`}>
-                  Schedule / Generate Meet Link
+                  Save Interview Schedule
                 </button>
               </form>
             </div>
