@@ -53,6 +53,15 @@ const roleMatrix = [
   { role: "Applicant", power: "Self service", detail: "Applies for vacancies and tracks application/interview status." },
 ];
 
+const adminPowerMatrix = [
+  { power: "Create, edit, and remove vacancies", roles: ["Admin", "HR"] },
+  { power: "Approve or reject CVs", roles: ["Admin", "HR"] },
+  { power: "Mark interview outcomes", roles: ["Admin", "HR"] },
+  { power: "Recommend or approve hiring", roles: ["Admin", "HR", "PRO-VC"] },
+  { power: "Override application status", roles: ["Admin"] },
+  { power: "Download institution-wide reports", roles: ["Admin", "Registrar"] },
+];
+
 function truthy(value: unknown) {
   return value === true || ["true", "yes", "1", "passed"].includes(String(value || "").toLowerCase());
 }
@@ -554,10 +563,15 @@ export default function AdminDashboard() {
                 </div>
                 <span className="rounded-full border border-[#f8b51b]/30 bg-[#f8b51b]/10 px-3 py-1 text-xs font-black text-[#f8b51b]">Full access</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {["Create, edit, and remove vacancies", "Approve or reject CVs", "Mark interview outcomes", "Recommend or approve hiring", "Override application status", "Download institution-wide reports"].map((power) => (
-                  <div key={power} className="row-card border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
-                    <strong>{power}</strong>
+              <div className="grid gap-3">
+                {adminPowerMatrix.map((item) => (
+                  <div key={item.power} className="admin-power-row border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
+                    <strong>{item.power}</strong>
+                    <div className="admin-role-chip-list">
+                      {item.roles.map((role) => (
+                        <span key={role}>{role}</span>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -630,6 +644,13 @@ export default function AdminDashboard() {
                       </div>
                       <div className="insight-card">
                         <p className="eyebrow">AI Review</p>
+                        <div className="ai-score-header">
+                          <strong>{Math.round(Number(app.similarity || 0) * 100)}% CV match</strong>
+                          <span>{decision.label}</span>
+                        </div>
+                        <div className="ai-score-bar" aria-label="AI CV match score">
+                          <span style={{ width: `${Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)))}%` }} />
+                        </div>
                         <p className="status-note">{cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status)}</p>
                       </div>
                       <div className="insight-card">
@@ -737,16 +758,37 @@ export default function AdminDashboard() {
                     <div className="best-three-list">
                       {applicants.map((app, index) => {
                         const decision = getMatchDecision(Number(app.similarity || 0));
+                        const matchPercent = Math.round(Number(app.similarity || 0) * 100);
                         return (
                           <div key={app.id} className="best-three-row">
                             <div className="best-rank">{index + 1}</div>
-                            <div>
+                            <div className="best-three-candidate">
                               <strong>{candidateName(app)}</strong>
+                              <span className="best-three-email">{app.email || "No email on file"}</span>
                               <p className="status-note">{app.email || app.phone || "No contact"} · {app.status}</p>
+                              <div className="ai-score-bar compact" aria-label="Best three CV match score">
+                                <span style={{ width: `${Math.max(0, Math.min(100, matchPercent))}%` }} />
+                              </div>
                             </div>
-                            <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
-                              {Math.round(Number(app.similarity || 0) * 100)}%
-                            </span>
+                            <div className="best-three-actions">
+                              <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
+                                {matchPercent}%
+                              </span>
+                              <select
+                                className="input-field"
+                                value=""
+                                onChange={(event) => handleDecisionAction(app, event.target.value)}
+                                disabled={busyAction === `app-${app.id}`}
+                              >
+                                <option value="">Select action...</option>
+                                <option value="approve-cv">Approve CV</option>
+                                <option value="reject-cv">Reject CV</option>
+                                <option value="pass-interview">Pass interview</option>
+                                <option value="not-pass-interview">Reject after interview</option>
+                                <option value="recommend-hire">Recommend for hire</option>
+                                <option value="approve-hire">Approve hire</option>
+                              </select>
+                            </div>
                           </div>
                         );
                       })}
