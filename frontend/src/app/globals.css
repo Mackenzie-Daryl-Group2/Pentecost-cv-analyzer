@@ -449,34 +449,6 @@ td {
   padding: 14px;
 }
 
-.admin-power-row {
-  align-items: center;
-  background: var(--surface-1);
-  border: 1px solid var(--line-soft);
-  border-radius: 12px;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  padding: 12px;
-}
-
-.admin-role-chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
-.admin-role-chip-list span {
-  background: rgba(248, 181, 27, 0.12);
-  border: 1px solid rgba(248, 181, 27, 0.28);
-  border-radius: 999px;
-  color: var(--accent-neon);
-  font-size: 0.7rem;
-  font-weight: 900;
-  padding: 5px 8px;
-}
-
 .admin-application-list {
   display: grid;
   gap: 14px;
@@ -641,6 +613,14 @@ td {
 .ai-score-bar.compact {
   height: 7px;
   margin: 8px 0 0;
+}
+
+.ai-review-summary {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .score-meter {
@@ -888,7 +868,7 @@ td {
 .best-three-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .best-three-card {
@@ -928,14 +908,14 @@ td {
 }
 
 .best-three-row {
-  align-items: center;
+  align-items: stretch;
   background: var(--surface-2);
   border: 1px solid var(--line-soft);
   border-radius: 8px;
   display: grid;
-  gap: 10px;
-  grid-template-columns: auto minmax(260px, 1fr) minmax(190px, auto);
-  padding: 10px;
+  gap: 12px;
+  grid-template-columns: auto minmax(280px, 1fr) minmax(170px, 220px);
+  padding: 12px;
 }
 
 .best-three-candidate {
@@ -952,7 +932,7 @@ td {
   display: block;
   font-size: 0.76rem;
   font-weight: 800;
-  max-width: min(100%, 420px);
+  max-width: 100%;
   overflow: hidden;
   padding: 7px 10px;
   text-overflow: ellipsis;
@@ -963,13 +943,14 @@ td {
   align-items: center;
   display: grid;
   gap: 8px;
-  justify-items: end;
-  min-width: 190px;
+  justify-items: stretch;
+  min-width: 0;
 }
 
 .best-three-actions .input-field {
-  min-width: 180px;
+  min-width: 0;
   padding: 8px 10px;
+  width: 100%;
 }
 
 .best-rank {
@@ -1738,12 +1719,10 @@ td {
     justify-self: start;
   }
 
-  .admin-power-row,
   .best-three-row {
     grid-template-columns: 1fr;
   }
 
-  .admin-role-chip-list,
   .best-three-actions {
     justify-content: flex-start;
     justify-items: stretch;

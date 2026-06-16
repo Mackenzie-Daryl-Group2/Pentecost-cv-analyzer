@@ -53,15 +53,6 @@ const roleMatrix = [
   { role: "Applicant", power: "Self service", detail: "Applies for vacancies and tracks application/interview status." },
 ];
 
-const adminPowerMatrix = [
-  { power: "Create, edit, and remove vacancies", roles: ["Admin", "HR"] },
-  { power: "Approve or reject CVs", roles: ["Admin", "HR"] },
-  { power: "Mark interview outcomes", roles: ["Admin", "HR"] },
-  { power: "Recommend or approve hiring", roles: ["Admin", "HR", "PRO-VC"] },
-  { power: "Override application status", roles: ["Admin"] },
-  { power: "Download institution-wide reports", roles: ["Admin", "Registrar"] },
-];
-
 function truthy(value: unknown) {
   return value === true || ["true", "yes", "1", "passed"].includes(String(value || "").toLowerCase());
 }
@@ -563,15 +554,10 @@ export default function AdminDashboard() {
                 </div>
                 <span className="rounded-full border border-[#f8b51b]/30 bg-[#f8b51b]/10 px-3 py-1 text-xs font-black text-[#f8b51b]">Full access</span>
               </div>
-              <div className="grid gap-3">
-                {adminPowerMatrix.map((item) => (
-                  <div key={item.power} className="admin-power-row border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
-                    <strong>{item.power}</strong>
-                    <div className="admin-role-chip-list">
-                      {item.roles.map((role) => (
-                        <span key={role}>{role}</span>
-                      ))}
-                    </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {["Create, edit, and remove vacancies", "Approve or reject CVs", "Mark interview outcomes", "Recommend or approve hiring", "Override application status", "Download institution-wide reports"].map((power) => (
+                  <div key={power} className="row-card border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
+                    <strong>{power}</strong>
                   </div>
                 ))}
               </div>
@@ -618,6 +604,8 @@ export default function AdminDashboard() {
                 const decision = getMatchDecision(Number(app.similarity || 0));
                 const interviewScore = parseInterviewScore(app.interview_notes);
                 const recommendation = interviewRecommendation(interviewScore);
+                const aiSummary = cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status);
+                const shortAiSummary = aiSummary.length > 120 ? `${aiSummary.slice(0, 117)}...` : aiSummary;
 
                 return (
                   <article key={app.id} className="admin-application-card rounded-2xl border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.025))] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
@@ -651,7 +639,7 @@ export default function AdminDashboard() {
                         <div className="ai-score-bar" aria-label="AI CV match score">
                           <span style={{ width: `${Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)))}%` }} />
                         </div>
-                        <p className="status-note">{cvAiSummary(candidateName(app), roleTitle(app, jobs), Number(app.similarity || 0), app.status)}</p>
+                        <p className="status-note ai-review-summary">{shortAiSummary}</p>
                       </div>
                       <div className="insight-card">
                         <p className="eyebrow">Interview</p>
