@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import UniversityBrand from "@/components/UniversityBrand";
+import { recordActivity } from "@/utils/audit";
 
 type AuthMode = "login" | "forgot" | "reset";
 
@@ -89,8 +90,14 @@ export default function LoginPage() {
       }
 
       if (error) throw error;
+      if (!data.user) throw new Error("Login succeeded without a user session.");
 
       const role = getUserRole(data.user);
+      await recordActivity("login", "Signed in to the recruitment portal.", {
+        entityType: "session",
+        entityId: data.user.id,
+        metadata: { role },
+      });
       router.push(role === "user" && returnTo ? returnTo : getRoleHome(role));
     } catch (error: any) {
       setMessage(error.message || "Invalid username or password");

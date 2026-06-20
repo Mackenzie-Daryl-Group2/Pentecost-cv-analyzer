@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ApplicationNotifications from "@/components/ApplicationNotifications";
 import PentecostChatbot from "@/components/PentecostChatbot";
 import ThemeToggle from "@/components/ThemeToggle";
+import ActivityTracker from "@/components/ActivityTracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
       </head>
       <body>
         {children}
+        <ActivityTracker />
         <ApplicationNotifications />
         <PentecostChatbot />
         <ThemeToggle />

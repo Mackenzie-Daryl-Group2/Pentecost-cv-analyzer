@@ -37,8 +37,31 @@ interface Application {
   staff_id?: string | null;
 }
 
-type AdminPanel = "overview" | "applications" | "recommendations" | "vacancies" | "roles" | "reports";
+type AdminPanel = "overview" | "applications" | "recommendations" | "vacancies" | "users" | "activity" | "roles" | "reports";
 type JobForm = Omit<Job, "id">;
+
+type UserProfile = {
+  id: string;
+  email?: string | null;
+  username?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  role: string;
+  last_sign_in_at?: string | null;
+  created_at: string;
+};
+
+type ActivityLog = {
+  id: number;
+  actor_email?: string | null;
+  actor_role?: string | null;
+  action: string;
+  entity_type?: string | null;
+  entity_id?: string | null;
+  description: string;
+  ip_address?: string | null;
+  created_at: string;
+};
 
 const emptyJobForm: JobForm = {
   title: "",
@@ -119,7 +142,27 @@ export default function AdminDashboard() {
   const [busyAction, setBusyAction] = useState("");
   const [activePanel, setActivePanel] = useState<AdminPanel>("overview");
   const [search, setSearch] = useState("");
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [oversightSearch, setOversightSearch] = useState("");
   const router = useRouter();
+
+  async function fetchOversight() {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+
+    const response = await fetch("/api/admin/oversight?limit=300", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setMessage(result.error || "User and activity records could not be loaded.");
+      return;
+    }
+    setProfiles(result.profiles || []);
+    setActivityLogs(result.logs || []);
+  }
 
   async function fetchData() {
     const [applicationsResponse, loadedJobs] = await Promise.all([
@@ -163,7 +206,7 @@ export default function AdminDashboard() {
       }
 
       setCurrentUser(user);
-      await fetchData();
+      await Promise.all([fetchData(), fetchOversight()]);
     };
 
     init();
@@ -193,6 +236,46 @@ export default function AdminDashboard() {
       }))
       .filter((group) => group.applicants.length);
   }, [apps, jobs]);
+  const filteredProfiles = useMemo(() => {
+    const term = oversightSearch.trim().toLowerCase();
+    if (!term) return profiles;
+    return profiles.filter((profile) =>
+      [profile.email, profile.username, profile.full_name, profile.phone, profile.role]
+        .some((value) => String(value || "").toLowerCase().includes(term))
+    );
+  }, [profiles, oversightSearch]);
+  const filteredActivityLogs = useMemo(() => {
+    const term = oversightSearch.trim().toLowerCase();
+    if (!term) return activityLogs;
+    return activityLogs.filter((log) =>
+      [log.actor_email, log.actor_role, log.action, log.description, log.entity_type, log.entity_id]
+        .some((value) => String(value || "").toLowerCase().includes(term))
+    );
+  }, [activityLogs, oversightSearch]);
+
+  async function updateUserRole(userId: string, role: string) {
+    setBusyAction(`user-${userId}`);
+    setMessage("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/oversight", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token || ""}`,
+        },
+        body: JSON.stringify({ userId, role }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Role update failed.");
+      setMessage("User role updated successfully.");
+      await fetchOversight();
+    } catch (error: any) {
+      setMessage(error.message || "User role could not be updated.");
+    } finally {
+      setBusyAction("");
+    }
+  }
 
   async function updateApplication(app: Application, updates: Partial<Application>, successMessage: string) {
     setBusyAction(`app-${app.id}`);
@@ -423,6 +506,8 @@ export default function AdminDashboard() {
     { id: "applications", label: "Applications", count: filteredApps.length },
     { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
+    { id: "users", label: "Users", count: profiles.length },
+    { id: "activity", label: "Activity Logs", count: activityLogs.length },
     { id: "roles", label: "Roles", count: roleMatrix.length },
     { id: "reports", label: "Reports", count: apps.length },
   ];
@@ -849,6 +934,108 @@ export default function AdminDashboard() {
                 <p className="status-note">No vacancies available.</p>
               )}
             </div>
+          </section>
+        )}
+
+        {activePanel === "users" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">User Directory</p>
+                <h2>Accounts and Stakeholder Roles</h2>
+                <p className="status-note">Profiles are synchronized from Supabase Auth. Admin can assign application roles here.</p>
+              </div>
+              <input
+                className="input-field"
+                value={oversightSearch}
+                onChange={(event) => setOversightSearch(event.target.value)}
+                placeholder="Search name, email, phone, or role"
+                style={{ width: "min(360px, 78vw)" }}
+              />
+            </div>
+            <div className="oversight-table-wrap">
+              <table className="data-table oversight-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Last Sign In</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProfiles.map((profile) => (
+                    <tr key={profile.id}>
+                      <td>
+                        <strong>{profile.full_name || profile.username || "Unnamed user"}</strong>
+                        <p className="status-note">{profile.username || profile.id.slice(0, 8)}</p>
+                      </td>
+                      <td>
+                        <span>{profile.email || "No email"}</span>
+                        <p className="status-note">{profile.phone || "No phone"}</p>
+                      </td>
+                      <td>
+                        <select
+                          className="input-field"
+                          value={profile.role || "user"}
+                          disabled={busyAction === `user-${profile.id}`}
+                          onChange={(event) => updateUserRole(profile.id, event.target.value)}
+                        >
+                          <option value="user">Applicant</option>
+                          <option value="hr">HR</option>
+                          <option value="pro_vc">PRO-VC</option>
+                          <option value="registrar">Registrar</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td>{profile.last_sign_in_at ? formatDate(profile.last_sign_in_at) : "Never"}</td>
+                      <td>{formatDate(profile.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!filteredProfiles.length && <p className="status-note">No users match that search.</p>}
+          </section>
+        )}
+
+        {activePanel === "activity" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Audit Center</p>
+                <h2>User Activity Logs</h2>
+                <p className="status-note">Tracks authentication, route visits, recruitment changes, and Admin role updates.</p>
+              </div>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                <input
+                  className="input-field"
+                  value={oversightSearch}
+                  onChange={(event) => setOversightSearch(event.target.value)}
+                  placeholder="Search actor, action, or record"
+                  style={{ width: "min(360px, 78vw)" }}
+                />
+                <button className="secondary-button" onClick={fetchOversight}>Refresh Logs</button>
+              </div>
+            </div>
+            <div className="activity-log-list">
+              {filteredActivityLogs.map((log) => (
+                <article key={log.id} className="activity-log-row">
+                  <div className="activity-log-marker" aria-hidden="true" />
+                  <div>
+                    <strong>{log.description}</strong>
+                    <p className="status-note">{log.actor_email || "System"} · {log.actor_role || "system"} · {log.action}</p>
+                  </div>
+                  <div>
+                    <p>{log.entity_type || "activity"}{log.entity_id ? ` #${log.entity_id}` : ""}</p>
+                    <p className="status-note">{log.ip_address || "IP unavailable"}</p>
+                  </div>
+                  <time>{formatDate(log.created_at)}</time>
+                </article>
+              ))}
+            </div>
+            {!filteredActivityLogs.length && <p className="status-note">No activity records match that search.</p>}
           </section>
         )}
 
