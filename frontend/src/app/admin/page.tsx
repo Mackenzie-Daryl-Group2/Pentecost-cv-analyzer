@@ -46,8 +46,8 @@ const emptyJobForm: JobForm = {
 };
 
 const roleMatrix = [
-  { role: "Admin", power: "Full control", detail: "Vacancies, applications, HR actions, final overrides, reports, role visibility." },
-  { role: "HR", power: "Recruitment operations", detail: "CV review, interview scheduling, interview results, hiring and onboarding." },
+  { role: "Admin", power: "System oversight", detail: "Monitors recruitment activity, recommendations, role visibility, and audit reports." },
+  { role: "HR", power: "Full recruitment control", detail: "Owns vacancies, CV decisions, interviews, hiring, onboarding, document review, and staff ID assignment." },
   { role: "PRO-VC", power: "Executive recommendation", detail: "Reviews HR reports and submits recommendation decisions." },
   { role: "Registrar", power: "Records visibility", detail: "Tracks submitted applications, interviews, and final records." },
   { role: "Applicant", power: "Self service", detail: "Applies for vacancies and tracks application/interview status." },
@@ -415,7 +415,6 @@ export default function AdminDashboard() {
     { id: "overview", label: "Overview", count: apps.length },
     { id: "applications", label: "Applications", count: filteredApps.length },
     { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
-    { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "roles", label: "Roles", count: roleMatrix.length },
     { id: "reports", label: "Reports", count: apps.length },
   ];
@@ -438,7 +437,7 @@ export default function AdminDashboard() {
             <div>
               <p className="eyebrow">Administration</p>
               <h1 className="page-title">Recruitment Command Center</h1>
-              <p className="page-subtitle max-w-3xl">Control vacancies, applications, candidate decisions, role visibility, onboarding, and reports.</p>
+              <p className="page-subtitle max-w-3xl">Monitor recruitment activity, recommendations, onboarding progress, role visibility, and audit reports.</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -589,7 +588,7 @@ export default function AdminDashboard() {
               <div>
                 <p className="eyebrow">Decision Desk</p>
                 <h2>Application Control</h2>
-                <p className="status-note">Admin has HR-level action controls plus direct status override.</p>
+                <p className="status-note">Read-only oversight. Recruitment decisions and onboarding updates are owned by HR.</p>
               </div>
               <input
                 className="input-field"
@@ -667,56 +666,10 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="application-operations">
-                      <label className="control-label">
-                        Status override
-                        <select className="input-field" value="" onChange={(event) => handleOverrideStatus(app, event.target.value)}>
-                          <option value="">Set status...</option>
-                          <option value="Admin Review">Admin Review</option>
-                          <option value="CV Passed by Admin">CV Passed by Admin</option>
-                          <option value="Recommended for Interview">Recommended for Interview</option>
-                          <option value="Interview Passed">Interview Passed</option>
-                          <option value="Recommended for Hire">Recommended for Hire</option>
-                          <option value="Awaiting Onboarding">Awaiting Onboarding</option>
-                          <option value="Hired / Onboarded">Hired / Onboarded</option>
-                          <option value="Application Closed">Application Closed</option>
-                        </select>
-                      </label>
-
-                      <label className="control-label">
-                        Decision action
-                        <select
-                          className="input-field"
-                          value=""
-                          onChange={(event) => handleDecisionAction(app, event.target.value)}
-                          disabled={busyAction === `app-${app.id}`}
-                        >
-                          <option value="">Choose action...</option>
-                          <option value="approve-cv">Approve CV</option>
-                          <option value="reject-cv">Reject CV</option>
-                          <option value="pass-interview">Pass interview</option>
-                          <option value="not-pass-interview">Reject after interview</option>
-                          <option value="recommend-hire">Recommend for hire</option>
-                          <option value="approve-hire">Approve hire</option>
-                          <option value="complete-onboarding">Complete onboarding</option>
-                        </select>
-                      </label>
-
-                      <div>
-                        <div className="onboarding-header">
-                          <strong>Onboarding</strong>
-                          <span>{app.onboarding_status || "Not started"}</span>
-                        </div>
-                        <select
-                          className="input-field"
-                          value={app.onboarding_status || ""}
-                          onChange={(event) => handleOnboardingStep(app, event.target.value)}
-                          disabled={busyAction === `app-${app.id}`}
-                        >
-                          <option value="">Not started</option>
-                          {onboardingSteps.map((step) => (
-                            <option key={step} value={step}>{step}</option>
-                          ))}
-                        </select>
+                      <div className="onboarding-callout">
+                        <strong>HR-managed record</strong>
+                        <p className="status-note">Current onboarding: {app.onboarding_status || "Not started"}</p>
+                        <p className="status-note">Admin can monitor this application but cannot change recruitment decisions.</p>
                       </div>
                     </div>
                   </article>
@@ -765,20 +718,7 @@ export default function AdminDashboard() {
                               <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
                                 {decision.label}
                               </span>
-                              <select
-                                className="input-field"
-                                value=""
-                                onChange={(event) => handleDecisionAction(app, event.target.value)}
-                                disabled={busyAction === `app-${app.id}`}
-                              >
-                                <option value="">Select action...</option>
-                                <option value="approve-cv">Approve CV</option>
-                                <option value="reject-cv">Reject CV</option>
-                                <option value="pass-interview">Pass interview</option>
-                                <option value="not-pass-interview">Reject after interview</option>
-                                <option value="recommend-hire">Recommend for hire</option>
-                                <option value="approve-hire">Approve hire</option>
-                              </select>
+                              <span className="status-note">HR decision required</span>
                             </div>
                           </div>
                         );

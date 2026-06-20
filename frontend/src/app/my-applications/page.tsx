@@ -8,6 +8,7 @@ import { getJobById } from "@/utils/jobs";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { onboardingStepByName, onboardingStepHref } from "@/utils/onboarding";
 
 interface Application {
   id: number;
@@ -17,6 +18,8 @@ interface Application {
   similarity: number;
   interview_scheduled_at: string | null;
   interview_meet_link: string | null;
+  onboarding_status?: string | null;
+  staff_id?: string | null;
 }
 
 export default function MyApplicationsPage() {
@@ -101,6 +104,7 @@ export default function MyApplicationsPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             {apps.map((app) => {
               const jobTitle = getJobById(app.job_id)?.title || "Unknown role";
+              const onboardingStep = onboardingStepByName(app.onboarding_status);
 
               return (
                 <div key={app.id} className="glass-card" style={{ padding: "24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "24px", alignItems: "center" }}>
@@ -144,6 +148,21 @@ export default function MyApplicationsPage() {
                       ) : (
                         <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Meeting link pending</p>
                       )}
+                    </div>
+                  )}
+                  {app.onboarding_status && (
+                    <div style={{ marginTop: "14px", padding: "12px", background: "var(--surface-1)", border: "1px solid var(--line-soft)", borderRadius: "8px", textAlign: "left" }}>
+                      <p className="eyebrow">Onboarding</p>
+                      <strong>{onboardingStep.title}</strong>
+                      <p className="status-note">{onboardingStep.applicantText}</p>
+                      {app.staff_id && <p className="status-note">Staff ID: <strong>{app.staff_id}</strong></p>}
+                      <button
+                        className="secondary-button"
+                        style={{ marginTop: "10px" }}
+                        onClick={() => router.push(onboardingStepHref(app.id, app.onboarding_status))}
+                      >
+                        Open Onboarding
+                      </button>
                     </div>
                   )}
                 </div>

@@ -21,6 +21,7 @@ import {
 } from "@/utils/recruitment-insights";
 import UserBadge, { Avatar } from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { generateStaffId, onboardingStepHref } from "@/utils/onboarding";
 
 interface Application {
   id: number;
@@ -42,6 +43,7 @@ interface Application {
   hr_report_sent?: boolean | string | null;
   pro_vc_approved?: boolean | string | null;
   onboarding_status?: string | null;
+  staff_id?: string | null;
 }
 
 type JobForm = Omit<Job, "id">;
@@ -323,6 +325,7 @@ export default function HRDashboard() {
       {
         onboarding_status: step,
         status: step === "Completed" ? "Hired / Onboarded" : "Awaiting Onboarding",
+        ...(step === "Completed" ? { staff_id: app.staff_id || generateStaffId(app.id) } : {}),
       },
       `Onboarding updated: ${step}.`
     );
@@ -330,7 +333,10 @@ export default function HRDashboard() {
     if (!updated) return;
 
     const email = onboardingEmailForStep(step, candidateName(app), roleTitle(app, jobs));
-    if (!email) return;
+    if (!email) {
+      router.push(onboardingStepHref(app.id, step));
+      return;
+    }
 
     const emailSent = await sendApplicantEmail(app, email.subject, email.html);
     setMessage(
@@ -340,6 +346,7 @@ export default function HRDashboard() {
           : `Onboarding updated: ${step}, but the applicant email could not be sent.`
         : `Onboarding updated: ${step}, but the applicant has no email address on file.`
     );
+    router.push(onboardingStepHref(app.id, step));
   }
 
   async function handleCreateJob(e: React.FormEvent) {
