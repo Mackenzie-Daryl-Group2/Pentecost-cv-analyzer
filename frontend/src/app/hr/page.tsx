@@ -75,8 +75,10 @@ function roleTitle(app: Application, jobs: Job[]) {
   return jobs.find((job) => job.id === Number(app.job_id))?.title || getJobById(app.job_id)?.title || `Job ${app.job_id}`;
 }
 
-function passedCv(app: Application) {
-  return truthy(app.cv_passed) || getMatchDecision(Number(app.similarity || 0)).passed || String(app.status || "").toLowerCase().includes("cv passed");
+function passedCv(app: Application, threshold: number) {
+  const status = String(app.status || "").toLowerCase();
+  const manuallyPassed = status.includes("cv passed") || status.includes("approved") || status.includes("recommended for interview");
+  return manuallyPassed || Number(app.similarity || 0) * 100 >= threshold;
 }
 
 function toDatetimeInput(value?: string | null) {
@@ -141,6 +143,8 @@ export default function HRDashboard() {
   const [applicationSearch, setApplicationSearch] = useState("");
   const [scoreForms, setScoreForms] = useState<Record<number, InterviewScoreForm>>({});
   const [portalEmail, setPortalEmail] = useState({ to: "", subject: "", message: "" });
+  const [cvPassThreshold, setCvPassThreshold] = useState(55);
+  const [thresholdDraft, setThresholdDraft] = useState("55");
   const router = useRouter();
 
   async function fetchData() {
@@ -184,21 +188,33 @@ export default function HRDashboard() {
       }
 
       setCurrentUser(user);
-      await fetchData();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const [thresholdResponse] = await Promise.all([
+        fetch("/api/settings/cv-threshold", {
+          headers: { Authorization: `Bearer ${sessionData.session?.access_token || ""}` },
+        }).catch(() => null),
+        fetchData(),
+      ]);
+      if (thresholdResponse?.ok) {
+        const thresholdData = await thresholdResponse.json();
+        const threshold = Number(thresholdData.threshold || 55);
+        setCvPassThreshold(threshold);
+        setThresholdDraft(String(threshold));
+      }
     };
 
     init();
   }, [router]);
 
-  const cvPassedApps = useMemo(() => apps.filter(passedCv), [apps]);
+  const cvPassedApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold)), [apps, cvPassThreshold]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
   const upcomingInterviewApps = useMemo(
     () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() > Date.now()),
     [scheduledApps]
   );
   const passedInterviewApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
-  const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app) && truthy(app.interview_passed)), [apps]);
-  const pendingReviewApps = useMemo(() => apps.filter((app) => !passedCv(app) && !String(app.status || "").toLowerCase().includes("not passed")), [apps]);
+  const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold) && truthy(app.interview_passed)), [apps, cvPassThreshold]);
+  const pendingReviewApps = useMemo(() => apps.filter((app) => !passedCv(app, cvPassThreshold) && !String(app.status || "").toLowerCase().includes("not passed")), [apps, cvPassThreshold]);
   const filteredApps = useMemo(() => {
     const term = applicationSearch.trim().toLowerCase();
     if (!term) return apps;
@@ -433,6 +449,35 @@ export default function HRDashboard() {
       setMessage("Email sent successfully through the HR portal.");
     } catch (error: any) {
       setMessage(error.message || "Email could not be sent.");
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function saveCvPassThreshold() {
+    const threshold = Number(thresholdDraft);
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 100) {
+      setMessage("CV pass threshold must be between 0 and 100.");
+      return;
+    }
+    setBusyAction("cv-threshold");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch("/api/settings/cv-threshold", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session?.access_token || ""}`,
+        },
+        body: JSON.stringify({ threshold }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "CV pass threshold could not be saved.");
+      setCvPassThreshold(result.threshold);
+      setThresholdDraft(String(result.threshold));
+      setMessage(`CV pass threshold updated to ${result.threshold}%.`);
+    } catch (error: any) {
+      setMessage(error.message || "CV pass threshold could not be saved.");
     } finally {
       setBusyAction("");
     }
@@ -738,22 +783,28 @@ export default function HRDashboard() {
   }
 
   function downloadReport() {
-    const lines = ["HR Final Report (CV + Interview Passed)", ""];
-    if (!hrReportApps.length) {
-      lines.push("No passed applicants yet.");
-    } else {
-      hrReportApps.forEach((app) => {
-        lines.push(
-          `${candidateName(app)} | ${app.email || ""} | ${roleTitle(app, jobs)} | Similarity ${Number(app.similarity || 0).toFixed(2)} | ${app.status}`
-        );
-      });
-    }
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Candidate", "Email", "Phone", "Role", "CV Match Percent", "CV Threshold", "Interview Score", "Interview Result", "Onboarding", "Status"],
+      ...hrReportApps.map((app) => [
+        candidateName(app),
+        app.email || "",
+        app.phone || "",
+        roleTitle(app, jobs),
+        Math.round(Number(app.similarity || 0) * 100),
+        cvPassThreshold,
+        parseInterviewScore(app.interview_notes) ?? "",
+        truthy(app.interview_passed) ? "Passed" : "Not Passed",
+        app.onboarding_status || "Not started",
+        app.status,
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "hr_final_report.txt";
+    link.download = `pentecost_hr_report_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -872,20 +923,42 @@ export default function HRDashboard() {
           </section>
         )}
 
-        <div className="tab-strip" aria-label="HR workflow sections">
-          {panels.map((panel) => (
-            <button
-              key={panel.id}
-              type="button"
-              className="tab-button"
-              data-active={activePanel === panel.id}
-              onClick={() => setActivePanel(panel.id)}
-            >
-              {panel.label}
-              <span className="tab-count">{panel.count}</span>
-            </button>
-          ))}
-        </div>
+        <div className="admin-workspace">
+          <aside className="admin-sidebar">
+            <div>
+              <p className="eyebrow">HR Sections</p>
+              <h2>Recruitment Desk</h2>
+              <p className="status-note">Move between screening, interviews, hiring, vacancies, and reporting tools.</p>
+            </div>
+            <label className="admin-section-select">
+              Quick switch
+              <select className="input-field" value={activePanel} onChange={(event) => setActivePanel(event.target.value as HrPanel)}>
+                {panels.map((panel) => (
+                  <option key={panel.id} value={panel.id}>{panel.label} ({panel.count})</option>
+                ))}
+              </select>
+            </label>
+            <nav className="admin-section-list" aria-label="HR workflow sections">
+              {panels.map((panel, index) => (
+                <button
+                  key={panel.id}
+                  type="button"
+                  className="admin-section-key"
+                  data-active={activePanel === panel.id}
+                  onClick={() => setActivePanel(panel.id)}
+                >
+                  <span className="admin-section-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="admin-section-copy">
+                    <strong>{panel.label}</strong>
+                    <small>{panel.id === "metrics" ? "Reports and email" : panel.id}</small>
+                  </span>
+                  <span className="admin-section-count">{panel.count}</span>
+                </button>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="admin-panel-surface">
 
         {activePanel === "vacancies" && (
           <>
@@ -1127,6 +1200,25 @@ export default function HRDashboard() {
               <button className="secondary-button" onClick={() => router.push("/hr/interviews")}>
                 Review Interview Scores
               </button>
+              <div className="onboarding-callout">
+                <strong>CV pass threshold</strong>
+                <p className="status-note">Applicants at or above this CV match percentage appear as passing the automatic HR screening cutoff.</p>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+                  <input
+                    className="input-field"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={thresholdDraft}
+                    onChange={(event) => setThresholdDraft(event.target.value)}
+                    style={{ width: "130px" }}
+                  />
+                  <span style={{ fontWeight: 800 }}>%</span>
+                  <button className="premium-button" type="button" disabled={busyAction === "cv-threshold"} onClick={saveCvPassThreshold}>
+                    {busyAction === "cv-threshold" ? "Saving..." : "Save Threshold"}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div className="glass-card ops-section">
@@ -1161,7 +1253,7 @@ export default function HRDashboard() {
                 style={{ width: "min(360px, 78vw)" }}
               />
               <button onClick={downloadReport} className="secondary-button">
-                Download HR Report
+                Download CSV Report
               </button>
             </div>
           </div>
@@ -1220,7 +1312,7 @@ export default function HRDashboard() {
                   <div className="hr-decision-panel">
                     <p className="eyebrow">HR Decision</p>
                     <div className="action-grid">
-                      {!passedCv(app) && (
+                      {!passedCv(app, cvPassThreshold) && (
                         <>
                           <button disabled={busyAction === `app-${app.id}`} onClick={() => handleApproveCv(app)} className="secondary-button">
                             {busyAction === `app-${app.id}` ? "Saving..." : "Approve CV"}
@@ -1233,7 +1325,7 @@ export default function HRDashboard() {
                       <button disabled={busyAction === `app-${app.id}`} onClick={() => handleRejectCv(app)} className="secondary-button">
                         {busyAction === `app-${app.id}` ? "Saving..." : "Reject CV"}
                       </button>
-                      {passedCv(app) && (
+                      {passedCv(app, cvPassThreshold) && (
                         <button disabled={busyAction === `app-${app.id}`} onClick={() => { setSelectedScheduleId(app.id); setActivePanel("interviews"); }} className="premium-button">
                           Schedule Interview
                         </button>
@@ -1249,6 +1341,8 @@ export default function HRDashboard() {
           )}
         </section>
         )}
+          </div>
+        </div>
       </div>
     </main>
   );

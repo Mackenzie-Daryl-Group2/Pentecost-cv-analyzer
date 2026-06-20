@@ -217,6 +217,10 @@ export default function AdminDashboard() {
 
   const cvPassedApps = useMemo(() => apps.filter(passedCv), [apps]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
+  const upcomingScheduledApps = useMemo(
+    () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() > Date.now()),
+    [scheduledApps]
+  );
   const interviewPassedApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
   const hiredApps = useMemo(() => apps.filter((app) => String(app.status || "").toLowerCase().includes("hired")), [apps]);
   const filteredApps = useMemo(() => {
@@ -458,15 +462,10 @@ export default function AdminDashboard() {
   }
 
   function downloadAdminReport() {
-    const lines = [
-      "Pentecost University Recruitment Admin Report",
-      `Generated: ${new Date().toLocaleString()}`,
-      "",
-      "Candidate | Email | Role | Match | CV | Interview | Mark Score | AI Recommendation | Onboarding | Status",
-    ];
-
-    apps.forEach((app) => {
-      lines.push([
+    const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Candidate", "Email", "Role", "Match", "CV", "Interview", "Mark Score", "AI Recommendation", "Onboarding", "Status"],
+      ...apps.map((app) => [
         candidateName(app),
         app.email || "",
         roleTitle(app, jobs),
@@ -477,14 +476,14 @@ export default function AdminDashboard() {
         interviewRecommendation(parseInterviewScore(app.interview_notes)).label,
         app.onboarding_status || "Not started",
         app.status || "",
-      ].join(" | "));
-    });
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "pentecost_admin_report.txt";
+    link.download = `pentecost_admin_report_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -564,7 +563,7 @@ export default function AdminDashboard() {
           ))}
         </section>
 
-        {scheduledApps.length > 0 && (
+        {upcomingScheduledApps.length > 0 && (
           <section className="glass-card upcoming-interviews rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(20,63,143,0.12))]">
             <div className="section-heading">
               <div>
@@ -576,7 +575,7 @@ export default function AdminDashboard() {
               </button>
             </div>
             <div className="meeting-list">
-              {scheduledApps.map((app) => (
+              {upcomingScheduledApps.map((app) => (
                 <article key={app.id} className="meeting-row transition duration-200 hover:border-[#f8b51b]/40 hover:bg-white/[0.075]">
                   <div className="application-profile">
                     <div className="application-avatar">{candidateName(app).slice(0, 2).toUpperCase()}</div>

@@ -145,11 +145,11 @@ function ApplyForm() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: userEmail,
-            subject: `Application Received: ${selectedJob.title}`,
+            subject: `Application Sent: ${selectedJob.title}`,
             html: `
-              <h2>Application Received!</h2>
+              <h2>Application Sent!</h2>
               <p>Hi ${fullName},</p>
-              <p>We have successfully received your application for <strong>${selectedJob.title}</strong>.</p>
+              <p>Your application for <strong>${selectedJob.title}</strong> was sent successfully and has been added to the recruitment portal.</p>
               <p>Your initial CV screening result is: <strong>${decision.label}</strong>.</p>
               <p>${decision.detail}</p>
               <p>You can check your application progress at any time in the <strong>My Applications</strong> section of your dashboard.</p>

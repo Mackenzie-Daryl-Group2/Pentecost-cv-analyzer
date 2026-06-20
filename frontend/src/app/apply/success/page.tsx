@@ -6,19 +6,19 @@ import { useRouter } from "next/navigation";
 export default function ApplySuccessPage() {
   const router = useRouter();
   const [emailStatus, setEmailStatus] = useState("sent");
-  const [decision, setDecision] = useState("Application received");
+  const [decision, setDecision] = useState("Application sent");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setEmailStatus(params.get("email") || "sent");
-    setDecision(params.get("decision") || "Application received");
+    setDecision(params.get("decision") || "Application sent");
   }, []);
 
   const emailMessage = emailStatus === "sent"
-    ? "Application received. A confirmation email was delivered to your registered address."
+    ? "Application sent. A confirmation email was delivered to your registered address."
     : emailStatus === "failed"
-      ? "Application received, but the confirmation email could not be delivered. Please contact the recruitment office if you need a receipt."
-      : "Application received. No confirmation email was delivered because no email address was available.";
+      ? "Application sent, but the confirmation email could not be delivered. Please contact the recruitment office if you need a receipt."
+      : "Application sent. No confirmation email was delivered because no email address was available.";
 
   return (
     <main style={{ padding: "40px", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", textAlign: "center" }}>
@@ -26,9 +26,9 @@ export default function ApplySuccessPage() {
         <div style={{ width: "72px", height: "72px", borderRadius: "50%", margin: "0 auto 24px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--success-bg)", border: "1px solid var(--success-border)", color: "var(--accent-neon)", fontSize: "2rem", fontWeight: "900" }}>
           ✓
         </div>
-        <h1 style={{ fontSize: "2rem", marginBottom: "16px", color: "var(--text-primary)" }}>Application Received!</h1>
+        <h1 style={{ fontSize: "2rem", marginBottom: "16px", color: "var(--text-primary)" }}>Application Sent!</h1>
         <p style={{ color: "var(--text-secondary)", marginBottom: "20px", lineHeight: "1.6" }}>
-          Thank you for applying to Pentecost University. Your application has been recorded and your initial CV review is complete.
+          Thank you for applying to Pentecost University. Your application was sent successfully and your initial CV review is complete.
         </p>
 
         <div style={{ padding: "18px", borderRadius: "14px", background: "var(--surface-1)", border: "1px solid var(--line-soft)", marginBottom: "18px" }}>
