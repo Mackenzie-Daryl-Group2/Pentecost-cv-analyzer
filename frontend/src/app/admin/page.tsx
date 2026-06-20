@@ -36,7 +36,7 @@ interface Application {
   staff_id?: string | null;
 }
 
-type AdminPanel = "overview" | "applications" | "recommendations" | "vacancies" | "users" | "activity" | "roles" | "reports";
+type AdminPanel = "overview" | "applications" | "recommendations" | "onboarding" | "vacancies" | "users" | "activity" | "roles" | "reports";
 type JobForm = Omit<Job, "id">;
 
 type UserProfile = {
@@ -223,6 +223,10 @@ export default function AdminDashboard() {
   );
   const interviewPassedApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
   const hiredApps = useMemo(() => apps.filter((app) => String(app.status || "").toLowerCase().includes("hired")), [apps]);
+  const onboardingApps = useMemo(
+    () => apps.filter((app) => truthy(app.interview_passed) || Boolean(app.onboarding_status)),
+    [apps]
+  );
   const filteredApps = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return apps;
@@ -507,6 +511,7 @@ export default function AdminDashboard() {
     { id: "overview", label: "Overview", count: apps.length },
     { id: "applications", label: "Applications", count: filteredApps.length },
     { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
+    { id: "onboarding", label: "Onboarding", count: onboardingApps.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "users", label: "Users", count: profiles.length },
     { id: "activity", label: "Activity Logs", count: activityLogs.length },
@@ -886,6 +891,60 @@ export default function AdminDashboard() {
             ) : (
               <p className="status-note">No applications have been submitted yet.</p>
             )}
+          </section>
+        )}
+
+        {activePanel === "onboarding" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Onboarding Oversight</p>
+                <h2>New Staff Workspace</h2>
+                <p className="status-note">Monitor and manage documents, references, orientation, and staff ID completion.</p>
+              </div>
+            </div>
+            <div className="admin-application-list">
+              {onboardingApps.map((app) => (
+                <article key={app.id} className="admin-application-card">
+                  <div className="application-profile">
+                    <div className="application-avatar">{candidateName(app).slice(0, 2).toUpperCase()}</div>
+                    <div>
+                      <p className="eyebrow">Candidate</p>
+                      <h3>{candidateName(app)}</h3>
+                      <p className="status-note">{app.email || app.phone || "No contact on file"}</p>
+                    </div>
+                  </div>
+                  <div className="application-intelligence">
+                    <div className="insight-card">
+                      <p className="eyebrow">Position</p>
+                      <strong>{roleTitle(app, jobs)}</strong>
+                    </div>
+                    <div className="insight-card">
+                      <p className="eyebrow">Recorded Stage</p>
+                      <strong>{app.onboarding_status || "Not started"}</strong>
+                    </div>
+                    <div className="insight-card">
+                      <p className="eyebrow">Staff ID</p>
+                      <strong>{app.staff_id || "Not assigned"}</strong>
+                    </div>
+                  </div>
+                  <div className="application-operations">
+                    <button
+                      className="premium-button"
+                      onClick={() => router.push(onboardingStepHref(app.id, app.onboarding_status || "Offer Letter Sent"))}
+                    >
+                      Open Onboarding Workspace
+                    </button>
+                    {!app.onboarding_status && (
+                      <button className="secondary-button" onClick={() => handleOnboardingStep(app, "Offer Letter Sent")}>
+                        Start Onboarding
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+            {!onboardingApps.length && <p className="status-note">No candidates are ready for onboarding yet.</p>}
           </section>
         )}
 

@@ -47,7 +47,7 @@ interface Application {
 }
 
 type JobForm = Omit<Job, "id">;
-type HrPanel = "screening" | "interviews" | "hiring" | "vacancies" | "metrics";
+type HrPanel = "screening" | "interviews" | "hiring" | "onboarding" | "vacancies" | "metrics";
 
 const emptyJobForm: JobForm = {
   title: "",
@@ -213,6 +213,10 @@ export default function HRDashboard() {
     [scheduledApps]
   );
   const passedInterviewApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
+  const onboardingApps = useMemo(
+    () => apps.filter((app) => truthy(app.interview_passed) || Boolean(app.onboarding_status)),
+    [apps]
+  );
   const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold) && truthy(app.interview_passed)), [apps, cvPassThreshold]);
   const pendingReviewApps = useMemo(() => apps.filter((app) => !passedCv(app, cvPassThreshold) && !String(app.status || "").toLowerCase().includes("not passed")), [apps, cvPassThreshold]);
   const filteredApps = useMemo(() => {
@@ -821,6 +825,7 @@ export default function HRDashboard() {
     { id: "screening", label: "Screening", count: pendingReviewApps.length || apps.length },
     { id: "interviews", label: "Interviews", count: upcomingInterviewApps.length + cvPassedApps.length },
     { id: "hiring", label: "Hiring", count: passedInterviewApps.length },
+    { id: "onboarding", label: "Onboarding", count: onboardingApps.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "metrics", label: "Metrics & Email", count: apps.length },
   ];
@@ -1170,6 +1175,76 @@ export default function HRDashboard() {
             <p style={{ color: "var(--text-secondary)" }}>No candidates have passed the interview stage yet.</p>
           )}
         </section>
+        )}
+
+        {activePanel === "onboarding" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Onboarding Workspace</p>
+                <h2>New Staff Progress</h2>
+                <p className="status-note">Open each candidate's dedicated workspace to manage documents, references, orientation, and staff ID assignment.</p>
+              </div>
+            </div>
+
+            <div className="admin-application-list">
+              {onboardingApps.map((app) => {
+                const progress = onboardingProgress(app.onboarding_status);
+                const currentStep = app.onboarding_status || "Offer Letter Sent";
+                return (
+                  <article key={app.id} className="admin-application-card">
+                    <div className="application-profile">
+                      <Avatar name={candidateName(app)} src={candidatePhotoUrl(app)} />
+                      <div>
+                        <p className="eyebrow">Candidate</p>
+                        <h3>{candidateName(app)}</h3>
+                        <p className="status-note">{app.email || app.phone || "No contact on file"}</p>
+                        <span className="status-pill">{app.status}</span>
+                      </div>
+                    </div>
+
+                    <div className="application-intelligence">
+                      <div className="insight-card">
+                        <p className="eyebrow">Position</p>
+                        <strong>{roleTitle(app, jobs)}</strong>
+                      </div>
+                      <div className="insight-card">
+                        <p className="eyebrow">Recorded Stage</p>
+                        <strong>{app.onboarding_status || "Not started"}</strong>
+                        <p className="status-note">{Math.max(0, progress + 1)} of {onboardingSteps.length} stages recorded</p>
+                      </div>
+                      <div className="insight-card">
+                        <p className="eyebrow">Staff ID</p>
+                        <strong>{app.staff_id || "Not assigned"}</strong>
+                      </div>
+                    </div>
+
+                    <div className="application-operations">
+                      <button
+                        className="premium-button"
+                        onClick={() => router.push(onboardingStepHref(app.id, currentStep))}
+                      >
+                        Open Onboarding Workspace
+                      </button>
+                      {!app.onboarding_status && (
+                        <button
+                          className="secondary-button"
+                          disabled={busyAction === `app-${app.id}`}
+                          onClick={() => handleOnboardingStep(app, "Offer Letter Sent")}
+                        >
+                          Start Onboarding
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            {!onboardingApps.length && (
+              <p className="status-note">No interview-passed candidates are ready for onboarding yet.</p>
+            )}
+          </section>
         )}
 
         {activePanel === "metrics" && (

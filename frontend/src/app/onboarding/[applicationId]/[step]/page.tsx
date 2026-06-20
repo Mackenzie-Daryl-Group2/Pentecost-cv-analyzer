@@ -340,9 +340,18 @@ export default function OnboardingStepPage() {
           </div>
 
           <aside className="glass-card ops-section onboarding-side-panel">
-            <p className="eyebrow">Progress</p>
-            <h3>{application.onboarding_status || "Not started"}</h3>
-            <p className="status-note">Status: {application.status || "Awaiting update"}</p>
+            <p className="eyebrow">Selected Step</p>
+            <h3>{pageStep.title}</h3>
+            <div className="onboarding-callout">
+              <strong>Recorded progress</strong>
+              <p>{application.onboarding_status || "Not started"}</p>
+              {application.onboarding_status !== pageStep.name && (
+                <p className="status-note">
+                  You are viewing {pageStep.title}. The recorded stage changes only after HR or Admin saves this step.
+                </p>
+              )}
+            </div>
+            <p className="status-note">Application status: {application.status || "Awaiting update"}</p>
 
             {role !== "user" && (
               <>
