@@ -167,3 +167,5 @@ drop trigger if exists audit_jobs_changes on public.jobs;
 create trigger audit_jobs_changes
 after insert or update or delete on public.jobs
 for each row execute procedure public.log_recruitment_change();
+
+notify pgrst, 'reload schema';

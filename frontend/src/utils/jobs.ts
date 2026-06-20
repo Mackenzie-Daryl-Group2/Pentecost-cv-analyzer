@@ -4,6 +4,7 @@ export interface Job {
   description: string;
   requirements: string;
   salary: string;
+  application_deadline?: string | null;
 }
 
 export const jobs: Job[] = [
@@ -41,6 +42,7 @@ function normalizeJob(job: any): Job {
     description: String(job.description || ""),
     requirements: String(job.requirements || ""),
     salary: String(job.salary || ""),
+    application_deadline: job.application_deadline ? String(job.application_deadline) : null,
   };
 }
 
@@ -59,10 +61,19 @@ export function mergeJobs(remoteJobs: any[] | null | undefined): Job[] {
 }
 
 export async function loadJobs(supabase: any): Promise<Job[]> {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("jobs")
-    .select("id,title,description,requirements,salary")
+    .select("id,title,description,requirements,salary,application_deadline")
     .order("id", { ascending: true });
+
+  if (error && ["42703", "PGRST204"].includes(String(error.code || ""))) {
+    const fallbackResponse = await supabase
+      .from("jobs")
+      .select("id,title,description,requirements,salary")
+      .order("id", { ascending: true });
+    data = fallbackResponse.data;
+    error = fallbackResponse.error;
+  }
 
   if (error || !data?.length) return jobs;
   return mergeJobs(data as any[]);
@@ -72,11 +83,21 @@ export async function loadJobById(supabase: any, jobId: string | number | null |
   const numericId = Number(jobId);
   if (!Number.isFinite(numericId)) return null;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("jobs")
-    .select("id,title,description,requirements,salary")
+    .select("id,title,description,requirements,salary,application_deadline")
     .eq("id", numericId)
     .maybeSingle();
+
+  if (error && ["42703", "PGRST204"].includes(String(error.code || ""))) {
+    const fallbackResponse = await supabase
+      .from("jobs")
+      .select("id,title,description,requirements,salary")
+      .eq("id", numericId)
+      .maybeSingle();
+    data = fallbackResponse.data;
+    error = fallbackResponse.error;
+  }
 
   if (!error && data) return normalizeJob(data);
   return getJobById(numericId);
@@ -85,4 +106,10 @@ export async function loadJobById(supabase: any, jobId: string | number | null |
 export function getJobById(jobId: string | number | null | undefined) {
   const numericId = Number(jobId);
   return jobs.find((job) => job.id === numericId) || null;
+}
+
+export function isJobClosed(job: Job, now = new Date()) {
+  if (!job.application_deadline) return false;
+  const deadline = new Date(job.application_deadline);
+  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < now.getTime();
 }

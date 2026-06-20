@@ -1162,6 +1162,54 @@ td {
   text-align: right;
 }
 
+.hr-metrics-workspace {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+}
+
+.interview-history-list {
+  display: grid;
+  gap: 12px;
+}
+
+.interview-history-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.interview-history-summary {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.7fr) minmax(130px, 0.45fr) auto;
+}
+
+.interview-history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.interview-history-card summary {
+  color: var(--accent-neon);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.interview-score-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  margin: 12px 0 10px;
+}
+
 .best-three-grid {
   display: grid;
   gap: 14px;
@@ -2024,6 +2072,16 @@ td {
   .activity-log-row time {
     grid-column: 2;
     text-align: left;
+  }
+
+  .hr-metrics-workspace,
+  .interview-history-summary,
+  .interview-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-history-actions {
+    justify-content: flex-start;
   }
 
   .application-intelligence {

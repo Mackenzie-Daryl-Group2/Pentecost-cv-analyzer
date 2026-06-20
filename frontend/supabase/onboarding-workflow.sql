@@ -62,3 +62,5 @@ create policy "HR updates onboarding"
 on public.applications for update to authenticated
 using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'))
 with check (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'));
+
+notify pgrst, 'reload schema';

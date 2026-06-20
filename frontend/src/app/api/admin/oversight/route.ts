@@ -34,10 +34,21 @@ export async function GET(req: NextRequest) {
       auth.client.from("profiles").select("*").order("created_at", { ascending: false }),
       auth.client.from("activity_logs").select("*").order("created_at", { ascending: false }).limit(limit),
     ]);
+    const missingSchema = [profileError, logError].some((error: any) =>
+      error && ["42P01", "PGRST205"].includes(String(error.code || ""))
+    );
+    if (missingSchema) {
+      return NextResponse.json({
+        profiles: [],
+        logs: [],
+        setupRequired: true,
+        setupMessage: "Run frontend/supabase/admin-oversight.sql in the active Supabase SQL Editor, then refresh the schema cache.",
+      });
+    }
     if (profileError) throw profileError;
     if (logError) throw logError;
 
-    return NextResponse.json({ profiles: profiles || [], logs: logs || [] });
+    return NextResponse.json({ profiles: profiles || [], logs: logs || [], setupRequired: false });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "Oversight data could not be loaded." }, { status: 500 });
   }

@@ -15,10 +15,10 @@ export default function ApplySuccessPage() {
   }, []);
 
   const emailMessage = emailStatus === "sent"
-    ? "A confirmation email has been sent to your registered address."
+    ? "Application received. A confirmation email was delivered to your registered address."
     : emailStatus === "failed"
-      ? "Your application was saved, but the confirmation email could not be sent. Please contact the recruitment office if you need a receipt."
-      : "Your application was saved. No confirmation email was sent because no email address was available.";
+      ? "Application received, but the confirmation email could not be delivered. Please contact the recruitment office if you need a receipt."
+      : "Application received. No confirmation email was delivered because no email address was available.";
 
   return (
     <main style={{ padding: "40px", minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", textAlign: "center" }}>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import { loadJobById, loadJobs, type Job } from "@/utils/jobs";
+import { isJobClosed, loadJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getMatchDecision } from "@/utils/match";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 
@@ -82,6 +82,10 @@ function ApplyForm() {
       return;
     }
     if (!cvFile || !photoFile || !jobId || !selectedJob) return;
+    if (isJobClosed(selectedJob)) {
+      setMessage("Applications for this vacancy have closed. Please choose another open role.");
+      return;
+    }
 
     setIsSubmitting(true);
     setMessage("");

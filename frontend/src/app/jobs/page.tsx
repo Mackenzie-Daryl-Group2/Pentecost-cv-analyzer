@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
-import { loadJobs, type Job } from "@/utils/jobs";
+import { isJobClosed, loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
@@ -98,8 +98,18 @@ export default function JobsPage() {
                     <p style={{ fontSize: "0.75rem", color: "var(--accent-neon)", fontWeight: "700", marginBottom: "8px" }}>REQUIREMENTS</p>
                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{job.requirements}</p>
                   </div>
+                  <p className="status-note" style={{ marginBottom: "16px" }}>
+                    Closing date: {job.application_deadline ? new Date(job.application_deadline).toLocaleString() : "Open until filled"}
+                  </p>
                 </div>
-                <button className="premium-button" style={{ width: "100%" }} onClick={() => handleApply(job.id)}>Apply Now</button>
+                <button
+                  className={isJobClosed(job) ? "secondary-button" : "premium-button"}
+                  style={{ width: "100%" }}
+                  disabled={isJobClosed(job)}
+                  onClick={() => handleApply(job.id)}
+                >
+                  {isJobClosed(job) ? "Applications Closed" : "Apply Now"}
+                </button>
               </div>
             ))}
           </div>

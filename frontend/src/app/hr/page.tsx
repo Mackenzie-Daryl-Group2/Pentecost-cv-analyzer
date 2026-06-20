@@ -47,13 +47,14 @@ interface Application {
 }
 
 type JobForm = Omit<Job, "id">;
-type HrPanel = "screening" | "interviews" | "hiring" | "vacancies";
+type HrPanel = "screening" | "interviews" | "hiring" | "vacancies" | "metrics";
 
 const emptyJobForm: JobForm = {
   title: "",
   description: "",
   requirements: "",
   salary: "",
+  application_deadline: null,
 };
 
 const cardStyle: React.CSSProperties = {
@@ -139,6 +140,7 @@ export default function HRDashboard() {
   const [activePanel, setActivePanel] = useState<HrPanel>("screening");
   const [applicationSearch, setApplicationSearch] = useState("");
   const [scoreForms, setScoreForms] = useState<Record<number, InterviewScoreForm>>({});
+  const [portalEmail, setPortalEmail] = useState({ to: "", subject: "", message: "" });
   const router = useRouter();
 
   async function fetchData() {
@@ -161,6 +163,7 @@ export default function HRDashboard() {
         description: loadedJobs[0].description,
         requirements: loadedJobs[0].requirements,
         salary: loadedJobs[0].salary,
+        application_deadline: loadedJobs[0].application_deadline || null,
       });
     }
     setLoading(false);
@@ -189,6 +192,10 @@ export default function HRDashboard() {
 
   const cvPassedApps = useMemo(() => apps.filter(passedCv), [apps]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
+  const upcomingInterviewApps = useMemo(
+    () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() > Date.now()),
+    [scheduledApps]
+  );
   const passedInterviewApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
   const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app) && truthy(app.interview_passed)), [apps]);
   const pendingReviewApps = useMemo(() => apps.filter((app) => !passedCv(app) && !String(app.status || "").toLowerCase().includes("not passed")), [apps]);
@@ -399,6 +406,36 @@ export default function HRDashboard() {
     }
 
     setBusyAction("");
+  }
+
+  async function handlePortalEmail(event: React.FormEvent) {
+    event.preventDefault();
+    setBusyAction("portal-email");
+    setMessage("");
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: portalEmail.to.trim(),
+          subject: portalEmail.subject.trim(),
+          html: `
+            <div style="font-family:Arial,sans-serif;line-height:1.6">
+              ${escapeHtml(portalEmail.message).replace(/\n/g, "<br/>")}
+              <p>Pentecost University HR Department</p>
+            </div>
+          `,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Email could not be sent.");
+      setPortalEmail({ to: "", subject: "", message: "" });
+      setMessage("Email sent successfully through the HR portal.");
+    } catch (error: any) {
+      setMessage(error.message || "Email could not be sent.");
+    } finally {
+      setBusyAction("");
+    }
   }
 
   async function handleScheduleInterview(e: React.FormEvent) {
@@ -725,15 +762,16 @@ export default function HRDashboard() {
     { label: "Total Vacancies", value: jobs.length },
     { label: "Total Applications", value: apps.length },
     { label: "CV Passed Candidates", value: cvPassedApps.length },
-    { label: "Scheduled Interviews", value: scheduledApps.length },
+    { label: "Upcoming Interviews", value: upcomingInterviewApps.length },
     { label: "Ready for Hiring", value: passedInterviewApps.length },
   ];
 
   const panels: Array<{ id: HrPanel; label: string; count: number }> = [
     { id: "screening", label: "Screening", count: pendingReviewApps.length || apps.length },
-    { id: "interviews", label: "Interviews", count: scheduledApps.length + cvPassedApps.length },
+    { id: "interviews", label: "Interviews", count: upcomingInterviewApps.length + cvPassedApps.length },
     { id: "hiring", label: "Hiring", count: passedInterviewApps.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
+    { id: "metrics", label: "Metrics & Email", count: apps.length },
   ];
 
   if (loading) {
@@ -785,19 +823,24 @@ export default function HRDashboard() {
           ))}
         </section>
 
-        {scheduledApps.length > 0 && (
+        {upcomingInterviewApps.length > 0 && (
           <section className="glass-card upcoming-interviews">
             <div className="section-heading">
               <div>
                 <h2>Upcoming Interview Meetings</h2>
                 <p className="status-note">Join scheduled meetings directly from the HR dashboard.</p>
               </div>
-              <button className="secondary-button" type="button" onClick={() => setActivePanel("interviews")}>
-                View Interviews
-              </button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                <button className="secondary-button" type="button" onClick={() => setActivePanel("interviews")}>
+                  Schedule Interviews
+                </button>
+                <button className="secondary-button" type="button" onClick={() => router.push("/hr/interviews")}>
+                  Interview History
+                </button>
+              </div>
             </div>
             <div className="meeting-list">
-              {scheduledApps.map((app) => (
+              {upcomingInterviewApps.map((app) => (
                 <article key={app.id} className="meeting-row">
                   <CandidateSummary app={app} jobs={jobs} detail={roleTitle(app, jobs)} />
                   <div>
@@ -853,6 +896,10 @@ export default function HRDashboard() {
             <input className="input-field" placeholder="Salary" value={newJob.salary} onChange={(e) => setNewJob({ ...newJob, salary: e.target.value })} required />
             <textarea className="input-field" placeholder="Description" rows={3} value={newJob.description} onChange={(e) => setNewJob({ ...newJob, description: e.target.value })} required />
             <textarea className="input-field" placeholder="Requirements" rows={3} value={newJob.requirements} onChange={(e) => setNewJob({ ...newJob, requirements: e.target.value })} required />
+            <label className="control-label">
+              Application cutoff
+              <input className="input-field" type="datetime-local" value={newJob.application_deadline ? toDatetimeInput(newJob.application_deadline) : ""} onChange={(e) => setNewJob({ ...newJob, application_deadline: e.target.value || null })} />
+            </label>
             <button className="premium-button" type="submit" disabled={busyAction === "create-job"} style={{ height: "48px" }}>
               {busyAction === "create-job" ? "Publishing..." : "Publish Vacancy"}
             </button>
@@ -876,6 +923,7 @@ export default function HRDashboard() {
                       description: selectedJob.description,
                       requirements: selectedJob.requirements,
                       salary: selectedJob.salary,
+                      application_deadline: selectedJob.application_deadline || null,
                     });
                   }
                 }}
@@ -888,6 +936,10 @@ export default function HRDashboard() {
               <input className="input-field" placeholder="Salary" value={editJob.salary} onChange={(e) => setEditJob({ ...editJob, salary: e.target.value })} required />
               <textarea className="input-field" placeholder="Description" rows={3} value={editJob.description} onChange={(e) => setEditJob({ ...editJob, description: e.target.value })} required />
               <textarea className="input-field" placeholder="Requirements" rows={3} value={editJob.requirements} onChange={(e) => setEditJob({ ...editJob, requirements: e.target.value })} required />
+              <label className="control-label">
+                Application cutoff
+                <input className="input-field" type="datetime-local" value={editJob.application_deadline ? toDatetimeInput(editJob.application_deadline) : ""} onChange={(e) => setEditJob({ ...editJob, application_deadline: e.target.value || null })} />
+              </label>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                 <button className="premium-button" type="submit" disabled={busyAction === "edit-job"}>{busyAction === "edit-job" ? "Updating..." : "Update Vacancy"}</button>
                 <button type="button" onClick={handleRemoveJob} disabled={busyAction === "remove-job"} style={{ background: "rgba(255,0,0,0.1)", color: "#ff8a80", border: "1px solid rgba(255,0,0,0.2)", padding: "12px 16px", borderRadius: "10px", fontWeight: "800" }}>
@@ -975,65 +1027,15 @@ export default function HRDashboard() {
         </section>
 
         <section className="glass-card" style={cardStyle}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "18px" }}>Interview Results</h2>
-          {scheduledApps.length ? (
-            <div style={{ display: "grid", gap: "12px" }}>
-              {scheduledApps.map((app) => {
-                const savedScore = parseInterviewScore(app.interview_notes);
-                const scoreForm = scoreFormFor(app.id);
-                const draftScore = interviewScoreTotal(scoreForm);
-                const recommendation = interviewRecommendation(savedScore);
-
-                return (
-                  <div key={app.id} style={{ display: "grid", gap: "12px", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.04)" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(220px, 1fr) auto", gap: "12px", alignItems: "center" }}>
-                      <CandidateSummary app={app} jobs={jobs} detail={roleTitle(app, jobs)} />
-                      <div>
-                        <p style={{ color: "var(--text-secondary)", fontSize: "0.86rem" }}>{formatDate(app.interview_scheduled_at)}</p>
-                        <p style={{ color: "var(--accent-neon)", fontWeight: "800", marginTop: "4px" }}>
-                          Mark score: {savedScore === null ? "Not scored" : `${savedScore}/100`}
-                        </p>
-                        <p className="status-note">{recommendation.label} - {recommendation.detail}</p>
-                        {app.interview_meet_link && (
-                          <a
-                            href={app.interview_meet_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="secondary-button"
-                            style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}
-                          >
-                            Join Meeting
-                          </a>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", flexWrap: "wrap" }}>
-                        <button onClick={() => handleInterviewResult(app, true)} style={{ background: "var(--success-bg)", color: "var(--accent-neon)", border: "1px solid var(--success-border)", padding: "9px 12px", borderRadius: "8px", fontWeight: "800" }}>Passed</button>
-                        <button onClick={() => handleInterviewResult(app, false)} style={{ background: "var(--surface-1)", color: "var(--text-primary)", border: "1px solid var(--line-soft)", padding: "9px 12px", borderRadius: "8px", fontWeight: "800" }}>Not Passed</button>
-                      </div>
-                    </div>
-                    <details>
-                      <summary style={{ cursor: "pointer", color: "var(--accent-neon)", fontWeight: "800" }}>Interview scoring sheet</summary>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginTop: "12px" }}>
-                        <input className="input-field" type="number" min="0" max="25" placeholder="Communication /25" value={scoreForm.communication} onChange={(event) => updateScoreForm(app.id, { communication: event.target.value })} />
-                        <input className="input-field" type="number" min="0" max="25" placeholder="Role knowledge /25" value={scoreForm.roleKnowledge} onChange={(event) => updateScoreForm(app.id, { roleKnowledge: event.target.value })} />
-                        <input className="input-field" type="number" min="0" max="25" placeholder="Experience /25" value={scoreForm.experience} onChange={(event) => updateScoreForm(app.id, { experience: event.target.value })} />
-                        <input className="input-field" type="number" min="0" max="25" placeholder="Culture fit /25" value={scoreForm.cultureFit} onChange={(event) => updateScoreForm(app.id, { cultureFit: event.target.value })} />
-                      </div>
-                      <textarea className="input-field" rows={3} placeholder="Panel notes" value={scoreForm.notes} onChange={(event) => updateScoreForm(app.id, { notes: event.target.value })} style={{ marginTop: "10px" }} />
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", marginTop: "10px" }}>
-                        <p className="status-note">Draft score: {draftScore}/100 - {interviewRecommendation(draftScore).label}</p>
-                        <button className="premium-button" onClick={() => handleSaveInterviewScore(app)} disabled={busyAction === `app-${app.id}`}>
-                          Save Score
-                        </button>
-                      </div>
-                    </details>
-                  </div>
-                );
-              })}
+          <div className="section-heading">
+            <div>
+              <h2>Interview Score Archive</h2>
+              <p className="status-note">Past, upcoming, completed, and unscored interview sessions are kept on a dedicated review page.</p>
             </div>
-          ) : (
-            <p style={{ color: "var(--text-secondary)" }}>No interview schedule has been added yet.</p>
-          )}
+            <button className="premium-button" onClick={() => router.push("/hr/interviews")}>
+              Open Interview History
+            </button>
+          </div>
         </section>
           </>
         )}
@@ -1095,6 +1097,52 @@ export default function HRDashboard() {
             <p style={{ color: "var(--text-secondary)" }}>No candidates have passed the interview stage yet.</p>
           )}
         </section>
+        )}
+
+        {activePanel === "metrics" && (
+          <section className="hr-metrics-workspace">
+            <div className="glass-card ops-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">Recruitment Metrics</p>
+                  <h2>Hiring Funnel</h2>
+                  <p className="status-note">Live measurements calculated from the current application records.</p>
+                </div>
+              </div>
+              <div className="metric-grid">
+                {[
+                  ["CV pass rate", apps.length ? `${Math.round((cvPassedApps.length / apps.length) * 100)}%` : "0%"],
+                  ["Interview scheduling rate", cvPassedApps.length ? `${Math.round((scheduledApps.length / cvPassedApps.length) * 100)}%` : "0%"],
+                  ["Interview pass rate", scheduledApps.length ? `${Math.round((passedInterviewApps.length / scheduledApps.length) * 100)}%` : "0%"],
+                  ["Awaiting review", pendingReviewApps.length],
+                  ["Upcoming interviews", upcomingInterviewApps.length],
+                  ["Completed interviews", scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() <= Date.now()).length],
+                ].map(([label, value]) => (
+                  <div key={label} className="glass-card metric-card">
+                    <p>{label}</p>
+                    <h2>{value}</h2>
+                  </div>
+                ))}
+              </div>
+              <button className="secondary-button" onClick={() => router.push("/hr/interviews")}>
+                Review Interview Scores
+              </button>
+            </div>
+
+            <div className="glass-card ops-section">
+              <p className="eyebrow">Portal Email</p>
+              <h2 style={{ marginBottom: "8px" }}>Send Recruitment Email</h2>
+              <p className="status-note" style={{ marginBottom: "16px" }}>Send a direct message to an applicant, stakeholder, or staff email address.</p>
+              <form onSubmit={handlePortalEmail} style={{ display: "grid", gap: "12px" }}>
+                <input className="input-field" type="email" placeholder="Recipient email" value={portalEmail.to} onChange={(event) => setPortalEmail({ ...portalEmail, to: event.target.value })} required />
+                <input className="input-field" placeholder="Email subject" value={portalEmail.subject} onChange={(event) => setPortalEmail({ ...portalEmail, subject: event.target.value })} required />
+                <textarea className="input-field" rows={8} placeholder="Write the email message" value={portalEmail.message} onChange={(event) => setPortalEmail({ ...portalEmail, message: event.target.value })} required />
+                <button className="premium-button" disabled={busyAction === "portal-email"}>
+                  {busyAction === "portal-email" ? "Sending..." : "Send Email"}
+                </button>
+              </form>
+            </div>
+          </section>
         )}
 
         {activePanel === "screening" && (

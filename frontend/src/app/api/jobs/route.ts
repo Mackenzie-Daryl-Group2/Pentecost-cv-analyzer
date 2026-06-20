@@ -12,6 +12,7 @@ type JobPayload = {
   description?: string;
   requirements?: string;
   salary?: string;
+  application_deadline?: string | null;
 };
 
 function env(name: string) {
@@ -59,12 +60,18 @@ function validateJob(payload: JobPayload) {
   const description = String(payload.description || "").trim();
   const requirements = String(payload.requirements || "").trim();
   const salary = String(payload.salary || "").trim();
+  let applicationDeadline: string | null = null;
+  if (payload.application_deadline) {
+    const deadline = new Date(String(payload.application_deadline));
+    if (Number.isNaN(deadline.getTime())) throw new Error("A valid application cutoff date is required.");
+    applicationDeadline = deadline.toISOString();
+  }
 
   if (!title || !description || !requirements || !salary) {
     throw new Error("Job title, description, requirements, and salary are required.");
   }
 
-  return { title, description, requirements, salary };
+  return { title, description, requirements, salary, application_deadline: applicationDeadline };
 }
 
 export async function POST(req: NextRequest) {
@@ -90,7 +97,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await admin
       .from("jobs")
       .insert({ id: nextId, ...job })
-      .select("id,title,description,requirements,salary")
+      .select("id,title,description,requirements,salary,application_deadline")
       .single();
 
     if (error) throw error;
@@ -116,7 +123,7 @@ export async function PUT(req: NextRequest) {
     const { data, error } = await supabaseAdmin()
       .from("jobs")
       .upsert({ id, ...job }, { onConflict: "id" })
-      .select("id,title,description,requirements,salary")
+      .select("id,title,description,requirements,salary,application_deadline")
       .single();
 
     if (error) throw error;

@@ -10,7 +10,6 @@ import {
   cvAiSummary,
   interviewRecommendation,
   onboardingEmailForStep,
-  onboardingSteps,
   parseInterviewScore,
 } from "@/utils/recruitment-insights";
 import UserBadge from "@/components/UserBadge";
@@ -68,6 +67,7 @@ const emptyJobForm: JobForm = {
   description: "",
   requirements: "",
   salary: "",
+  application_deadline: null,
 };
 
 const roleMatrix = [
@@ -145,6 +145,7 @@ export default function AdminDashboard() {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [oversightSearch, setOversightSearch] = useState("");
+  const [oversightSetupRequired, setOversightSetupRequired] = useState(false);
   const router = useRouter();
 
   async function fetchOversight() {
@@ -160,6 +161,7 @@ export default function AdminDashboard() {
       setMessage(result.error || "User and activity records could not be loaded.");
       return;
     }
+    setOversightSetupRequired(Boolean(result.setupRequired));
     setProfiles(result.profiles || []);
     setActivityLogs(result.logs || []);
   }
@@ -185,6 +187,7 @@ export default function AdminDashboard() {
         description: firstJob.description,
         requirements: firstJob.requirements,
         salary: firstJob.salary,
+        application_deadline: firstJob.application_deadline || null,
       });
     }
 
@@ -545,6 +548,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {oversightSetupRequired && (
+          <div className="glass-card onboarding-message">
+            User and activity tables are not installed in this Supabase project. Run <strong>frontend/supabase/admin-oversight.sql</strong> in Supabase SQL Editor, then reload.
+          </div>
+        )}
+
         <section className="metric-grid">
           {metricCards.map((metric, index) => (
             <div key={metric.label} className={`glass-card metric-card group relative overflow-hidden rounded-2xl border-white/10 bg-gradient-to-br ${metricAccentClasses[index]} transition duration-200 hover:-translate-y-1 hover:border-[#f8b51b]/40 hover:shadow-[0_18px_55px_rgba(0,0,0,0.24)]`}>
@@ -798,17 +807,13 @@ export default function AdminDashboard() {
                           <strong>Onboarding</strong>
                           <span>{app.onboarding_status || "Not started"}</span>
                         </div>
-                        <select
-                          className="input-field"
-                          value={app.onboarding_status || ""}
-                          onChange={(event) => handleOnboardingStep(app, event.target.value)}
-                          disabled={busyAction === `app-${app.id}`}
+                        <button
+                          className="secondary-button"
+                          type="button"
+                          onClick={() => router.push(onboardingStepHref(app.id, app.onboarding_status || "Offer Letter Sent"))}
                         >
-                          <option value="">Not started</option>
-                          {onboardingSteps.map((step) => (
-                            <option key={step} value={step}>{step}</option>
-                          ))}
-                        </select>
+                          Open Onboarding Workspace
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -894,6 +899,10 @@ export default function AdminDashboard() {
                 <input className="input-field" placeholder="Salary" value={newJob.salary} onChange={(event) => setNewJob({ ...newJob, salary: event.target.value })} required />
                 <textarea className="input-field" placeholder="Description" rows={3} value={newJob.description} onChange={(event) => setNewJob({ ...newJob, description: event.target.value })} required />
                 <textarea className="input-field" placeholder="Requirements" rows={3} value={newJob.requirements} onChange={(event) => setNewJob({ ...newJob, requirements: event.target.value })} required />
+                <label className="control-label">
+                  Application cutoff
+                  <input className="input-field" type="datetime-local" value={newJob.application_deadline ? new Date(new Date(newJob.application_deadline).getTime() - new Date(newJob.application_deadline).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={(event) => setNewJob({ ...newJob, application_deadline: event.target.value || null })} />
+                </label>
                 <button className="premium-button" disabled={busyAction === "create-job"}>{busyAction === "create-job" ? "Publishing..." : "Publish Vacancy"}</button>
               </form>
             </div>
@@ -915,6 +924,7 @@ export default function AdminDashboard() {
                           description: selectedJob.description,
                           requirements: selectedJob.requirements,
                           salary: selectedJob.salary,
+                          application_deadline: selectedJob.application_deadline || null,
                         });
                       }
                     }}
@@ -925,6 +935,10 @@ export default function AdminDashboard() {
                   <input className="input-field" placeholder="Salary" value={editJob.salary} onChange={(event) => setEditJob({ ...editJob, salary: event.target.value })} required />
                   <textarea className="input-field" placeholder="Description" rows={3} value={editJob.description} onChange={(event) => setEditJob({ ...editJob, description: event.target.value })} required />
                   <textarea className="input-field" placeholder="Requirements" rows={3} value={editJob.requirements} onChange={(event) => setEditJob({ ...editJob, requirements: event.target.value })} required />
+                  <label className="control-label">
+                    Application cutoff
+                    <input className="input-field" type="datetime-local" value={editJob.application_deadline ? new Date(new Date(editJob.application_deadline).getTime() - new Date(editJob.application_deadline).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ""} onChange={(event) => setEditJob({ ...editJob, application_deadline: event.target.value || null })} />
+                  </label>
                   <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                     <button className="premium-button" disabled={busyAction === "edit-job"}>{busyAction === "edit-job" ? "Saving..." : "Save Vacancy"}</button>
                     <button type="button" className="danger-button" disabled={busyAction === "remove-job"} onClick={handleRemoveJob}>{busyAction === "remove-job" ? "Removing..." : "Remove Vacancy"}</button>
