@@ -35,7 +35,8 @@ export default function JobsPage() {
 
   const handleApply = (jobId: number) => {
     if (!user) {
-      router.push(`/login?message=${encodeURIComponent("Please create an account or sign in to apply for a job.")}`);
+      const returnTo = `/apply?jobId=${jobId}`;
+      router.push(`/login?message=${encodeURIComponent("Please create an account or sign in to apply for this job.")}&next=${encodeURIComponent(returnTo)}`);
       return;
     }
 

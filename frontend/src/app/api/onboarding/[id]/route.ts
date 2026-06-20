@@ -28,7 +28,7 @@ async function loadApplication(id: string) {
 
 function canAccess(user: any, application: any) {
   const role = getUserRole(user);
-  return role === "hr" || (role === "user" && String(application.email || "").toLowerCase() === String(user.email || "").toLowerCase());
+  return role === "hr" || role === "admin" || (role === "user" && String(application.email || "").toLowerCase() === String(user.email || "").toLowerCase());
 }
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     const body = await req.json();
     const updates: Record<string, unknown> = { onboarding_updated_at: new Date().toISOString() };
 
-    if (role === "hr") {
+    if (role === "hr" || role === "admin") {
       const allowed = [
         "onboarding_status",
         "onboarding_documents",

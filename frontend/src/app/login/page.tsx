@@ -20,13 +20,16 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [returnTo, setReturnTo] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const msg = searchParams.get("message");
+    const next = searchParams.get("next");
 
     if (msg) setSuccessMessage(msg);
+    if (next && next.startsWith("/") && !next.startsWith("//")) setReturnTo(next);
   }, []);
 
   const loginHint = useMemo(() => {
@@ -87,7 +90,8 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      router.push(getRoleHome(getUserRole(data.user)));
+      const role = getUserRole(data.user);
+      router.push(role === "user" && returnTo ? returnTo : getRoleHome(role));
     } catch (error: any) {
       setMessage(error.message || "Invalid username or password");
     } finally {
@@ -325,7 +329,7 @@ export default function LoginPage() {
             <button onClick={() => router.push("/")} style={{ background: "none", border: "none", color: "var(--text-secondary)", fontSize: "0.85rem", cursor: "pointer" }}>
               Back to Home
             </button>
-            <button onClick={() => router.push("/signup")} style={{ background: "none", border: "none", color: "var(--accent-neon)", fontSize: "0.85rem", cursor: "pointer", fontWeight: "800" }}>
+            <button onClick={() => router.push(returnTo ? `/signup?next=${encodeURIComponent(returnTo)}` : "/signup")} style={{ background: "none", border: "none", color: "var(--accent-neon)", fontSize: "0.85rem", cursor: "pointer", fontWeight: "800" }}>
               Create Account
             </button>
           </div>

@@ -47,8 +47,8 @@ async function requireStaff(req: NextRequest) {
   if (error || !data.user) return { error: "Invalid session.", status: 401 } as const;
 
   const role = getUserRole(data.user);
-  if (role !== "hr") {
-    return { error: "Only HR can manage vacancies.", status: 403 } as const;
+  if (role !== "hr" && role !== "admin") {
+    return { error: "Only HR and Admin can manage vacancies.", status: 403 } as const;
   }
 
   return { user: data.user, role } as const;

@@ -35,7 +35,7 @@ export default function OnboardingStepPage() {
   const params = useParams<{ applicationId: string; step: string }>();
   const router = useRouter();
   const [application, setApplication] = useState<OnboardingApplication | null>(null);
-  const [role, setRole] = useState<"user" | "hr">("user");
+  const [role, setRole] = useState<"user" | "hr" | "admin">("user");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -185,11 +185,11 @@ export default function OnboardingStepPage() {
         <header className="app-topbar">
           <UniversityBrand />
           <div>
-            <p className="eyebrow">{role === "hr" ? "HR Onboarding Workspace" : "My Onboarding"}</p>
+            <p className="eyebrow">{role === "user" ? "My Onboarding" : `${role === "admin" ? "Admin" : "HR"} Onboarding Workspace`}</p>
             <h1 className="page-title">{pageStep.title}</h1>
             <p className="page-subtitle">{applicantName} · {roleName}</p>
           </div>
-          <button className="secondary-button" onClick={() => router.push(role === "hr" ? "/hr" : "/my-applications")}>
+          <button className="secondary-button" onClick={() => router.push(role === "admin" ? "/admin" : role === "hr" ? "/hr" : "/my-applications")}>
             Back to dashboard
           </button>
         </header>
@@ -236,7 +236,7 @@ export default function OnboardingStepPage() {
 
             {(pageStep.slug === "offer-accepted" || pageStep.slug === "documents") && (
               <>
-                {role === "hr" && pageStep.slug === "documents" && (
+                {role !== "user" && pageStep.slug === "documents" && (
                   <div className="onboarding-requirements">
                     <div>
                       <strong>Required documents</strong>
@@ -295,7 +295,7 @@ export default function OnboardingStepPage() {
                         {document && (
                           <div className="onboarding-document-actions">
                             <button className="secondary-button" onClick={() => openDocument(document)}>View</button>
-                            {role === "hr" && (
+                            {role !== "user" && (
                               <>
                                 <button className="secondary-button" onClick={() => reviewDocument(document.id, "approved")}>Approve</button>
                                 <button className="danger-button" onClick={() => reviewDocument(document.id, "rejected")}>Reject</button>
@@ -344,7 +344,7 @@ export default function OnboardingStepPage() {
             <h3>{application.onboarding_status || "Not started"}</h3>
             <p className="status-note">Status: {application.status || "Awaiting update"}</p>
 
-            {role === "hr" && (
+            {role !== "user" && (
               <>
                 <label className="control-label">
                   HR notes

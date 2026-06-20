@@ -47,18 +47,18 @@ using (
       from public.applications
       where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
     )
-    or coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager')
+    or coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin')
   )
 );
 
 drop policy if exists "HR manages onboarding documents" on storage.objects;
 create policy "HR manages onboarding documents"
 on storage.objects for all to authenticated
-using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager'))
-with check (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager'));
+using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'))
+with check (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'));
 
 drop policy if exists "HR updates onboarding" on public.applications;
 create policy "HR updates onboarding"
 on public.applications for update to authenticated
-using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager'))
-with check (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager'));
+using (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'))
+with check (coalesce(auth.jwt() -> 'user_metadata' ->> 'role', '') in ('hr', 'hr_manager', 'admin'));

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/utils/supabase";
 import { useRouter } from "next/navigation";
 import UniversityBrand from "@/components/UniversityBrand";
@@ -17,7 +17,13 @@ export default function SignupPage() {
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [returnTo, setReturnTo] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (next && next.startsWith("/") && !next.startsWith("//")) setReturnTo(next);
+  }, []);
 
   const handleRequestAccount = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,7 +96,7 @@ export default function SignupPage() {
       const loginMessage = emailResponse?.ok
         ? "Account created successfully. Please log in."
         : "Account created successfully, but the welcome email could not be sent. Please log in.";
-      router.push(`/login?message=${encodeURIComponent(loginMessage)}`);
+      router.push(`/login?message=${encodeURIComponent(loginMessage)}${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ""}`);
     } catch (error: any) {
       setMessage(error.message || "Invalid verification code");
     } finally {

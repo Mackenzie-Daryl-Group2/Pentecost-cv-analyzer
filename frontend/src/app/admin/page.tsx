@@ -15,6 +15,7 @@ import {
 } from "@/utils/recruitment-insights";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { generateStaffId, onboardingStepHref } from "@/utils/onboarding";
 
 interface Application {
   id: number;
@@ -33,6 +34,7 @@ interface Application {
   hr_report_sent?: boolean | string | null;
   pro_vc_approved?: boolean | string | null;
   onboarding_status?: string | null;
+  staff_id?: string | null;
 }
 
 type AdminPanel = "overview" | "applications" | "recommendations" | "vacancies" | "roles" | "reports";
@@ -46,8 +48,8 @@ const emptyJobForm: JobForm = {
 };
 
 const roleMatrix = [
-  { role: "Admin", power: "System oversight", detail: "Monitors recruitment activity, recommendations, role visibility, and audit reports." },
-  { role: "HR", power: "Full recruitment control", detail: "Owns vacancies, CV decisions, interviews, hiring, onboarding, document review, and staff ID assignment." },
+  { role: "Admin", power: "Full control and oversight", detail: "Oversees every stakeholder role while retaining vacancy, application, decision, onboarding, override, and reporting powers." },
+  { role: "HR", power: "Recruitment operations", detail: "Leads CV review, interviews, hiring, onboarding, document review, and staff ID assignment." },
   { role: "PRO-VC", power: "Executive recommendation", detail: "Reviews HR reports and submits recommendation decisions." },
   { role: "Registrar", power: "Records visibility", detail: "Tracks submitted applications, interviews, and final records." },
   { role: "Applicant", power: "Self service", detail: "Applies for vacancies and tracks application/interview status." },
@@ -345,6 +347,7 @@ export default function AdminDashboard() {
       {
         onboarding_status: step,
         status: step === "Completed" ? "Hired / Onboarded" : "Awaiting Onboarding",
+        ...(step === "Completed" ? { staff_id: app.staff_id || generateStaffId(app.id) } : {}),
       },
       `Onboarding updated: ${step}.`
     );
@@ -352,7 +355,10 @@ export default function AdminDashboard() {
     if (!updated) return;
 
     const email = onboardingEmailForStep(step, candidateName(app), roleTitle(app, jobs));
-    if (!email) return;
+    if (!email) {
+      router.push(onboardingStepHref(app.id, step));
+      return;
+    }
 
     const emailSent = await sendApplicantEmail(app, email.subject, email.html);
     setMessage(
@@ -362,6 +368,7 @@ export default function AdminDashboard() {
           : `Onboarding updated: ${step}, but the applicant email could not be sent.`
         : `Onboarding updated: ${step}, but the applicant has no email address on file.`
     );
+    router.push(onboardingStepHref(app.id, step));
   }
 
   function downloadAdminReport() {
@@ -415,6 +422,7 @@ export default function AdminDashboard() {
     { id: "overview", label: "Overview", count: apps.length },
     { id: "applications", label: "Applications", count: filteredApps.length },
     { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
+    { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "roles", label: "Roles", count: roleMatrix.length },
     { id: "reports", label: "Reports", count: apps.length },
   ];
@@ -437,7 +445,7 @@ export default function AdminDashboard() {
             <div>
               <p className="eyebrow">Administration</p>
               <h1 className="page-title">Recruitment Command Center</h1>
-              <p className="page-subtitle max-w-3xl">Monitor recruitment activity, recommendations, onboarding progress, role visibility, and audit reports.</p>
+              <p className="page-subtitle max-w-3xl">Oversee stakeholder roles while retaining full control of vacancies, applications, decisions, onboarding, and reports.</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -588,7 +596,7 @@ export default function AdminDashboard() {
               <div>
                 <p className="eyebrow">Decision Desk</p>
                 <h2>Application Control</h2>
-                <p className="status-note">Read-only oversight. Recruitment decisions and onboarding updates are owned by HR.</p>
+                <p className="status-note">Admin oversight with full decision, status, hiring, and onboarding controls.</p>
               </div>
               <input
                 className="input-field"
@@ -666,10 +674,56 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="application-operations">
-                      <div className="onboarding-callout">
-                        <strong>HR-managed record</strong>
-                        <p className="status-note">Current onboarding: {app.onboarding_status || "Not started"}</p>
-                        <p className="status-note">Admin can monitor this application but cannot change recruitment decisions.</p>
+                      <label className="control-label">
+                        Status override
+                        <select className="input-field" value="" onChange={(event) => handleOverrideStatus(app, event.target.value)}>
+                          <option value="">Set status...</option>
+                          <option value="Admin Review">Admin Review</option>
+                          <option value="CV Passed by Admin">CV Passed by Admin</option>
+                          <option value="Recommended for Interview">Recommended for Interview</option>
+                          <option value="Interview Passed">Interview Passed</option>
+                          <option value="Recommended for Hire">Recommended for Hire</option>
+                          <option value="Awaiting Onboarding">Awaiting Onboarding</option>
+                          <option value="Hired / Onboarded">Hired / Onboarded</option>
+                          <option value="Application Closed">Application Closed</option>
+                        </select>
+                      </label>
+
+                      <label className="control-label">
+                        Decision action
+                        <select
+                          className="input-field"
+                          value=""
+                          onChange={(event) => handleDecisionAction(app, event.target.value)}
+                          disabled={busyAction === `app-${app.id}`}
+                        >
+                          <option value="">Choose action...</option>
+                          <option value="approve-cv">Approve CV</option>
+                          <option value="reject-cv">Reject CV</option>
+                          <option value="pass-interview">Pass interview</option>
+                          <option value="not-pass-interview">Reject after interview</option>
+                          <option value="recommend-hire">Recommend for hire</option>
+                          <option value="approve-hire">Approve hire</option>
+                          <option value="complete-onboarding">Complete onboarding</option>
+                        </select>
+                      </label>
+
+                      <div>
+                        <div className="onboarding-header">
+                          <strong>Onboarding</strong>
+                          <span>{app.onboarding_status || "Not started"}</span>
+                        </div>
+                        <select
+                          className="input-field"
+                          value={app.onboarding_status || ""}
+                          onChange={(event) => handleOnboardingStep(app, event.target.value)}
+                          disabled={busyAction === `app-${app.id}`}
+                        >
+                          <option value="">Not started</option>
+                          {onboardingSteps.map((step) => (
+                            <option key={step} value={step}>{step}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </article>
@@ -718,7 +772,20 @@ export default function AdminDashboard() {
                               <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
                                 {decision.label}
                               </span>
-                              <span className="status-note">HR decision required</span>
+                              <select
+                                className="input-field"
+                                value=""
+                                onChange={(event) => handleDecisionAction(app, event.target.value)}
+                                disabled={busyAction === `app-${app.id}`}
+                              >
+                                <option value="">Select action...</option>
+                                <option value="approve-cv">Approve CV</option>
+                                <option value="reject-cv">Reject CV</option>
+                                <option value="pass-interview">Pass interview</option>
+                                <option value="not-pass-interview">Reject after interview</option>
+                                <option value="recommend-hire">Recommend for hire</option>
+                                <option value="approve-hire">Approve hire</option>
+                              </select>
                             </div>
                           </div>
                         );
