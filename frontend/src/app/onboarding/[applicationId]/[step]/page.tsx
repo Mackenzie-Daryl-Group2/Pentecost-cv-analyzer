@@ -200,7 +200,7 @@ export default function OnboardingStepPage() {
             <p className="page-subtitle">{applicantName} · {roleName}</p>
           </div>
           <button className="secondary-button" onClick={() => router.push(role === "admin" ? "/admin" : role === "hr" ? "/hr" : "/my-applications")}>
-            Back to dashboard
+            Dashboard
           </button>
         </header>
 

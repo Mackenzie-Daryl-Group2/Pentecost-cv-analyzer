@@ -197,7 +197,7 @@ export default function InterviewHistoryPage() {
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
             <UserBadge user={user} label="Staff account" onUserUpdated={setUser} />
-            <button className="secondary-button" onClick={() => router.push(getUserRole(user) === "admin" ? "/admin" : "/hr")}>Back to Dashboard</button>
+            <button className="secondary-button" onClick={() => router.push(getUserRole(user) === "admin" ? "/admin" : "/hr")}>Dashboard</button>
           </div>
         </header>
 

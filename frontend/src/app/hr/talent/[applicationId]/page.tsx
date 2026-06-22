@@ -219,7 +219,7 @@ export default function TalentOutreachPage() {
           </div>
           <div className="topbar-actions">
             <UserBadge user={currentUser} label="HR account" onUserUpdated={setCurrentUser} />
-            <button className="secondary-button" onClick={() => router.push(getUserRole(currentUser) === "admin" ? "/admin" : "/hr")}>Back to Dashboard</button>
+            <button className="secondary-button" onClick={() => router.push(getUserRole(currentUser) === "admin" ? "/admin" : "/hr")}>Dashboard</button>
           </div>
         </header>
 
