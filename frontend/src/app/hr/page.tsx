@@ -17,6 +17,7 @@ import {
 import UserBadge, { Avatar } from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
 import { generateStaffId, onboardingStepHref, parseOnboardingDocuments } from "@/utils/onboarding";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 interface Application {
   id: number;
@@ -236,7 +237,11 @@ export default function HRDashboard() {
   const cvPassedApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold)), [apps, cvPassThreshold]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
   const upcomingInterviewApps = useMemo(
-    () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() > Date.now()),
+    () => scheduledApps.filter((app) =>
+      new Date(app.interview_scheduled_at || "").getTime() > Date.now()
+      && app.interview_passed !== true
+      && app.interview_passed !== false
+    ),
     [scheduledApps]
   );
   const passedInterviewApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
@@ -1079,12 +1084,12 @@ export default function HRDashboard() {
                     <strong>{formatDate(app.interview_scheduled_at)}</strong>
                   </div>
                   <div className="meeting-actions">
-                    {app.interview_meet_link ? (
-                      <a className="premium-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">
+                    {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                      <a className="premium-button" href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">
                         Join Meeting
                       </a>
                     ) : (
-                      <span className="status-note">No meeting link saved</span>
+                      <span className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</span>
                     )}
                     <button
                       className="secondary-button"
@@ -1267,10 +1272,10 @@ export default function HRDashboard() {
                     <p className="eyebrow">Position</p>
                     <strong>{roleTitle(selectedScheduleApp, jobs)}</strong>
                   </div>
-                  {selectedScheduleApp.interview_meet_link && (
+                  {canJoinInterview(selectedScheduleApp.interview_scheduled_at, selectedScheduleApp.interview_meet_link, selectedScheduleApp.interview_passed, selectedScheduleApp.status) && (
                     <a
                       className="secondary-button"
-                      href={selectedScheduleApp.interview_meet_link}
+                      href={selectedScheduleApp.interview_meet_link || ""}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -1285,7 +1290,11 @@ export default function HRDashboard() {
                   </span>
                   <span>
                     <small>Meeting status</small>
-                    <strong>{selectedScheduleApp.interview_meet_link ? "Link ready" : "Link not generated"}</strong>
+                    <strong>
+                      {canJoinInterview(selectedScheduleApp.interview_scheduled_at, selectedScheduleApp.interview_meet_link, selectedScheduleApp.interview_passed, selectedScheduleApp.status)
+                        ? "Link ready"
+                        : interviewAccessMessage(selectedScheduleApp.interview_scheduled_at, selectedScheduleApp.interview_passed, selectedScheduleApp.status)}
+                    </strong>
                   </span>
                 </div>
                 {message && (

@@ -15,6 +15,7 @@ import {
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
 import { generateStaffId, onboardingStepHref } from "@/utils/onboarding";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 interface Application {
   id: number;
@@ -218,7 +219,11 @@ export default function AdminDashboard() {
   const cvPassedApps = useMemo(() => apps.filter(passedCv), [apps]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
   const upcomingScheduledApps = useMemo(
-    () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() > Date.now()),
+    () => scheduledApps.filter((app) =>
+      new Date(app.interview_scheduled_at || "").getTime() > Date.now()
+      && app.interview_passed !== true
+      && app.interview_passed !== false
+    ),
     [scheduledApps]
   );
   const interviewPassedApps = useMemo(() => apps.filter((app) => truthy(app.interview_passed)), [apps]);
@@ -595,12 +600,12 @@ export default function AdminDashboard() {
                     <strong>{formatDate(app.interview_scheduled_at)}</strong>
                   </div>
                   <div className="meeting-actions">
-                    {app.interview_meet_link ? (
-                      <a className="premium-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">
+                    {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                      <a className="premium-button" href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">
                         Join Meeting
                       </a>
                     ) : (
-                      <span className="status-note">No meeting link saved</span>
+                      <span className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</span>
                     )}
                     <button className="secondary-button" type="button" onClick={() => setActivePanel("applications")}>
                       Details
@@ -757,10 +762,10 @@ export default function AdminDashboard() {
                           <span style={{ width: `${interviewScore === null ? 0 : interviewScore}%` }} />
                         </div>
                         <p className="status-note"><strong>{interviewScore === null ? "Not scored" : `${interviewScore}/100`}</strong> · {recommendation.label}</p>
-                        {app.interview_meet_link && (
+                        {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) && (
                           <a
                             className="secondary-button"
-                            href={app.interview_meet_link}
+                            href={app.interview_meet_link || ""}
                             target="_blank"
                             rel="noreferrer"
                             style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}

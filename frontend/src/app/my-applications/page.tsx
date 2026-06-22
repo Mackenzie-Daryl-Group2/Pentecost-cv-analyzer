@@ -15,6 +15,7 @@ import {
 import { onboardingStepByName, onboardingStepHref } from "@/utils/onboarding";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 interface Application {
   id: string | number;
@@ -29,6 +30,7 @@ interface Application {
   cv_replaced_at?: string | null;
   interview_scheduled_at?: string | null;
   interview_meet_link?: string | null;
+  interview_passed?: boolean | string | null;
   onboarding_status?: string | null;
   staff_id?: string | null;
   talent_pool_consent?: boolean | null;
@@ -257,10 +259,14 @@ export default function MyApplicationsPage() {
                       {app.interview_scheduled_at && (
                         <div className="applicant-update-box">
                           <strong>Interview: {new Date(app.interview_scheduled_at).toLocaleString()}</strong>
-                          {app.interview_meet_link && <a href={app.interview_meet_link} target="_blank" rel="noreferrer">Join Google Meet</a>}
+                          {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                            <a href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">Join Google Meet</a>
+                          ) : app.interview_meet_link ? (
+                            <p className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</p>
+                          ) : null}
                         </div>
                       )}
-                      {app.onboarding_status && (
+                      {app.onboarding_status && (app.interview_passed === true || ["true", "yes", "1", "passed"].includes(String(app.interview_passed || "").toLowerCase())) && (
                         <div className="applicant-update-box">
                           <strong>{onboardingStep.title}</strong>
                           <p className="status-note">{onboardingStep.applicantText}</p>

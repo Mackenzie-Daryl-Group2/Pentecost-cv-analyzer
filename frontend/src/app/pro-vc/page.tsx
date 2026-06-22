@@ -7,6 +7,7 @@ import { getJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 interface Application {
   id: number;
@@ -155,11 +156,11 @@ export default function ProVcDashboard() {
                 <div key={app.id} style={{ padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.04)" }}>
                   <strong>{candidateName(app)} - {roleTitle(app, jobs)}</strong>
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "6px" }}>{app.interview_scheduled_at} | {app.interview_notes || "No notes"}</p>
-                  {app.interview_meet_link && (
-                    <a href={app.interview_meet_link} target="_blank" rel="noreferrer" style={{ color: "var(--accent-neon)", fontSize: "0.82rem", fontWeight: "800", display: "inline-block", marginTop: "8px" }}>
+                  {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                    <a href={app.interview_meet_link || ""} target="_blank" rel="noreferrer" style={{ color: "var(--accent-neon)", fontSize: "0.82rem", fontWeight: "800", display: "inline-block", marginTop: "8px" }}>
                       Join Google Meet
                     </a>
-                  )}
+                  ) : app.interview_meet_link ? <p className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</p> : null}
                 </div>
               ))}
             </div>

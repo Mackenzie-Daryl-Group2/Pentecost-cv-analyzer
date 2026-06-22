@@ -28,7 +28,10 @@ async function loadApplication(id: string) {
 
 function canAccess(user: any, application: any) {
   const role = getUserRole(user);
-  return role === "hr" || role === "admin" || (role === "user" && String(application.email || "").toLowerCase() === String(user.email || "").toLowerCase());
+  const interviewPassed = application.interview_passed === true
+    || ["true", "yes", "1", "passed"].includes(String(application.interview_passed || "").toLowerCase());
+  const ownsApplication = String(application.email || "").toLowerCase() === String(user.email || "").toLowerCase();
+  return role === "hr" || role === "admin" || (role === "user" && ownsApplication && interviewPassed);
 }
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {

@@ -19,6 +19,7 @@ import {
 } from "@/utils/interview-panel";
 import UniversityBrand from "@/components/UniversityBrand";
 import UserBadge from "@/components/UserBadge";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 type Application = {
   id: string | number;
@@ -241,7 +242,11 @@ export default function InterviewHistoryPage() {
                       </p>
                     </div>
                     <div className="interview-history-actions">
-                      {app.interview_meet_link && !isPast && <a className="secondary-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">Join</a>}
+                      {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                        <a className="secondary-button" href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">Join</a>
+                      ) : app.interview_meet_link ? (
+                        <span className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</span>
+                      ) : null}
                       <button className="secondary-button" disabled={busyId === String(app.id)} onClick={() => setResult(app, true)}>Passed</button>
                       <button className="danger-button" disabled={busyId === String(app.id)} onClick={() => setResult(app, false)}>Not Passed</button>
                     </div>

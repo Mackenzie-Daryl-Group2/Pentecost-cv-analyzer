@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getJobById } from "@/utils/jobs";
 import { getUserRole, isApplicantRole } from "@/utils/roles";
 import { supabase } from "@/utils/supabase";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 type ApplicationNotice = {
   id: number;
@@ -13,6 +14,7 @@ type ApplicationNotice = {
   submitted_at?: string | null;
   interview_scheduled_at?: string | null;
   interview_meet_link?: string | null;
+  interview_passed?: boolean | string | null;
   onboarding_status?: string | null;
 };
 
@@ -58,7 +60,7 @@ export default function ApplicationNotifications() {
       setIsApplicant(true);
       const { data } = await supabase
         .from("applications")
-        .select("id,job_id,status,submitted_at,interview_scheduled_at,interview_meet_link,onboarding_status")
+        .select("id,job_id,status,submitted_at,interview_scheduled_at,interview_meet_link,interview_passed,onboarding_status")
         .eq("email", user.email || "")
         .order("submitted_at", { ascending: false });
 
@@ -139,9 +141,11 @@ export default function ApplicationNotifications() {
                     {app.interview_scheduled_at && (
                       <p className="status-note">Interview: {formatDate(app.interview_scheduled_at)}</p>
                     )}
-                    {app.interview_meet_link && (
-                      <a className="notification-link" href={app.interview_meet_link} target="_blank" rel="noreferrer">Open meeting link</a>
-                    )}
+                    {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, app.interview_passed, app.status) ? (
+                      <a className="notification-link" href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">Open meeting link</a>
+                    ) : app.interview_meet_link ? (
+                      <p className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</p>
+                    ) : null}
                   </article>
                 );
               })}

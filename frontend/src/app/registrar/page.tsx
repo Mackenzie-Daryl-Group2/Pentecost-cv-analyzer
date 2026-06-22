@@ -14,6 +14,7 @@ import {
 import { type InterviewPanelScore } from "@/utils/interview-panel";
 import UserBadge from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
+import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
 
 interface Application {
   id: string | number;
@@ -208,11 +209,11 @@ export default function RegistrarDashboard() {
                         <strong>{savedScore ? `${savedScore.total_score}/100` : "Not scored"}</strong>
                         <p className="status-note">{recommendation.label}</p>
                       </div>
-                      {app.interview_meet_link && scheduledAt.getTime() > Date.now() && (
-                        <a className="secondary-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">
+                      {canJoinInterview(app.interview_scheduled_at, app.interview_meet_link, undefined, app.status) ? (
+                        <a className="secondary-button" href={app.interview_meet_link || ""} target="_blank" rel="noreferrer">
                           Join Interview
                         </a>
-                      )}
+                      ) : app.interview_meet_link ? <span className="status-note">{interviewAccessMessage(app.interview_scheduled_at, undefined, app.status)}</span> : null}
                     </div>
 
                     <div className="interview-score-grid">
