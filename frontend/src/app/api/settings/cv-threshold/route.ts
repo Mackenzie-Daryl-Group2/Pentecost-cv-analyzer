@@ -58,6 +58,15 @@ export async function PATCH(req: NextRequest) {
       updated_by: auth.user.id,
       updated_at: new Date().toISOString(),
     });
+    if (error && ["42P01", "PGRST205"].includes(String(error.code || ""))) {
+      return NextResponse.json(
+        {
+          error: "Recruitment settings are not installed yet. Run frontend/supabase/recruitment-settings.sql in the active Supabase project.",
+          setupRequired: true,
+        },
+        { status: 503 }
+      );
+    }
     if (error) throw error;
 
     return NextResponse.json({ success: true, threshold: Math.round(threshold) });
