@@ -136,6 +136,7 @@ export default function HRDashboard() {
   const [editJobId, setEditJobId] = useState<number | null>(null);
   const [editJob, setEditJob] = useState<JobForm>(emptyJobForm);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
+  const [selectedHiringId, setSelectedHiringId] = useState<number | null>(null);
   const [scheduleForm, setScheduleForm] = useState({ datetime: "", meetLink: "", notes: "" });
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState("");
@@ -244,6 +245,12 @@ export default function HRDashboard() {
   }, [cvPassedApps, selectedScheduleId]);
 
   useEffect(() => {
+    if (passedInterviewApps.length && !passedInterviewApps.some((app) => app.id === selectedHiringId)) {
+      setSelectedHiringId(passedInterviewApps[0].id);
+    }
+  }, [passedInterviewApps, selectedHiringId]);
+
+  useEffect(() => {
     const selected = apps.find((app) => app.id === selectedScheduleId);
     if (!selected) return;
 
@@ -255,6 +262,7 @@ export default function HRDashboard() {
   }, [apps, selectedScheduleId]);
 
   const selectedScheduleApp = apps.find((app) => app.id === selectedScheduleId);
+  const selectedHiringApp = passedInterviewApps.find((app) => app.id === selectedHiringId);
 
   async function updateApplication(appId: number, updates: Partial<Application>, successMessage: string) {
     setBusyAction(`app-${appId}`);
@@ -1127,57 +1135,130 @@ export default function HRDashboard() {
         )}
 
         {activePanel === "hiring" && (
-        <section className="glass-card" style={cardStyle}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "18px" }}>Final Hiring Approval & Onboarding</h2>
-          {passedInterviewApps.length ? (
-            <div style={{ display: "grid", gap: "12px" }}>
-              {passedInterviewApps.map((app) => {
-                const progress = onboardingProgress(app.onboarding_status);
-                const savedScore = parseInterviewScore(app.interview_notes);
+        <section className="glass-card hr-hiring-workspace" style={cardStyle}>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Final Decision Desk</p>
+              <h2>Hiring Approval</h2>
+              <p className="status-note">Select an interview-passed candidate, review their status, and complete the hiring decision.</p>
+            </div>
+            <span className="status-pill">{passedInterviewApps.length} ready</span>
+          </div>
+          {passedInterviewApps.length && selectedHiringApp ? (
+            <div className="hr-hiring-layout">
+              <div className="hr-hiring-roster">
+                <div className="hr-schedule-roster-heading">
+                  <div>
+                    <p className="eyebrow">Candidate Shortlist</p>
+                    <strong>Passed interviews</strong>
+                  </div>
+                  <span>{passedInterviewApps.length}</span>
+                </div>
+                <div className="hr-hiring-candidate-list">
+                  {passedInterviewApps.map((app) => {
+                    const isSelected = selectedHiringId === app.id;
+                    const savedScore = parseInterviewScore(app.interview_notes);
+                    const recommendationState = app.pro_vc_approved
+                      ? "PRO-VC approved"
+                      : truthy(app.hr_report_sent)
+                        ? "Recommended"
+                        : "Awaiting decision";
+                    return (
+                      <button
+                        key={app.id}
+                        type="button"
+                        className="hr-hiring-candidate"
+                        data-active={isSelected}
+                        onClick={() => setSelectedHiringId(app.id)}
+                      >
+                        <div className="hr-schedule-candidate-main">
+                          <CandidateSummary app={app} jobs={jobs} detail={app.email || app.phone || "No contact on file"} />
+                          <span className="hr-schedule-selection">{isSelected ? "Selected" : "Select"}</span>
+                        </div>
+                        <div className="hr-hiring-candidate-meta">
+                          <span><small>Position</small><strong>{roleTitle(app, jobs)}</strong></span>
+                          <span><small>Interview</small><strong>{savedScore === null ? "Passed · score pending" : `${savedScore}/100`}</strong></span>
+                          <span><small>Decision</small><strong>{recommendationState}</strong></span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
+              {(() => {
+                const progress = onboardingProgress(selectedHiringApp.onboarding_status);
+                const savedScore = parseInterviewScore(selectedHiringApp.interview_notes);
+                const recommendation = interviewRecommendation(savedScore);
                 return (
-                  <div key={app.id} style={{ display: "grid", gap: "12px", padding: "14px", borderRadius: "12px", background: "rgba(255,255,255,0.04)" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "minmax(240px, 1fr) minmax(180px, auto) auto", gap: "12px", alignItems: "center" }}>
+                  <div className="hr-hiring-decision">
+                    <div className="hr-hiring-profile">
                       <CandidateSummary
-                        app={app}
+                        app={selectedHiringApp}
                         jobs={jobs}
-                        detail={`${roleTitle(app, jobs)} | ${app.pro_vc_approved ? "Recommended by PRO-VC" : truthy(app.hr_report_sent) ? "Recommended for hire; awaiting PRO-VC" : "Ready for HR decision"}`}
+                        detail={selectedHiringApp.email || selectedHiringApp.phone || "No contact on file"}
                       />
+                      <span className="status-pill">{selectedHiringApp.status}</span>
+                    </div>
+
+                    <div className="hr-hiring-summary">
                       <div>
-                        <span style={{ color: "var(--accent-neon)", fontWeight: "800" }}>{app.onboarding_status || "Not started"}</span>
-                        <p className="status-note">Interview score: {savedScore === null ? "Not scored" : `${savedScore}/100`}</p>
+                        <p className="eyebrow">Position</p>
+                        <strong>{roleTitle(selectedHiringApp, jobs)}</strong>
                       </div>
-                      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", flexWrap: "wrap" }}>
-                        <button disabled={busyAction === `app-${app.id}` || truthy(app.hr_report_sent)} onClick={() => handleRecommendForHire(app)} style={{ background: "var(--surface-1)", color: "var(--text-primary)", border: "1px solid var(--line-soft)", padding: "9px 12px", borderRadius: "8px", fontWeight: "800", opacity: truthy(app.hr_report_sent) ? 0.55 : 1 }}>
-                          {truthy(app.hr_report_sent) ? "Recommended" : "Recommend for Hire"}
-                        </button>
-                        <button disabled={busyAction === `app-${app.id}`} onClick={() => handleHiring(app)} className="premium-button">Approve Candidate</button>
+                      <div>
+                        <p className="eyebrow">Interview Score</p>
+                        <strong>{savedScore === null ? "Not recorded" : `${savedScore}/100`}</strong>
+                        <p className="status-note">{recommendation.label}</p>
+                      </div>
+                      <div>
+                        <p className="eyebrow">Onboarding Stage</p>
+                        <strong>{selectedHiringApp.onboarding_status || "Not started"}</strong>
                       </div>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px" }}>
-                      {onboardingSteps.map((step, index) => (
-                        <button
-                          key={step}
-                          type="button"
-                          onClick={() => handleOnboardingStep(app, step)}
-                          disabled={busyAction === `app-${app.id}`}
-                          style={{
-                            background: index <= progress ? "var(--success-bg)" : "var(--surface-1)",
-                            color: index <= progress ? "var(--accent-neon)" : "var(--text-secondary)",
-                            border: index <= progress ? "1px solid var(--success-border)" : "1px solid var(--line-soft)",
-                            padding: "9px 10px",
-                            borderRadius: "8px",
-                            fontWeight: "800",
-                            textAlign: "left",
-                          }}
-                        >
-                          {step}
-                        </button>
-                      ))}
+
+                    <div className="hr-hiring-actions">
+                      <button
+                        className="secondary-button"
+                        disabled={busyAction === `app-${selectedHiringApp.id}` || truthy(selectedHiringApp.hr_report_sent)}
+                        onClick={() => handleRecommendForHire(selectedHiringApp)}
+                      >
+                        {truthy(selectedHiringApp.hr_report_sent) ? "Recommended for Hire" : "Recommend for Hire"}
+                      </button>
+                      <button
+                        disabled={busyAction === `app-${selectedHiringApp.id}`}
+                        onClick={() => handleHiring(selectedHiringApp)}
+                        className="premium-button"
+                      >
+                        {busyAction === `app-${selectedHiringApp.id}` ? "Processing..." : "Approve Candidate"}
+                      </button>
+                    </div>
+
+                    <div className="hr-onboarding-stage-panel">
+                      <div>
+                        <p className="eyebrow">Onboarding Progress</p>
+                        <strong>Update the candidate's current stage</strong>
+                      </div>
+                      <div className="hr-onboarding-stage-grid">
+                        {onboardingSteps.map((step, index) => (
+                          <button
+                            key={step}
+                            type="button"
+                            className="hr-onboarding-stage"
+                            data-complete={index <= progress}
+                            data-current={index === progress}
+                            onClick={() => handleOnboardingStep(selectedHiringApp, step)}
+                            disabled={busyAction === `app-${selectedHiringApp.id}`}
+                          >
+                            <span>{index + 1}</span>
+                            <strong>{step}</strong>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 );
-              })}
+              })()}
             </div>
           ) : (
             <p style={{ color: "var(--text-secondary)" }}>No candidates have passed the interview stage yet.</p>
