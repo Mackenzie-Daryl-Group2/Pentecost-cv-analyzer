@@ -1173,6 +1173,35 @@ td {
   gap: 3px;
 }
 
+.talent-email-success {
+  align-items: center;
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+}
+
+.talent-email-success > span {
+  align-items: center;
+  background: var(--accent-neon);
+  border-radius: 999px;
+  color: var(--button-text);
+  display: flex;
+  flex: none;
+  font-size: 0.9rem;
+  font-weight: 900;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.talent-email-success p {
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
 .admin-application-card {
   background: linear-gradient(180deg, var(--surface-1), rgba(255, 255, 255, 0.025));
   border: 1px solid var(--line-soft);

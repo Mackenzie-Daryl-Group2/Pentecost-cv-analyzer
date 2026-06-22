@@ -58,6 +58,11 @@ export default function TalentOutreachPage() {
   const [closing, setClosing] = useState("Kind regards,\nHuman Resources Department\nPentecost University");
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [message, setMessage] = useState("");
+  const [sentConfirmation, setSentConfirmation] = useState<{
+    recipient: string;
+    vacancyCount: number;
+    sentAt: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
@@ -154,6 +159,7 @@ export default function TalentOutreachPage() {
 
     setSending(true);
     setMessage("");
+    setSentConfirmation(null);
     const { data: sessionData } = await supabase.auth.getSession();
     const response = await fetch(`/api/talent-outreach/${application.id}`, {
       method: "POST",
@@ -187,7 +193,12 @@ export default function TalentOutreachPage() {
         },
       }
     );
-    setMessage(`Career opportunity email sent to ${application.email}.`);
+    setMessage("");
+    setSentConfirmation({
+      recipient: application.email,
+      vacancyCount: selectedJobs.length,
+      sentAt: new Date().toISOString(),
+    });
     setSending(false);
   }
 
@@ -213,6 +224,19 @@ export default function TalentOutreachPage() {
         </header>
 
         {message && <div className="glass-card onboarding-message" role="status">{message}</div>}
+        {sentConfirmation && (
+          <div className="glass-card talent-email-success" role="status" aria-live="polite">
+            <span aria-hidden="true">✓</span>
+            <div>
+              <strong>Email sent successfully</strong>
+              <p>
+                Sent to {sentConfirmation.recipient} with {sentConfirmation.vacancyCount} potential
+                {sentConfirmation.vacancyCount === 1 ? " vacancy" : " vacancies"} at{" "}
+                {new Date(sentConfirmation.sentAt).toLocaleTimeString()}.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="talent-outreach-layout">
           <aside className="glass-card ops-section talent-contact-profile">
@@ -287,8 +311,8 @@ export default function TalentOutreachPage() {
               <span><small>Selected vacancies</small><strong>{selectedJobs.length}</strong></span>
               <span><small>Delivery</small><strong>Portal SMTP email</strong></span>
             </div>
-            <button className="premium-button" disabled={sending || !selectedJobs.length || !application.email || !application.talent_pool_consent}>
-              {sending ? "Sending Email..." : "Send Opportunity Email"}
+            <button className="premium-button" disabled={sending || Boolean(sentConfirmation) || !selectedJobs.length || !application.email || !application.talent_pool_consent}>
+              {sending ? "Sending Email..." : sentConfirmation ? "Email Sent" : "Send Opportunity Email"}
             </button>
           </form>
         </div>
