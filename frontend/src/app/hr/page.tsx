@@ -1537,7 +1537,7 @@ export default function HRDashboard() {
                     <div className="insight-card"><p className="eyebrow">Retention</p><strong>{app.retention_until ? new Date(app.retention_until).toLocaleDateString() : "Not set"}</strong></div>
                   </div>
                   <div className="application-operations">
-                    {app.email && <a className="premium-button" href={`mailto:${app.email}?subject=${encodeURIComponent("Pentecost University Career Opportunity")}`}>Contact Candidate</a>}
+                    {app.email && <button className="premium-button" onClick={() => router.push(`/hr/talent/${app.id}`)}>Contact Candidate</button>}
                     <button className="secondary-button" disabled={busyAction === `talent-${app.id}`} onClick={() => updateTalentPool(app, false)}>Remove from Pool</button>
                   </div>
                 </article>
