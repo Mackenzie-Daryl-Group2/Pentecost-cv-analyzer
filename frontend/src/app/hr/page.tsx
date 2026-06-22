@@ -1006,68 +1006,104 @@ export default function HRDashboard() {
 
         {activePanel === "interviews" && (
           <>
-        <section className="glass-card" style={cardStyle}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "18px" }}>Applicants Who Passed CV Mark</h2>
+        <section className="glass-card hr-interview-scheduler" style={cardStyle}>
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Interview Scheduling</p>
+              <h2>Applicants Who Passed CV Mark</h2>
+              <p className="status-note">Select a candidate, review their details, then schedule the interview from the panel beside them.</p>
+            </div>
+            <span className="status-pill">{cvPassedApps.length} qualified</span>
+          </div>
           {cvPassedApps.length && selectedScheduleApp ? (
             <div className="hr-schedule-workspace">
-              <div className="hr-schedule-candidate-list">
-                {cvPassedApps.map((app) => {
-                  const decision = getMatchDecision(Number(app.similarity || 0));
-                  const isSelected = selectedScheduleId === app.id;
-                  return (
-                    <button
-                      key={app.id}
-                      type="button"
-                      className="hr-schedule-candidate"
-                      data-active={isSelected}
-                      onClick={() => setSelectedScheduleId(app.id)}
-                    >
-                      <CandidateSummary app={app} jobs={jobs} detail={app.email || app.phone || "No contact on file"} />
-                      <div>
-                        <p className="eyebrow">Role</p>
-                        <strong>{roleTitle(app, jobs)}</strong>
-                        <span style={{ ...getMatchStyle(decision.tone), display: "inline-block", marginTop: "8px", padding: "6px 10px", borderRadius: "999px", fontSize: "0.7rem", fontWeight: "800" }}>
-                          {decision.label}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="eyebrow">Schedule</p>
-                        <strong>{formatDate(app.interview_scheduled_at)}</strong>
-                        <p className="status-note">{app.interview_meet_link ? "Meeting link saved" : "No meeting link yet"}</p>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="hr-schedule-roster">
+                <div className="hr-schedule-roster-heading">
+                  <div>
+                    <p className="eyebrow">Qualified Candidates</p>
+                    <strong>Select an applicant</strong>
+                  </div>
+                  <span>{cvPassedApps.length}</span>
+                </div>
+                <div className="hr-schedule-candidate-list">
+                  {cvPassedApps.map((app) => {
+                    const decision = getMatchDecision(Number(app.similarity || 0));
+                    const isSelected = selectedScheduleId === app.id;
+                    const matchPercent = Math.round(Number(app.similarity || 0) * 100);
+                    return (
+                      <button
+                        key={app.id}
+                        type="button"
+                        className="hr-schedule-candidate"
+                        data-active={isSelected}
+                        onClick={() => setSelectedScheduleId(app.id)}
+                      >
+                        <div className="hr-schedule-candidate-main">
+                          <CandidateSummary app={app} jobs={jobs} detail={app.email || app.phone || "No contact on file"} />
+                          <span className="hr-schedule-selection" aria-hidden="true">{isSelected ? "Selected" : "Select"}</span>
+                        </div>
+                        <div className="hr-schedule-candidate-meta">
+                          <span><small>Role</small><strong>{roleTitle(app, jobs)}</strong></span>
+                          <span><small>CV match</small><strong>{matchPercent}% · {decision.label}</strong></span>
+                          <span><small>Interview</small><strong>{app.interview_scheduled_at ? formatDate(app.interview_scheduled_at) : "Not scheduled"}</strong></span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <form onSubmit={handleScheduleInterview} className="hr-schedule-form">
-                <div>
-                  <p className="eyebrow">Schedule meeting for</p>
-                  <h3>{candidateName(selectedScheduleApp)} - {roleTitle(selectedScheduleApp, jobs)}</h3>
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "6px" }}>Current schedule: {formatDate(selectedScheduleApp.interview_scheduled_at)}</p>
-                  <p className="status-note" style={{ marginTop: "8px" }}>{selectedScheduleApp.email || "No applicant email on file"}</p>
+                <div className="hr-schedule-form-header">
+                  <CandidateSummary
+                    app={selectedScheduleApp}
+                    jobs={jobs}
+                    detail={selectedScheduleApp.email || "No applicant email on file"}
+                  />
+                  <div className="hr-schedule-role">
+                    <p className="eyebrow">Position</p>
+                    <strong>{roleTitle(selectedScheduleApp, jobs)}</strong>
+                  </div>
                   {selectedScheduleApp.interview_meet_link && (
                     <a
                       className="secondary-button"
                       href={selectedScheduleApp.interview_meet_link}
                       target="_blank"
                       rel="noreferrer"
-                      style={{ display: "inline-flex", marginTop: "10px", textDecoration: "none" }}
                     >
                       Join Meeting
                     </a>
                   )}
                 </div>
+                <div className="hr-schedule-current">
+                  <span>
+                    <small>Current schedule</small>
+                    <strong>{formatDate(selectedScheduleApp.interview_scheduled_at)}</strong>
+                  </span>
+                  <span>
+                    <small>Meeting status</small>
+                    <strong>{selectedScheduleApp.interview_meet_link ? "Link ready" : "Link not generated"}</strong>
+                  </span>
+                </div>
                 {message && (
-                  <p className="status-note" style={{ background: "var(--surface-1)", border: "1px solid var(--line-soft)", borderRadius: "8px", padding: "10px" }}>
+                  <p className="status-note hr-schedule-message">
                     {message}
                   </p>
                 )}
-                <input className="input-field" type="datetime-local" value={scheduleForm.datetime} onChange={(e) => setScheduleForm({ ...scheduleForm, datetime: e.target.value })} required />
-                <input className="input-field" placeholder="Google Meet link will be generated automatically, or paste one manually" value={scheduleForm.meetLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetLink: e.target.value })} />
-                <textarea className="input-field" placeholder="Interview notes or venue" rows={4} value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} />
+                <label className="control-label">
+                  Interview date and time
+                  <input className="input-field" type="datetime-local" value={scheduleForm.datetime} onChange={(e) => setScheduleForm({ ...scheduleForm, datetime: e.target.value })} required />
+                </label>
+                <label className="control-label">
+                  Google Meet link
+                  <input className="input-field" placeholder="Generated automatically, or paste a link" value={scheduleForm.meetLink} onChange={(e) => setScheduleForm({ ...scheduleForm, meetLink: e.target.value })} />
+                </label>
+                <label className="control-label">
+                  Interview notes or venue
+                  <textarea className="input-field" placeholder="Add panel instructions, venue, or preparation notes" rows={4} value={scheduleForm.notes} onChange={(e) => setScheduleForm({ ...scheduleForm, notes: e.target.value })} />
+                </label>
                 <button className="premium-button" type="submit" disabled={busyAction === `app-${selectedScheduleApp.id}`}>
-                  Schedule / Generate Meet Link
+                  {busyAction === `app-${selectedScheduleApp.id}` ? "Scheduling..." : "Schedule Interview"}
                 </button>
               </form>
             </div>

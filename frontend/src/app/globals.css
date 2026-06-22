@@ -460,27 +460,61 @@ td {
 }
 
 .hr-schedule-workspace {
+  align-items: start;
   display: grid;
-  gap: 18px;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.9fr);
+  gap: 20px;
+  grid-template-columns: minmax(300px, 0.88fr) minmax(390px, 1.12fr);
+}
+
+.hr-interview-scheduler > .section-heading {
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+}
+
+.hr-schedule-roster {
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hr-schedule-roster-heading {
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: space-between;
+  padding: 14px;
+}
+
+.hr-schedule-roster-heading > span {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: 999px;
+  color: var(--accent-neon);
+  font-size: 0.76rem;
+  font-weight: 900;
+  padding: 4px 9px;
 }
 
 .hr-schedule-candidate-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  max-height: 610px;
+  overflow-y: auto;
+  padding: 10px;
 }
 
 .hr-schedule-candidate {
-  align-items: center;
   background: var(--surface-1);
   border: 1px solid var(--line-soft);
-  border-radius: 12px;
+  border-radius: 8px;
   color: var(--text-primary);
   cursor: pointer;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.75fr) minmax(160px, 0.7fr);
-  padding: 12px;
+  gap: 10px;
+  padding: 13px;
   text-align: left;
   transition: 160ms ease;
 }
@@ -491,16 +525,108 @@ td {
   border-color: var(--success-border);
 }
 
+.hr-schedule-candidate-main {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.hr-schedule-selection {
+  color: var(--text-secondary);
+  flex: none;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.hr-schedule-candidate[data-active="true"] .hr-schedule-selection {
+  color: var(--accent-neon);
+}
+
+.hr-schedule-candidate-meta {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.hr-schedule-candidate-meta span,
+.hr-schedule-current span {
+  min-width: 0;
+}
+
+.hr-schedule-candidate-meta small,
+.hr-schedule-current small {
+  color: var(--text-secondary);
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 800;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.hr-schedule-candidate-meta strong {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .hr-schedule-form {
   align-content: start;
   background: var(--surface-2);
   border: 1px solid var(--line-soft);
-  border-radius: 14px;
+  border-radius: 8px;
   display: grid;
   gap: 14px;
-  padding: 16px;
+  min-width: 0;
+  padding: 18px;
   position: sticky;
   top: 18px;
+}
+
+.hr-schedule-form-header {
+  align-items: center;
+  border-bottom: 1px solid var(--line-soft);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(190px, 1fr) minmax(130px, 0.65fr) auto;
+  padding-bottom: 14px;
+}
+
+.hr-schedule-form-header .secondary-button {
+  text-decoration: none;
+}
+
+.hr-schedule-role {
+  min-width: 0;
+}
+
+.hr-schedule-role strong {
+  overflow-wrap: anywhere;
+}
+
+.hr-schedule-current {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 12px;
+}
+
+.hr-schedule-current strong {
+  display: block;
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.hr-schedule-message {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 10px;
 }
 
 .admin-application-card {
@@ -1922,6 +2048,18 @@ td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .hr-schedule-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-schedule-candidate-list {
+    max-height: 460px;
+  }
+
+  .hr-schedule-form {
+    position: static;
+  }
+
   div[style*="minmax(320px"] {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
   }
@@ -2083,6 +2221,20 @@ td {
   .hr-schedule-workspace,
   .hr-schedule-candidate {
     grid-template-columns: 1fr;
+  }
+
+  .hr-schedule-candidate-list {
+    max-height: none;
+  }
+
+  .hr-schedule-candidate-meta,
+  .hr-schedule-form-header,
+  .hr-schedule-current {
+    grid-template-columns: 1fr;
+  }
+
+  .hr-schedule-form-header .secondary-button {
+    justify-self: start;
   }
 
   .hr-schedule-form {
