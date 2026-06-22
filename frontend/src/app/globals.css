@@ -1203,6 +1203,51 @@ td {
   font-weight: 800;
 }
 
+.panel-score-summary {
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  padding: 12px;
+}
+
+.registrar-score-header {
+  align-items: center;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.7fr) minmax(130px, 0.4fr) auto;
+}
+
+.registrar-score-footer {
+  margin-top: 10px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.records-table {
+  border-collapse: collapse;
+  min-width: 760px;
+  width: 100%;
+}
+
+.records-table th,
+.records-table td {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.records-table th {
+  color: var(--accent-neon);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
 .interview-score-grid {
   display: grid;
   gap: 10px;
@@ -2076,6 +2121,7 @@ td {
 
   .hr-metrics-workspace,
   .interview-history-summary,
+  .registrar-score-header,
   .interview-score-grid {
     grid-template-columns: 1fr;
   }

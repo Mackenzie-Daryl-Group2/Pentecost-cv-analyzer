@@ -7,21 +7,16 @@ import { getMatchDecision, getMatchStyle } from "@/utils/match";
 import { getJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import {
-  buildInterviewScoreNote,
   cvAiSummary,
-  emptyInterviewScoreForm,
   interviewRecommendation,
-  interviewScoreTotal,
-  mergeInterviewScoreNote,
   onboardingProgress,
   onboardingEmailForStep,
   onboardingSteps,
   parseInterviewScore,
-  type InterviewScoreForm,
 } from "@/utils/recruitment-insights";
 import UserBadge, { Avatar } from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
-import { generateStaffId, onboardingStepHref } from "@/utils/onboarding";
+import { generateStaffId, onboardingStepHref, parseOnboardingDocuments } from "@/utils/onboarding";
 
 interface Application {
   id: number;
@@ -43,11 +38,13 @@ interface Application {
   hr_report_sent?: boolean | string | null;
   pro_vc_approved?: boolean | string | null;
   onboarding_status?: string | null;
+  onboarding_documents?: unknown;
+  onboarding_required_documents?: string[] | null;
   staff_id?: string | null;
 }
 
 type JobForm = Omit<Job, "id">;
-type HrPanel = "screening" | "interviews" | "hiring" | "onboarding" | "vacancies" | "metrics";
+type HrPanel = "screening" | "history" | "interviews" | "hiring" | "onboarding" | "vacancies" | "metrics";
 
 const emptyJobForm: JobForm = {
   title: "",
@@ -79,6 +76,11 @@ function passedCv(app: Application, threshold: number) {
   const status = String(app.status || "").toLowerCase();
   const manuallyPassed = status.includes("cv passed") || status.includes("approved") || status.includes("recommended for interview");
   return manuallyPassed || Number(app.similarity || 0) * 100 >= threshold;
+}
+
+function rejectedCv(app: Application) {
+  const status = String(app.status || "").toLowerCase();
+  return status.includes("cv not passed") || status.includes("cv rejected") || status.includes("not qualified");
 }
 
 function toDatetimeInput(value?: string | null) {
@@ -141,7 +143,6 @@ export default function HRDashboard() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [activePanel, setActivePanel] = useState<HrPanel>("screening");
   const [applicationSearch, setApplicationSearch] = useState("");
-  const [scoreForms, setScoreForms] = useState<Record<number, InterviewScoreForm>>({});
   const [portalEmail, setPortalEmail] = useState({ to: "", subject: "", message: "" });
   const [cvPassThreshold, setCvPassThreshold] = useState(55);
   const [thresholdDraft, setThresholdDraft] = useState("55");
@@ -218,12 +219,14 @@ export default function HRDashboard() {
     [apps]
   );
   const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold) && truthy(app.interview_passed)), [apps, cvPassThreshold]);
-  const pendingReviewApps = useMemo(() => apps.filter((app) => !passedCv(app, cvPassThreshold) && !String(app.status || "").toLowerCase().includes("not passed")), [apps, cvPassThreshold]);
+  const rejectedApps = useMemo(() => apps.filter(rejectedCv), [apps]);
+  const screeningApps = useMemo(() => apps.filter((app) => !rejectedCv(app)), [apps]);
+  const pendingReviewApps = useMemo(() => screeningApps.filter((app) => !passedCv(app, cvPassThreshold)), [screeningApps, cvPassThreshold]);
   const filteredApps = useMemo(() => {
     const term = applicationSearch.trim().toLowerCase();
-    if (!term) return apps;
+    if (!term) return screeningApps;
 
-    return apps.filter((app) =>
+    return screeningApps.filter((app) =>
       [
         candidateName(app),
         app.email || "",
@@ -232,7 +235,7 @@ export default function HRDashboard() {
         app.status || "",
       ].some((value) => value.toLowerCase().includes(term))
     );
-  }, [apps, applicationSearch, jobs]);
+  }, [screeningApps, applicationSearch, jobs]);
 
   useEffect(() => {
     if (!selectedScheduleId && cvPassedApps.length) {
@@ -304,46 +307,6 @@ export default function HRDashboard() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || "Vacancy action failed.");
     return data;
-  }
-
-  function scoreFormFor(appId: number) {
-    return scoreForms[appId] || emptyInterviewScoreForm;
-  }
-
-  function updateScoreForm(appId: number, updates: Partial<InterviewScoreForm>) {
-    setScoreForms((current) => ({
-      ...current,
-      [appId]: {
-        ...emptyInterviewScoreForm,
-        ...(current[appId] || {}),
-        ...updates,
-      },
-    }));
-  }
-
-  async function handleSaveInterviewScore(app: Application) {
-    const form = scoreFormFor(app.id);
-    const scoreNote = buildInterviewScoreNote(form);
-    const total = interviewScoreTotal(form);
-    const recommendation = interviewRecommendation(total);
-    const notes = mergeInterviewScoreNote(app.interview_notes, scoreNote);
-
-    const updated = await updateApplication(
-      app.id,
-      {
-        interview_notes: notes,
-        status: recommendation.label === "Do not proceed" ? "Interview Review Needed" : "Interview Scored",
-      },
-      `Interview score saved: ${total}/100 (${recommendation.label}).`
-    );
-
-    if (updated) {
-      setScoreForms((current) => {
-        const next = { ...current };
-        delete next[app.id];
-        return next;
-      });
-    }
   }
 
   async function handleOnboardingStep(app: Application, step: string) {
@@ -786,6 +749,14 @@ export default function HRDashboard() {
     setBusyAction("");
   }
 
+  async function restoreRejectedCv(app: Application) {
+    await updateApplication(
+      app.id,
+      { cv_passed: null, status: "HR Review" },
+      "Application returned to the screening workspace."
+    );
+  }
+
   function downloadReport() {
     const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -822,7 +793,8 @@ export default function HRDashboard() {
   ];
 
   const panels: Array<{ id: HrPanel; label: string; count: number }> = [
-    { id: "screening", label: "Screening", count: pendingReviewApps.length || apps.length },
+    { id: "screening", label: "Screening", count: screeningApps.length },
+    { id: "history", label: "Rejection History", count: rejectedApps.length },
     { id: "interviews", label: "Interviews", count: upcomingInterviewApps.length + cvPassedApps.length },
     { id: "hiring", label: "Hiring", count: passedInterviewApps.length },
     { id: "onboarding", label: "Onboarding", count: onboardingApps.length },
@@ -1191,6 +1163,9 @@ export default function HRDashboard() {
               {onboardingApps.map((app) => {
                 const progress = onboardingProgress(app.onboarding_status);
                 const currentStep = app.onboarding_status || "Offer Letter Sent";
+                const documents = parseOnboardingDocuments(app.onboarding_documents);
+                const requiredDocuments = app.onboarding_required_documents || [];
+                const approvedDocuments = documents.filter((document) => document.status === "approved").length;
                 return (
                   <article key={app.id} className="admin-application-card">
                     <div className="application-profile">
@@ -1217,6 +1192,14 @@ export default function HRDashboard() {
                         <p className="eyebrow">Staff ID</p>
                         <strong>{app.staff_id || "Not assigned"}</strong>
                       </div>
+                      <div className="insight-card">
+                        <p className="eyebrow">Documents</p>
+                        <strong>{documents.length} uploaded</strong>
+                        <p className="status-note">
+                          {approvedDocuments} approved
+                          {requiredDocuments.length ? ` · ${requiredDocuments.length} required` : ""}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="application-operations">
@@ -1225,6 +1208,12 @@ export default function HRDashboard() {
                         onClick={() => router.push(onboardingStepHref(app.id, currentStep))}
                       >
                         Open Onboarding Workspace
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={() => router.push(onboardingStepHref(app.id, "Documents Verified"))}
+                      >
+                        View All Documents
                       </button>
                       {!app.onboarding_status && (
                         <button
@@ -1244,6 +1233,58 @@ export default function HRDashboard() {
             {!onboardingApps.length && (
               <p className="status-note">No interview-passed candidates are ready for onboarding yet.</p>
             )}
+          </section>
+        )}
+
+        {activePanel === "history" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Application Archive</p>
+                <h2>Rejected CV History</h2>
+                <p className="status-note">Rejected applications are kept here for audit and no longer appear in active screening.</p>
+              </div>
+            </div>
+            <div className="admin-application-list">
+              {rejectedApps.map((app) => (
+                <article key={app.id} className="admin-application-card">
+                  <div className="application-profile">
+                    <Avatar name={candidateName(app)} src={candidatePhotoUrl(app)} />
+                    <div>
+                      <p className="eyebrow">Rejected Candidate</p>
+                      <h3>{candidateName(app)}</h3>
+                      <p className="status-note">{app.email || app.phone || "No contact on file"}</p>
+                      <span className="status-pill">{app.status}</span>
+                    </div>
+                  </div>
+                  <div className="application-intelligence">
+                    <div className="insight-card">
+                      <p className="eyebrow">Position</p>
+                      <strong>{roleTitle(app, jobs)}</strong>
+                    </div>
+                    <div className="insight-card">
+                      <p className="eyebrow">CV Match</p>
+                      <strong>{Math.round(Number(app.similarity || 0) * 100)}%</strong>
+                      <p className="status-note">Cutoff: {cvPassThreshold}%</p>
+                    </div>
+                    <div className="insight-card">
+                      <p className="eyebrow">Submitted</p>
+                      <strong>{formatDate(app.submitted_at)}</strong>
+                    </div>
+                  </div>
+                  <div className="application-operations">
+                    <button
+                      className="secondary-button"
+                      disabled={busyAction === `app-${app.id}`}
+                      onClick={() => restoreRejectedCv(app)}
+                    >
+                      Return to Screening
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+            {!rejectedApps.length && <p className="status-note">No rejected CVs have been archived.</p>}
           </section>
         )}
 
@@ -1317,7 +1358,7 @@ export default function HRDashboard() {
           <div className="section-heading">
             <div>
               <h2>Application Screening</h2>
-              <p className="status-note">{filteredApps.length} of {apps.length} applications shown</p>
+              <p className="status-note">{filteredApps.length} of {screeningApps.length} active applications shown</p>
             </div>
             <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
               <input

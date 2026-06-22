@@ -6,20 +6,23 @@ import { supabase } from "@/utils/supabase";
 import { loadJobs, type Job } from "@/utils/jobs";
 import { getRoleHome, getUserRole } from "@/utils/roles";
 import {
-  buildInterviewScoreNote,
   emptyInterviewScoreForm,
   interviewRecommendation,
   interviewScoreTotal,
-  mergeInterviewScoreNote,
   parseInterviewScore,
   type InterviewScoreForm,
 } from "@/utils/recruitment-insights";
+import {
+  compiledInterviewScore,
+  reviewerLabel,
+  type InterviewPanelScore,
+} from "@/utils/interview-panel";
 import UniversityBrand from "@/components/UniversityBrand";
 import UserBadge from "@/components/UserBadge";
 
 type Application = {
-  id: number;
-  job_id: number;
+  id: string | number;
+  job_id: string | number;
   name?: string;
   full_name?: string;
   email?: string;
@@ -45,22 +48,50 @@ export default function InterviewHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
-  const [scoreForms, setScoreForms] = useState<Record<number, InterviewScoreForm>>({});
-  const [busyId, setBusyId] = useState<number | null>(null);
+  const [scoreForms, setScoreForms] = useState<Record<string, InterviewScoreForm>>({});
+  const [panelScores, setPanelScores] = useState<InterviewPanelScore[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const router = useRouter();
 
   async function loadData() {
-    const [applications, loadedJobs] = await Promise.all([
+    const { data: sessionData } = await supabase.auth.getSession();
+    const [applications, loadedJobs, scoresResponse] = await Promise.all([
       supabase
         .from("applications")
         .select("*")
         .not("interview_scheduled_at", "is", null)
         .order("interview_scheduled_at", { ascending: false }),
       loadJobs(supabase),
+      fetch("/api/interview-scores", {
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token || ""}` },
+      }).catch(() => null),
     ]);
     if (applications.error) setMessage(applications.error.message);
     setApps((applications.data || []) as Application[]);
     setJobs(loadedJobs);
+    if (scoresResponse?.ok) {
+      const scoreData = await scoresResponse.json();
+      const loadedScores = (scoreData.scores || []) as InterviewPanelScore[];
+      setPanelScores(loadedScores);
+      const reviewerId = sessionData.session?.user.id;
+      if (reviewerId) {
+        setScoreForms((current) => {
+          const next = { ...current };
+          loadedScores
+            .filter((score) => score.reviewer_id === reviewerId)
+            .forEach((score) => {
+              next[String(score.application_id)] = {
+                communication: String(score.communication),
+                roleKnowledge: String(score.role_knowledge),
+                experience: String(score.experience),
+                cultureFit: String(score.culture_fit),
+                notes: score.notes || "",
+              };
+            });
+          return next;
+        });
+      }
+    }
     setLoading(false);
   }
 
@@ -93,29 +124,41 @@ export default function InterviewHistoryPage() {
     });
   }, [apps, jobs, search]);
 
-  function formFor(id: number) {
-    return scoreForms[id] || emptyInterviewScoreForm;
+  function formFor(id: string | number) {
+    return scoreForms[String(id)] || emptyInterviewScoreForm;
   }
 
-  function updateForm(id: number, updates: Partial<InterviewScoreForm>) {
+  function updateForm(id: string | number, updates: Partial<InterviewScoreForm>) {
     setScoreForms((current) => ({
       ...current,
-      [id]: { ...emptyInterviewScoreForm, ...(current[id] || {}), ...updates },
+      [String(id)]: { ...emptyInterviewScoreForm, ...(current[String(id)] || {}), ...updates },
     }));
   }
 
   async function saveScore(app: Application) {
     const form = formFor(app.id);
     const total = interviewScoreTotal(form);
-    const notes = mergeInterviewScoreNote(app.interview_notes, buildInterviewScoreNote(form));
-    setBusyId(app.id);
-    const { error } = await supabase
-      .from("applications")
-      .update({ interview_notes: notes, status: "Interview Scored" })
-      .eq("id", app.id);
+    setBusyId(String(app.id));
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch("/api/interview-scores", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
+      },
+      body: JSON.stringify({
+        applicationId: app.id,
+        communication: form.communication,
+        roleKnowledge: form.roleKnowledge,
+        experience: form.experience,
+        cultureFit: form.cultureFit,
+        notes: form.notes,
+      }),
+    }).catch(() => null);
     setBusyId(null);
-    if (error) {
-      setMessage(error.message);
+    if (!response?.ok) {
+      const data = response ? await response.json().catch(() => ({})) : {};
+      setMessage(data.error || "Interview score could not be saved.");
       return;
     }
     setMessage(`Interview score saved: ${total}/100.`);
@@ -123,7 +166,7 @@ export default function InterviewHistoryPage() {
   }
 
   async function setResult(app: Application, passed: boolean) {
-    setBusyId(app.id);
+    setBusyId(String(app.id));
     const { error } = await supabase
       .from("applications")
       .update({ interview_passed: passed, status: passed ? "Interview Passed" : "Interview Not Passed" })
@@ -173,7 +216,10 @@ export default function InterviewHistoryPage() {
               const role = jobs.find((job) => Number(job.id) === Number(app.job_id))?.title || `Job ${app.job_id}`;
               const scheduledAt = new Date(app.interview_scheduled_at || "");
               const isPast = scheduledAt.getTime() <= Date.now();
-              const savedScore = parseInterviewScore(app.interview_notes);
+              const applicationScores = panelScores.filter((score) => String(score.application_id) === String(app.id));
+              const compiledScore = compiledInterviewScore(applicationScores);
+              const legacyScore = parseInterviewScore(app.interview_notes);
+              const savedScore = compiledScore ?? legacyScore;
               const recommendation = interviewRecommendation(savedScore);
               const form = formFor(app.id);
               return (
@@ -190,14 +236,31 @@ export default function InterviewHistoryPage() {
                     </div>
                     <div>
                       <strong>{savedScore === null ? "Not scored" : `${savedScore}/100`}</strong>
-                      <p className="status-note">{recommendation.label}</p>
+                      <p className="status-note">
+                        {applicationScores.length ? `${applicationScores.length} panel review${applicationScores.length === 1 ? "" : "s"}` : "No panel reviews"} · {recommendation.label}
+                      </p>
                     </div>
                     <div className="interview-history-actions">
                       {app.interview_meet_link && !isPast && <a className="secondary-button" href={app.interview_meet_link} target="_blank" rel="noreferrer">Join</a>}
-                      <button className="secondary-button" disabled={busyId === app.id} onClick={() => setResult(app, true)}>Passed</button>
-                      <button className="danger-button" disabled={busyId === app.id} onClick={() => setResult(app, false)}>Not Passed</button>
+                      <button className="secondary-button" disabled={busyId === String(app.id)} onClick={() => setResult(app, true)}>Passed</button>
+                      <button className="danger-button" disabled={busyId === String(app.id)} onClick={() => setResult(app, false)}>Not Passed</button>
                     </div>
                   </div>
+                  {applicationScores.length > 0 && (
+                    <div className="panel-score-summary">
+                      <div>
+                        <p className="eyebrow">Compiled Panel Score</p>
+                        <strong>{compiledScore}/100</strong>
+                      </div>
+                      {applicationScores.map((score) => (
+                        <div key={`${score.application_id}-${score.reviewer_id}`}>
+                          <p className="eyebrow">{reviewerLabel(score)}</p>
+                          <strong>{score.total_score}/100</strong>
+                          <p className="status-note">{score.reviewer_email || "Panel member"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <details>
                     <summary>Interview scoring sheet</summary>
                     <div className="interview-score-grid">
@@ -209,7 +272,7 @@ export default function InterviewHistoryPage() {
                     <textarea className="input-field" rows={3} placeholder="Panel notes" value={form.notes} onChange={(event) => updateForm(app.id, { notes: event.target.value })} />
                     <div className="section-heading" style={{ marginTop: "10px" }}>
                       <p className="status-note">Draft: {interviewScoreTotal(form)}/100 · {interviewRecommendation(interviewScoreTotal(form)).label}</p>
-                      <button className="premium-button" disabled={busyId === app.id} onClick={() => saveScore(app)}>Save Score</button>
+                      <button className="premium-button" disabled={busyId === String(app.id)} onClick={() => saveScore(app)}>Save Score</button>
                     </div>
                   </details>
                 </article>
