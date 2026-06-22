@@ -60,7 +60,7 @@ interface Application {
 }
 
 type JobForm = Omit<Job, "id">;
-type HrPanel = "screening" | "history" | "interviews" | "hiring" | "onboarding" | "talent" | "vacancies" | "metrics";
+type HrPanel = "screening" | "recommendations" | "history" | "interviews" | "hiring" | "onboarding" | "talent" | "vacancies" | "metrics";
 
 const emptyJobForm: JobForm = {
   title: "",
@@ -256,6 +256,22 @@ export default function HRDashboard() {
         .some((value) => value.toLowerCase().includes(term))
     );
   }, [jobs, talentPoolApps, talentSearch]);
+  const bestApplicationsByRole = useMemo(() => {
+    return jobs
+      .map((job) => ({
+        job,
+        applicants: apps
+          .filter((app) => {
+            const status = String(app.status || "").toLowerCase();
+            return Number(app.job_id) === Number(job.id)
+              && !rejectedCv(app)
+              && !status.includes("withdrawn");
+          })
+          .sort((a, b) => Number(b.similarity || 0) - Number(a.similarity || 0))
+          .slice(0, 3),
+      }))
+      .filter((group) => group.applicants.length);
+  }, [apps, jobs]);
   const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold) && truthy(app.interview_passed)), [apps, cvPassThreshold]);
   const rejectedApps = useMemo(() => apps.filter(rejectedCv), [apps]);
   const screeningApps = useMemo(() => apps.filter((app) => !rejectedCv(app)), [apps]);
@@ -912,6 +928,16 @@ export default function HRDashboard() {
     await fetchData();
   }
 
+  async function handleBestThreeAction(app: Application, action: string) {
+    if (action === "approve-cv") await handleApproveCv(app);
+    if (action === "recommend-interview") await handleApproveCv(app, "Recommended for Interview");
+    if (action === "reject-cv") await handleRejectCv(app);
+    if (action === "pass-interview") await handleInterviewResult(app, true);
+    if (action === "not-pass-interview") await handleInterviewResult(app, false);
+    if (action === "recommend-hire") await handleRecommendForHire(app);
+    if (action === "approve-hire") await handleHiring(app);
+  }
+
   function downloadReport() {
     const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -969,6 +995,7 @@ export default function HRDashboard() {
 
   const panels: Array<{ id: HrPanel; label: string; count: number }> = [
     { id: "screening", label: "Screening", count: screeningApps.length },
+    { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
     { id: "history", label: "Rejection History", count: rejectedApps.length },
     { id: "interviews", label: "Interviews", count: upcomingInterviewApps.length + cvPassedApps.length },
     { id: "hiring", label: "Hiring", count: passedInterviewApps.length },
@@ -1647,6 +1674,82 @@ export default function HRDashboard() {
               ))}
             </div>
             {!rejectedApps.length && <p className="status-note">No rejected CVs have been archived.</p>}
+          </section>
+        )}
+
+        {activePanel === "recommendations" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">AI-Assisted Shortlist</p>
+                <h2>Best Three Applicants by Position</h2>
+                <p className="status-note">Active applicants are ranked by CV requirement match. HR remains responsible for the final decision.</p>
+              </div>
+              <span className="status-pill">{bestApplicationsByRole.length} positions</span>
+            </div>
+            {bestApplicationsByRole.length ? (
+              <div className="best-three-grid">
+                {bestApplicationsByRole.map(({ job, applicants }) => (
+                  <article key={job.id} className="best-three-card">
+                    <div className="best-three-header">
+                      <div>
+                        <p className="eyebrow">Position</p>
+                        <h3>{job.title}</h3>
+                        <p className="status-note">{applicants.length === 3 ? "Top three active candidates" : `${applicants.length} active candidate${applicants.length === 1 ? "" : "s"} available`}</p>
+                      </div>
+                      <span>{applicants.length}/3</span>
+                    </div>
+                    <div className="best-three-list">
+                      {applicants.map((app, index) => {
+                        const decision = getMatchDecision(Number(app.similarity || 0));
+                        const matchPercent = Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)));
+                        return (
+                          <div key={app.id} className="best-three-row">
+                            <div className="best-rank">{index + 1}</div>
+                            <div className="best-three-candidate">
+                              <CandidateSummary app={app} jobs={jobs} detail={app.email || app.phone || "No contact on file"} />
+                              <span className="best-three-email">{app.email || "No email on file"}</span>
+                              <p className="status-note">{app.status}</p>
+                            </div>
+                            <div className="best-three-actions">
+                              <div className="ai-score-circle compact" style={{ "--score": `${matchPercent}%` } as React.CSSProperties} aria-label={`${candidateName(app)} CV match score ${matchPercent}%`}>
+                                <span>{matchPercent}%</span>
+                              </div>
+                              <span style={{ ...getMatchStyle(decision.tone), padding: "6px 10px", borderRadius: "999px", fontSize: "0.72rem", fontWeight: 850 }}>
+                                {decision.label}
+                              </span>
+                              <select
+                                className="input-field"
+                                defaultValue=""
+                                onChange={async (event) => {
+                                  const action = event.target.value;
+                                  if (!action) return;
+                                  await handleBestThreeAction(app, action);
+                                  event.target.value = "";
+                                }}
+                                disabled={busyAction === `app-${app.id}`}
+                                aria-label={`Select HR action for ${candidateName(app)}`}
+                              >
+                                <option value="">Select HR action...</option>
+                                <option value="approve-cv">Approve CV</option>
+                                <option value="recommend-interview">Recommend interview</option>
+                                <option value="reject-cv">Reject CV</option>
+                                <option value="pass-interview">Pass interview</option>
+                                <option value="not-pass-interview">Reject after interview</option>
+                                <option value="recommend-hire">Recommend for hire</option>
+                                <option value="approve-hire">Approve candidate</option>
+                              </select>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="status-note">No active applications are available for ranking.</p>
+            )}
           </section>
         )}
 
