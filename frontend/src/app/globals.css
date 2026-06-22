@@ -2,6 +2,22 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
+:focus-visible {
+  outline: 3px solid var(--accent-gold);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -803,6 +819,222 @@ td {
 
 .hr-onboarding-stage[data-current="true"] {
   box-shadow: inset 3px 0 0 var(--accent-gold);
+}
+
+.hr-offer-generator {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 13px;
+}
+
+.hr-offer-generator summary,
+.applicant-privacy-panel summary {
+  color: var(--accent-neon);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.hr-offer-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 14px 0;
+}
+
+.hr-offer-terms {
+  grid-column: 1 / -1;
+}
+
+.application-consent-panel {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 15px;
+}
+
+.application-consent-panel label,
+.privacy-toggle {
+  align-items: flex-start;
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  line-height: 1.45;
+}
+
+.application-consent-panel input,
+.privacy-toggle input {
+  height: 18px;
+  margin-top: 2px;
+  width: 18px;
+}
+
+.application-consent-panel strong,
+.privacy-toggle strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.empty-state {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  padding: 46px;
+  text-align: center;
+}
+
+.applicant-application-list {
+  display: grid;
+  gap: 18px;
+}
+
+.applicant-application-card {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.applicant-application-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.application-timeline {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.application-timeline li {
+  align-items: center;
+  border-top: 3px solid var(--line-soft);
+  color: var(--text-secondary);
+  display: grid;
+  gap: 7px;
+  grid-template-columns: 26px minmax(0, 1fr);
+  padding-top: 10px;
+}
+
+.application-timeline li > span {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  display: flex;
+  font-size: 0.7rem;
+  font-weight: 900;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.application-timeline li strong {
+  font-size: 0.72rem;
+}
+
+.application-timeline li[data-complete="true"] {
+  border-color: var(--accent-neon);
+  color: var(--text-primary);
+}
+
+.application-timeline li[data-complete="true"] > span {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--accent-neon);
+}
+
+.application-timeline li[data-current="true"] {
+  border-color: var(--accent-gold);
+}
+
+.applicant-application-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.applicant-application-grid > section {
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.applicant-update-box {
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  gap: 7px;
+  padding-top: 10px;
+}
+
+.applicant-update-box a {
+  color: var(--accent-neon);
+  font-weight: 800;
+}
+
+.applicant-action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-action-button {
+  cursor: pointer;
+}
+
+.file-action-button input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.applicant-offer-panel {
+  align-items: start;
+  background: var(--success-soft-bg);
+  border: 1px solid var(--success-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px;
+}
+
+.applicant-privacy-panel {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 14px;
+}
+
+.applicant-privacy-panel > div {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.privacy-request-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.privacy-request-list > div {
+  align-items: center;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 7px;
 }
 
 .admin-application-card {
@@ -2427,6 +2659,45 @@ td {
   .hr-hiring-profile {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .hr-offer-grid,
+  .applicant-application-grid,
+  .applicant-offer-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .application-timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .application-timeline li {
+    border-left: 3px solid var(--line-soft);
+    border-top: 0;
+    padding: 7px 0 7px 10px;
+  }
+
+  .application-timeline li[data-complete="true"] {
+    border-left-color: var(--accent-neon);
+  }
+
+  .application-timeline li[data-current="true"] {
+    border-left-color: var(--accent-gold);
+  }
+
+  .applicant-application-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .applicant-action-list {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .applicant-action-list > * {
+    justify-content: center;
+    width: 100%;
   }
 
   .hr-schedule-candidate-meta,

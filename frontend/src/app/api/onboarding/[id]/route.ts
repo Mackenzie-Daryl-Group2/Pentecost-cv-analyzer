@@ -135,6 +135,15 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
       return NextResponse.json({ signedUrl: data.signedUrl });
     }
 
+    const allowedTypes = ["application/pdf", "image/png", "image/jpeg"];
+    const fileSize = Number(body.fileSize || 0);
+    if (!allowedTypes.includes(String(body.fileType || ""))) {
+      return NextResponse.json({ error: "Only PDF, PNG, and JPEG documents are allowed." }, { status: 400 });
+    }
+    if (!fileSize || fileSize > 8 * 1024 * 1024) {
+      return NextResponse.json({ error: "Documents must be 8 MB or smaller." }, { status: 400 });
+    }
+
     const fileName = String(body.fileName || "document").replace(/[^a-zA-Z0-9._-]/g, "_");
     const path = `${id}/${Date.now()}-${fileName}`;
     const { data, error } = await adminClient().storage.from("onboarding-documents").createSignedUploadUrl(path);

@@ -14,6 +14,7 @@ const quickQuestions = [
   "What faculties are available?",
   "What are the application steps?",
   "Where can I find policies?",
+  "Where are current vacancies?",
 ];
 
 const schoolLinks = {
@@ -21,6 +22,10 @@ const schoolLinks = {
   admissions: "https://pentvars.edu.gh/admissions-procedure/",
   faculties: "https://pentvars.edu.gh/faculty/",
   handbook: "https://pentvars.edu.gh/resource/student-handbook/",
+  resources: "https://pentvars.edu.gh/resources/",
+  vacancies: "https://pentvars.edu.gh/vacancies/",
+  staffDirectory: "https://pentvars.edu.gh/staff-directory/",
+  directions: "https://pentvars.edu.gh/directions-to-campus/",
   website: "https://pentvars.edu.gh/",
 };
 
@@ -30,7 +35,7 @@ function answerQuestion(question: string): ChatMessage {
   if (/(contact|phone|email|call|number|reach)/.test(q)) {
     return {
       sender: "bot",
-      text: "You can contact Pentecost University through info@pentvars.edu.gh. The public contact numbers listed by the university include +233202706645 and +233302417057/8. The general postal address is P. O. Box KN 1739, Kaneshie, Accra.",
+      text: "Pentecost University lists info@pentvars.edu.gh, +233 28 309 4284, and +233 30 241 7057/8 as general contacts. Its postal address is P. O. Box KN 1739, Kaneshie, Accra.",
       links: [{ label: "Contact page", href: schoolLinks.contact }],
     };
   }
@@ -40,8 +45,8 @@ function answerQuestion(question: string): ChatMessage {
       sender: "bot",
       text: "Pentecost University lists its postal address as P. O. Box KN 1739, Kaneshie, Accra. For admissions by post, the university also mentions delivery at the Academic Affairs Office, Sowutuom Campus.",
       links: [
+        { label: "Campus directions", href: schoolLinks.directions },
         { label: "Contact page", href: schoolLinks.contact },
-        { label: "Application procedure", href: schoolLinks.admissions },
       ],
     };
   }
@@ -66,7 +71,26 @@ function answerQuestion(question: string): ChatMessage {
     return {
       sender: "bot",
       text: "The Student Handbook is the best place to start for school rules, student conduct, discipline, grievance procedures, campus safety, academic policies, and general regulations. For official decisions, confirm with HR, the Registrar, or the relevant university office.",
-      links: [{ label: "Student handbook", href: schoolLinks.handbook }],
+      links: [
+        { label: "Student handbook", href: schoolLinks.handbook },
+        { label: "University resources", href: schoolLinks.resources },
+      ],
+    };
+  }
+
+  if (/(job|jobs|vacancy|vacancies|career|recruitment|opening)/.test(q)) {
+    return {
+      sender: "bot",
+      text: "Current opportunities should be confirmed on the Pentecost University vacancies page or in this recruitment portal. Vacancy deadlines and requirements can differ by position.",
+      links: [{ label: "Official vacancies", href: schoolLinks.vacancies }],
+    };
+  }
+
+  if (/(staff directory|staff member|employee|lecturer|office)/.test(q)) {
+    return {
+      sender: "bot",
+      text: "Use the official staff directory to find publicly listed university staff and offices. Personal recruitment records should still be handled through HR.",
+      links: [{ label: "Staff directory", href: schoolLinks.staffDirectory }],
     };
   }
 
@@ -174,7 +198,7 @@ export default function PentecostChatbot() {
           </form>
 
           {latestBotLinks.length ? (
-            <p className="chatbot-source">Answers use public Pentecost University website pages. Use the linked page for official details.</p>
+            <p className="chatbot-source">Official public sources checked June 22, 2026. Follow the linked page for the latest authoritative details.</p>
           ) : null}
         </section>
       )}

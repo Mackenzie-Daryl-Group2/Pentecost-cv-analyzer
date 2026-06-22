@@ -41,10 +41,26 @@ interface Application {
   onboarding_documents?: unknown;
   onboarding_required_documents?: string[] | null;
   staff_id?: string | null;
+  privacy_consent_at?: string | null;
+  talent_pool_consent?: boolean | null;
+  talent_pool_added_at?: string | null;
+  withdrawn_at?: string | null;
+  retention_until?: string | null;
+  data_deletion_requested_at?: string | null;
+  offer_status?: string | null;
+  offer_details?: {
+    position?: string;
+    salary?: string;
+    startDate?: string;
+    probation?: string;
+    reportingOfficer?: string;
+    responseDeadline?: string;
+    additionalTerms?: string;
+  } | null;
 }
 
 type JobForm = Omit<Job, "id">;
-type HrPanel = "screening" | "history" | "interviews" | "hiring" | "onboarding" | "vacancies" | "metrics";
+type HrPanel = "screening" | "history" | "interviews" | "hiring" | "onboarding" | "talent" | "vacancies" | "metrics";
 
 const emptyJobForm: JobForm = {
   title: "",
@@ -147,6 +163,15 @@ export default function HRDashboard() {
   const [portalEmail, setPortalEmail] = useState({ to: "", subject: "", message: "" });
   const [cvPassThreshold, setCvPassThreshold] = useState(55);
   const [thresholdDraft, setThresholdDraft] = useState("55");
+  const [talentSearch, setTalentSearch] = useState("");
+  const [offerForm, setOfferForm] = useState({
+    salary: "",
+    startDate: "",
+    probation: "Six months",
+    reportingOfficer: "Head of Department",
+    responseDeadline: "",
+    additionalTerms: "",
+  });
   const router = useRouter();
 
   async function fetchData() {
@@ -219,6 +244,18 @@ export default function HRDashboard() {
     () => apps.filter((app) => truthy(app.interview_passed) || Boolean(app.onboarding_status)),
     [apps]
   );
+  const talentPoolApps = useMemo(
+    () => apps.filter((app) => truthy(app.talent_pool_consent)),
+    [apps]
+  );
+  const filteredTalentPool = useMemo(() => {
+    const term = talentSearch.trim().toLowerCase();
+    if (!term) return talentPoolApps;
+    return talentPoolApps.filter((app) =>
+      [candidateName(app), app.email || "", roleTitle(app, jobs), app.status || ""]
+        .some((value) => value.toLowerCase().includes(term))
+    );
+  }, [jobs, talentPoolApps, talentSearch]);
   const hrReportApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold) && truthy(app.interview_passed)), [apps, cvPassThreshold]);
   const rejectedApps = useMemo(() => apps.filter(rejectedCv), [apps]);
   const screeningApps = useMemo(() => apps.filter((app) => !rejectedCv(app)), [apps]);
@@ -249,6 +286,18 @@ export default function HRDashboard() {
       setSelectedHiringId(passedInterviewApps[0].id);
     }
   }, [passedInterviewApps, selectedHiringId]);
+
+  useEffect(() => {
+    if (!selectedHiringApp) return;
+    setOfferForm({
+      salary: selectedHiringApp.offer_details?.salary || "",
+      startDate: selectedHiringApp.offer_details?.startDate || "",
+      probation: selectedHiringApp.offer_details?.probation || "Six months",
+      reportingOfficer: selectedHiringApp.offer_details?.reportingOfficer || "Head of Department",
+      responseDeadline: selectedHiringApp.offer_details?.responseDeadline || "",
+      additionalTerms: selectedHiringApp.offer_details?.additionalTerms || "",
+    });
+  }, [selectedHiringId]);
 
   useEffect(() => {
     const selected = apps.find((app) => app.id === selectedScheduleId);
@@ -765,6 +814,104 @@ export default function HRDashboard() {
     );
   }
 
+  function printOfferLetter(app: Application, details = app.offer_details) {
+    if (!details) {
+      setMessage("Generate the offer details before opening the letter.");
+      return;
+    }
+    const letter = window.open("", "_blank");
+    if (!letter) {
+      setMessage("Allow pop-ups to open the printable offer letter.");
+      return;
+    }
+    letter.document.write(`<!doctype html>
+      <html><head><title>Offer Letter - ${escapeHtml(candidateName(app))}</title>
+      <style>
+        body{font-family:Arial,sans-serif;color:#17211b;margin:0;padding:48px;line-height:1.6}
+        .page{max-width:760px;margin:auto}.header{border-bottom:4px solid #08783f;padding-bottom:18px;margin-bottom:30px}
+        h1{font-size:24px;margin:0;color:#08783f}.meta{color:#59645d;font-size:13px}.terms{background:#f4f7f5;padding:18px;margin:24px 0}
+        .sign{margin-top:48px}.actions{position:fixed;right:20px;top:20px}@media print{.actions{display:none}body{padding:0}}
+        button{background:#08783f;color:white;border:0;padding:10px 16px;font-weight:bold;cursor:pointer}
+      </style></head><body><button class="actions" onclick="window.print()">Print / Save PDF</button><main class="page">
+      <header class="header"><h1>Pentecost University</h1><p class="meta">P. O. Box KN 1739, Kaneshie, Accra · info@pentvars.edu.gh</p></header>
+      <p>${new Date().toLocaleDateString()}</p>
+      <p><strong>${escapeHtml(candidateName(app))}</strong><br>${escapeHtml(app.email || "")}</p>
+      <h2>Offer of Appointment: ${escapeHtml(details.position || roleTitle(app, jobs))}</h2>
+      <p>Dear ${escapeHtml(candidateName(app))},</p>
+      <p>Pentecost University is pleased to offer you appointment as <strong>${escapeHtml(details.position || roleTitle(app, jobs))}</strong>, commencing on <strong>${escapeHtml(details.startDate || "the agreed date")}</strong>.</p>
+      <div class="terms">
+        <p><strong>Salary:</strong> ${escapeHtml(details.salary || "As communicated by HR")}</p>
+        <p><strong>Probation:</strong> ${escapeHtml(details.probation || "Six months")}</p>
+        <p><strong>Reporting officer:</strong> ${escapeHtml(details.reportingOfficer || "Head of Department")}</p>
+        ${details.responseDeadline ? `<p><strong>Response deadline:</strong> ${escapeHtml(details.responseDeadline)}</p>` : ""}
+      </div>
+      ${details.additionalTerms ? `<p>${escapeHtml(details.additionalTerms).replace(/\n/g, "<br>")}</p>` : ""}
+      <p>This appointment is subject to successful verification of your submitted documents, references, and compliance with University policies.</p>
+      <p>Please sign in to the recruitment portal to accept or decline this offer.</p>
+      <div class="sign"><p>Yours faithfully,</p><p><strong>Human Resources Department</strong><br>Pentecost University</p></div>
+      </main></body></html>`);
+    letter.document.close();
+    letter.opener = null;
+  }
+
+  async function generateOfferLetter(app: Application) {
+    setBusyAction(`offer-${app.id}`);
+    setMessage("");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(`/api/offers/${app.id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
+      },
+      body: JSON.stringify({ ...offerForm, position: roleTitle(app, jobs) }),
+    }).catch(() => null);
+    setBusyAction("");
+    if (!response?.ok) {
+      const data = response ? await response.json().catch(() => ({})) : {};
+      setMessage(data.error || "Offer letter could not be generated.");
+      return;
+    }
+    const data = await response.json();
+    const emailSent = app.email
+      ? await sendApplicantEmail(
+          app,
+          `Offer of Appointment: ${roleTitle(app, jobs)}`,
+          `<h2>Offer of Appointment</h2>
+           <p>Hello ${escapeHtml(candidateName(app))},</p>
+           <p>Pentecost University has issued an offer of appointment for <strong>${escapeHtml(roleTitle(app, jobs))}</strong>.</p>
+           <p>Please sign in to the recruitment portal to review the appointment details and accept or decline the offer.</p>
+           <p>Regards,<br>Human Resources Department<br>Pentecost University</p>`
+        )
+      : false;
+    setMessage(emailSent
+      ? "Offer letter generated, saved to the portal, and emailed to the applicant."
+      : "Offer letter generated and saved to the applicant's portal.");
+    await fetchData();
+    printOfferLetter(data.application, data.application.offer_details);
+  }
+
+  async function updateTalentPool(app: Application, enabled: boolean) {
+    setBusyAction(`talent-${app.id}`);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(`/api/applications/${app.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
+      },
+      body: JSON.stringify({ action: "talent-pool", enabled }),
+    }).catch(() => null);
+    setBusyAction("");
+    if (!response?.ok) {
+      const data = response ? await response.json().catch(() => ({})) : {};
+      setMessage(data.error || "Talent pool could not be updated.");
+      return;
+    }
+    setMessage(enabled ? "Candidate added to the talent pool." : "Candidate removed from the talent pool.");
+    await fetchData();
+  }
+
   function downloadReport() {
     const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
     const rows = [
@@ -792,6 +939,26 @@ export default function HRDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  function downloadFunnelReport() {
+    const csvCell = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Metric", "Count", "Rate"],
+      ["Applications", apps.length, "100%"],
+      ["CV passed", cvPassedApps.length, apps.length ? `${Math.round(cvPassedApps.length / apps.length * 100)}%` : "0%"],
+      ["Interviews scheduled", scheduledApps.length, apps.length ? `${Math.round(scheduledApps.length / apps.length * 100)}%` : "0%"],
+      ["Interviews passed", passedInterviewApps.length, scheduledApps.length ? `${Math.round(passedInterviewApps.length / scheduledApps.length * 100)}%` : "0%"],
+      ["Onboarding", onboardingApps.length, passedInterviewApps.length ? `${Math.round(onboardingApps.length / passedInterviewApps.length * 100)}%` : "0%"],
+      ["Talent pool", talentPoolApps.length, apps.length ? `${Math.round(talentPoolApps.length / apps.length * 100)}%` : "0%"],
+      ["Withdrawn", apps.filter((app) => Boolean(app.withdrawn_at)).length, ""],
+    ];
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" }));
+    link.download = `pentecost_recruitment_funnel_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
   const metricCards = [
     { label: "Total Vacancies", value: jobs.length },
     { label: "Total Applications", value: apps.length },
@@ -806,6 +973,7 @@ export default function HRDashboard() {
     { id: "interviews", label: "Interviews", count: upcomingInterviewApps.length + cvPassedApps.length },
     { id: "hiring", label: "Hiring", count: passedInterviewApps.length },
     { id: "onboarding", label: "Onboarding", count: onboardingApps.length },
+    { id: "talent", label: "Talent Pool", count: talentPoolApps.length },
     { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "metrics", label: "Metrics & Email", count: apps.length },
   ];
@@ -1234,6 +1402,46 @@ export default function HRDashboard() {
                       </button>
                     </div>
 
+                    <details className="hr-offer-generator" open={selectedHiringApp.offer_status === "Generated"}>
+                      <summary>Offer letter generator</summary>
+                      <div className="hr-offer-grid">
+                        <label className="control-label">
+                          Salary and currency
+                          <input className="input-field" value={offerForm.salary} onChange={(event) => setOfferForm({ ...offerForm, salary: event.target.value })} placeholder="Example: GHS 6,500 per month" />
+                        </label>
+                        <label className="control-label">
+                          Start date
+                          <input className="input-field" type="date" value={offerForm.startDate} onChange={(event) => setOfferForm({ ...offerForm, startDate: event.target.value })} />
+                        </label>
+                        <label className="control-label">
+                          Probation period
+                          <input className="input-field" value={offerForm.probation} onChange={(event) => setOfferForm({ ...offerForm, probation: event.target.value })} />
+                        </label>
+                        <label className="control-label">
+                          Reporting officer
+                          <input className="input-field" value={offerForm.reportingOfficer} onChange={(event) => setOfferForm({ ...offerForm, reportingOfficer: event.target.value })} />
+                        </label>
+                        <label className="control-label">
+                          Response deadline
+                          <input className="input-field" type="date" value={offerForm.responseDeadline} onChange={(event) => setOfferForm({ ...offerForm, responseDeadline: event.target.value })} />
+                        </label>
+                        <label className="control-label hr-offer-terms">
+                          Additional terms
+                          <textarea className="input-field" rows={3} value={offerForm.additionalTerms} onChange={(event) => setOfferForm({ ...offerForm, additionalTerms: event.target.value })} placeholder="Optional appointment terms or reporting instructions" />
+                        </label>
+                      </div>
+                      <div className="hr-hiring-actions">
+                        <button className="premium-button" disabled={busyAction === `offer-${selectedHiringApp.id}` || !offerForm.startDate} onClick={() => generateOfferLetter(selectedHiringApp)}>
+                          {busyAction === `offer-${selectedHiringApp.id}` ? "Generating..." : "Generate and Save Offer"}
+                        </button>
+                        {selectedHiringApp.offer_details && (
+                          <button className="secondary-button" onClick={() => printOfferLetter(selectedHiringApp)}>
+                            Open Printable Offer
+                          </button>
+                        )}
+                      </div>
+                    </details>
+
                     <div className="hr-onboarding-stage-panel">
                       <div>
                         <p className="eyebrow">Onboarding Progress</p>
@@ -1264,6 +1472,43 @@ export default function HRDashboard() {
             <p style={{ color: "var(--text-secondary)" }}>No candidates have passed the interview stage yet.</p>
           )}
         </section>
+        )}
+
+        {activePanel === "talent" && (
+          <section className="glass-card ops-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Future Recruitment</p>
+                <h2>Consent-Based Talent Pool</h2>
+                <p className="status-note">Candidates shown here have permitted Pentecost University to retain and reuse their profile for suitable vacancies.</p>
+              </div>
+              <input className="input-field" value={talentSearch} onChange={(event) => setTalentSearch(event.target.value)} placeholder="Search candidate, role, or status" style={{ width: "min(340px, 100%)" }} />
+            </div>
+            <div className="admin-application-list">
+              {filteredTalentPool.map((app) => (
+                <article key={app.id} className="admin-application-card">
+                  <div className="application-profile">
+                    <Avatar name={candidateName(app)} src={candidatePhotoUrl(app)} />
+                    <div>
+                      <p className="eyebrow">Talent Profile</p>
+                      <h3>{candidateName(app)}</h3>
+                      <p className="status-note">{app.email || app.phone || "No contact on file"}</p>
+                    </div>
+                  </div>
+                  <div className="application-intelligence">
+                    <div className="insight-card"><p className="eyebrow">Previous Role</p><strong>{roleTitle(app, jobs)}</strong></div>
+                    <div className="insight-card"><p className="eyebrow">CV Match</p><strong>{Math.round(Number(app.similarity || 0) * 100)}%</strong></div>
+                    <div className="insight-card"><p className="eyebrow">Retention</p><strong>{app.retention_until ? new Date(app.retention_until).toLocaleDateString() : "Not set"}</strong></div>
+                  </div>
+                  <div className="application-operations">
+                    {app.email && <a className="premium-button" href={`mailto:${app.email}?subject=${encodeURIComponent("Pentecost University Career Opportunity")}`}>Contact Candidate</a>}
+                    <button className="secondary-button" disabled={busyAction === `talent-${app.id}`} onClick={() => updateTalentPool(app, false)}>Remove from Pool</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+            {!filteredTalentPool.length && <p className="status-note">No consented candidates match this search.</p>}
+          </section>
         )}
 
         {activePanel === "onboarding" && (
@@ -1423,6 +1668,8 @@ export default function HRDashboard() {
                   ["Awaiting review", pendingReviewApps.length],
                   ["Upcoming interviews", upcomingInterviewApps.length],
                   ["Completed interviews", scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() <= Date.now()).length],
+                  ["Deletion requests", apps.filter((app) => Boolean(app.data_deletion_requested_at)).length],
+                  ["Talent pool profiles", talentPoolApps.length],
                 ].map(([label, value]) => (
                   <div key={label} className="glass-card metric-card">
                     <p>{label}</p>
@@ -1433,6 +1680,23 @@ export default function HRDashboard() {
               <button className="secondary-button" onClick={() => router.push("/hr/interviews")}>
                 Review Interview Scores
               </button>
+              <button className="secondary-button" onClick={downloadFunnelReport}>
+                Download Funnel Metrics CSV
+              </button>
+              {apps.some((app) => app.data_deletion_requested_at) && (
+                <div className="onboarding-callout">
+                  <strong>Applicant privacy requests</strong>
+                  <p className="status-note">Review these records before deletion or anonymisation. Preserve information that must be retained for an active legal or employment process.</p>
+                  <div className="privacy-request-list">
+                    {apps.filter((app) => app.data_deletion_requested_at).map((app) => (
+                      <div key={app.id}>
+                        <span>{candidateName(app)} · {app.email || "No email"}</span>
+                        <strong>{new Date(app.data_deletion_requested_at || "").toLocaleDateString()}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="onboarding-callout">
                 <strong>CV pass threshold</strong>
                 <p className="status-note">Applicants at or above this CV match percentage appear as passing the automatic HR screening cutoff.</p>

@@ -15,6 +15,7 @@ import {
   type OnboardingDocument,
 } from "@/utils/onboarding";
 import UniversityBrand from "@/components/UniversityBrand";
+import { validateRecruitmentFile } from "@/utils/application-lifecycle";
 
 type OnboardingApplication = {
   id: string | number;
@@ -120,11 +121,20 @@ export default function OnboardingStepPage() {
       setMessage("Choose the document type and a file to upload.");
       return;
     }
+    const validationError = validateRecruitmentFile(file, "document");
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
 
     setBusy(true);
     setMessage("");
     try {
-      const upload = await onboardingRequest("POST", { fileName: file.name });
+      const upload = await onboardingRequest("POST", {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      });
       const { error } = await supabase.storage
         .from("onboarding-documents")
         .uploadToSignedUrl(upload.path, upload.token, file);

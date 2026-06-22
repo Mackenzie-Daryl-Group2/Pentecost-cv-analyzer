@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { isJobClosed, loadJobById, loadJobs, type Job } from "@/utils/jobs";
 import { getMatchDecision } from "@/utils/match";
 import { getRoleHome, getUserRole, isApplicantRole } from "@/utils/roles";
+import { validateRecruitmentFile } from "@/utils/application-lifecycle";
 
 type SubmitStep = "idle" | "uploading" | "analyzing" | "saving" | "emailing";
 
@@ -21,6 +22,8 @@ function ApplyForm() {
   const [submitStep, setSubmitStep] = useState<SubmitStep>("idle");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [availableJobs, setAvailableJobs] = useState<Job[]>([]);
+  const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [talentPoolConsent, setTalentPoolConsent] = useState(false);
   const [jobsLoading, setJobsLoading] = useState(true);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -82,6 +85,16 @@ function ApplyForm() {
       return;
     }
     if (!cvFile || !photoFile || !jobId || !selectedJob) return;
+    const cvValidation = validateRecruitmentFile(cvFile, "cv");
+    const photoValidation = validateRecruitmentFile(photoFile, "photo");
+    if (cvValidation || photoValidation) {
+      setMessage(cvValidation || photoValidation);
+      return;
+    }
+    if (!privacyConsent) {
+      setMessage("You must accept the recruitment privacy notice before submitting.");
+      return;
+    }
     if (isJobClosed(selectedJob)) {
       setMessage("Applications for this vacancy have closed. Please choose another open role.");
       return;
@@ -130,6 +143,10 @@ function ApplyForm() {
         cv_passed: decision.passed,
         status: decision.label,
         submitted_at: new Date().toISOString(),
+        privacy_consent_at: new Date().toISOString(),
+        talent_pool_consent: talentPoolConsent,
+        talent_pool_added_at: talentPoolConsent ? new Date().toISOString() : null,
+        retention_until: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000).toISOString(),
         interview_scheduled_at: null,
         interview_meet_link: null
       });
@@ -271,6 +288,23 @@ function ApplyForm() {
             <input type="file" accept=".pdf" className="input-field" onChange={(e) => setCvFile(e.target.files?.[0] || null)} required />
             <p style={{ marginTop: "10px", color: "var(--text-secondary)", fontSize: "0.8rem" }}>{cvFile ? cvFile.name : "No CV selected yet"}</p>
           </div>
+        </div>
+
+        <div className="application-consent-panel">
+          <label>
+            <input type="checkbox" checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} required />
+            <span>
+              <strong>Recruitment privacy notice</strong>
+              I consent to Pentecost University processing my information for recruitment, verification, communication, and onboarding. Unsuccessful application data may be retained for up to 24 months.
+            </span>
+          </label>
+          <label>
+            <input type="checkbox" checked={talentPoolConsent} onChange={(event) => setTalentPoolConsent(event.target.checked)} />
+            <span>
+              <strong>Talent pool permission</strong>
+              Keep my profile for suitable future vacancies and allow HR to contact me about matching opportunities.
+            </span>
+          </label>
         </div>
 
         <button type="submit" className="premium-button" style={{ width: "100%", height: "56px" }} disabled={isSubmitting || jobsLoading || !selectedJob}>
