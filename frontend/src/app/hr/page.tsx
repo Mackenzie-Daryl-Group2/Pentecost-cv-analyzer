@@ -1031,6 +1031,7 @@ export default function HRDashboard() {
             </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <button className="secondary-button" onClick={() => router.push("/hr/operations")}>Operations Center</button>
             <UserBadge user={currentUser} label="HR account" onUserUpdated={setCurrentUser} />
             <button
               onClick={async () => {
