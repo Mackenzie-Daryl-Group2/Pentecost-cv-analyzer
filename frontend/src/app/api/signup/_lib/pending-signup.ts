@@ -3,14 +3,10 @@ import { getServerEnv } from "./server-env";
 
 export const pendingSignupCookieName = "pentecost_pending_signup";
 
-export type SignupDeliveryMethod = "Email" | "SMS";
-
 export interface PendingSignup {
   username: string;
   email: string;
   password: string;
-  phone: string;
-  deliveryMethod: SignupDeliveryMethod;
   codeHash: string;
   expiresAt: string;
 }

@@ -5,21 +5,10 @@ import {
   encryptPendingSignup,
   hashSignupCode,
   pendingSignupCookieName,
-  SignupDeliveryMethod,
 } from "../_lib/pending-signup";
 import { getServerEnv } from "../_lib/server-env";
 
 export const runtime = "nodejs";
-
-function normalizeDeliveryMethod(value: unknown): SignupDeliveryMethod {
-  return String(value || "Email").toLowerCase() === "sms" ? "SMS" : "Email";
-}
-
-function normalizePhone(value: unknown) {
-  const raw = String(value || "").trim();
-  const digits = raw.replace(/\D/g, "");
-  return digits ? `${raw.startsWith("+") ? "+" : ""}${digits}` : "";
-}
 
 async function sendVerificationEmail(to: string, username: string, code: string) {
   const smtpUser = getServerEnv("SMTP_USER");
@@ -62,47 +51,12 @@ async function sendVerificationEmail(to: string, username: string, code: string)
   });
 }
 
-async function sendVerificationSms(to: string, code: string) {
-  const accountSid = getServerEnv("TWILIO_ACCOUNT_SID");
-  const authToken = getServerEnv("TWILIO_AUTH_TOKEN");
-  const fromNumber = getServerEnv("TWILIO_FROM_NUMBER");
-
-  if (!accountSid || !authToken || !fromNumber) {
-    throw new Error("Twilio SMS credentials are not configured.");
-  }
-
-  const body = new URLSearchParams({
-    From: fromNumber,
-    To: to,
-    Body: `Pentecost Recruitment verification code: ${code}. It expires in 10 minutes.`,
-  });
-
-  const response = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    }
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => "");
-    throw new Error(errorText || "SMS verification code could not be sent.");
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
-    const { username, email, password, phone, verificationMethod } = await req.json();
+    const { username, email, password } = await req.json();
     const cleanUsername = String(username || "").trim();
     const cleanEmail = String(email || "").trim().toLowerCase();
     const cleanPassword = String(password || "");
-    const cleanPhone = normalizePhone(phone);
-    const deliveryMethod = normalizeDeliveryMethod(verificationMethod);
 
     if (!cleanUsername || !cleanEmail || !cleanPassword) {
       return NextResponse.json({ error: "Username, email, and password are required." }, { status: 400 });
@@ -112,28 +66,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
     }
 
-    if (deliveryMethod === "SMS" && !/^\+\d{8,15}$/.test(cleanPhone)) {
-      return NextResponse.json({ error: "A valid phone number with country code is required for SMS verification." }, { status: 400 });
-    }
-
     const code = String(randomInt(100000, 1000000));
     const pendingSignupToken = encryptPendingSignup({
       username: cleanUsername,
       email: cleanEmail,
       password: cleanPassword,
-      phone: cleanPhone,
-      deliveryMethod,
       codeHash: hashSignupCode(cleanEmail, code),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });
 
-    if (deliveryMethod === "SMS") {
-      await sendVerificationSms(cleanPhone, code);
-    } else {
-      await sendVerificationEmail(cleanEmail, cleanUsername, code);
-    }
+    await sendVerificationEmail(cleanEmail, cleanUsername, code);
 
-    const response = NextResponse.json({ success: true, method: deliveryMethod });
+    const response = NextResponse.json({ success: true, method: "Email" });
     response.cookies.set(pendingSignupCookieName, pendingSignupToken, {
       httpOnly: true,
       sameSite: "lax",

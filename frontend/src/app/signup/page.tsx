@@ -30,7 +30,6 @@ export default function SignupPage() {
     setLoading(true);
     setMessage("");
     setOtpCode("");
-    const fullPhone = `${countryCode}${phone.replace(/\D/g, "")}`;
     try {
       const verificationResponse = await fetch("/api/signup/request", {
         method: "POST",
@@ -39,8 +38,6 @@ export default function SignupPage() {
           username,
           email,
           password,
-          phone: fullPhone,
-          verificationMethod,
         }),
       });
       const verificationData = await verificationResponse.json().catch(() => ({}));
@@ -49,9 +46,7 @@ export default function SignupPage() {
       }
       
       setShowOtp(true);
-      setMessage(
-        `Verification code sent to ${verificationMethod === "SMS" ? fullPhone : email}.`
-      );
+      setMessage(`Verification code sent to ${email}.`);
     } catch (error: any) {
       setMessage(error.message || "Account creation failed");
     } finally {
@@ -177,7 +172,7 @@ export default function SignupPage() {
             <form onSubmit={showOtp ? handleVerifyOtp : handleRequestAccount}>
               {!showOtp ? (
                 <>
-                  <div style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "none" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>USERNAME</label>
                     <input type="text" className="input-field" placeholder="e.g. john_doe" value={username} onChange={(e) => setUsername(e.target.value)} required />
                   </div>
@@ -191,11 +186,11 @@ export default function SignupPage() {
                         <option value="+1">🇺🇸 +1</option>
                         <option value="+44">🇬🇧 +44</option>
                       </select>
-                      <input type="tel" className="input-field" style={{ flex: 1 }} placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                      <input type="tel" className="input-field" style={{ flex: 1 }} placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} />
                     </div>
                   </div>
 
-                  <div style={{ marginBottom: "20px" }}>
+                  <div style={{ display: "none" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>EMAIL ADDRESS</label>
                     <input type="email" className="input-field" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
@@ -204,7 +199,6 @@ export default function SignupPage() {
                     <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>VERIFY VIA</label>
                     <select className="input-field" style={{ cursor: "pointer" }} value={verificationMethod} onChange={(e) => setVerificationMethod(e.target.value)}>
                       <option value="Email">Email</option>
-                      <option value="SMS">SMS</option>
                     </select>
                   </div>
 
