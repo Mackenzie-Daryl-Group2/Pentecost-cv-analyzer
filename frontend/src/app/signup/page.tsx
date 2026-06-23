@@ -191,9 +191,16 @@ export default function SignupPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: "none" }}>
+                  <div style={{ marginBottom: "20px" }}>
                     <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>EMAIL ADDRESS</label>
                     <input type="email" className="input-field" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  </div>
+
+                  <div style={{ marginBottom: "20px" }}>
+                    <label style={{ display: "block", marginBottom: "8px", fontSize: "0.8rem", color: "var(--accent-neon)", fontWeight: "700" }}>VERIFY VIA</label>
+                    <select className="input-field" value="Email" disabled aria-label="Verification method">
+                      <option value="Email">Email</option>
+                    </select>
                   </div>
 
                   <div style={{ marginBottom: "32px" }}>
