@@ -10,6 +10,12 @@ import { getServerEnv } from "../_lib/server-env";
 
 export const runtime = "nodejs";
 
+function normalizePhone(value: unknown) {
+  const raw = String(value || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  return digits ? `+${digits}` : "";
+}
+
 async function sendVerificationEmail(to: string, username: string, code: string) {
   const smtpUser = getServerEnv("SMTP_USER");
   const smtpPassword = getServerEnv("SMTP_PASSWORD");
@@ -53,17 +59,22 @@ async function sendVerificationEmail(to: string, username: string, code: string)
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, email, password } = await req.json();
+    const { username, email, password, phone } = await req.json();
     const cleanUsername = String(username || "").trim();
     const cleanEmail = String(email || "").trim().toLowerCase();
     const cleanPassword = String(password || "");
+    const cleanPhone = normalizePhone(phone);
 
-    if (!cleanUsername || !cleanEmail || !cleanPassword) {
-      return NextResponse.json({ error: "Username, email, and password are required." }, { status: 400 });
+    if (!cleanUsername || !cleanEmail || !cleanPassword || !cleanPhone) {
+      return NextResponse.json({ error: "Username, email, phone number, and password are required." }, { status: 400 });
     }
 
     if (cleanPassword.length < 6) {
       return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
+    }
+
+    if (!/^\+\d{8,15}$/.test(cleanPhone)) {
+      return NextResponse.json({ error: "Enter a valid phone number with its country code." }, { status: 400 });
     }
 
     const code = String(randomInt(100000, 1000000));
@@ -71,6 +82,7 @@ export async function POST(req: NextRequest) {
       username: cleanUsername,
       email: cleanEmail,
       password: cleanPassword,
+      phone: cleanPhone,
       codeHash: hashSignupCode(cleanEmail, code),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
     });

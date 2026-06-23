@@ -7,6 +7,7 @@ export interface PendingSignup {
   username: string;
   email: string;
   password: string;
+  phone: string;
   codeHash: string;
   expiresAt: string;
 }

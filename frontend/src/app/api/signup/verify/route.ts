@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
     const metadata = {
       username: pendingSignup.username,
       full_name: pendingSignup.username,
+      phone: pendingSignup.phone,
       role: "user",
     };
 
