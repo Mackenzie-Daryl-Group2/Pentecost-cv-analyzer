@@ -72,7 +72,7 @@ const emptyJobForm: JobForm = {
 };
 
 const roleMatrix = [
-  { role: "Admin", power: "Full control and oversight", detail: "Oversees every stakeholder role while retaining vacancy, application, decision, onboarding, override, and reporting powers." },
+  { role: "Admin", power: "Oversight and governance", detail: "Oversees stakeholder roles, user access, activity logs, and reporting across the recruitment system." },
   { role: "HR", power: "Recruitment operations", detail: "Leads CV review, interviews, hiring, onboarding, document review, and staff ID assignment." },
   { role: "PRO-VC", power: "Executive recommendation", detail: "Reviews HR reports and submits recommendation decisions." },
   { role: "Registrar", power: "Records visibility", detail: "Tracks submitted applications, interviews, and final records." },
@@ -498,10 +498,10 @@ export default function AdminDashboard() {
   }
 
   const metricCards = [
-    { label: "Vacancies", value: jobs.length },
-    { label: "Applications", value: apps.length },
-    { label: "CV Passed", value: cvPassedApps.length },
+    { label: "Users", value: profiles.length },
+    { label: "Activity Logs", value: activityLogs.length },
     { label: "Interviews", value: scheduledApps.length },
+    { label: "Reports", value: apps.length },
     { label: "Ready / Hired", value: interviewPassedApps.length + hiredApps.length },
   ];
   const metricAccentClasses = [
@@ -514,10 +514,6 @@ export default function AdminDashboard() {
 
   const panels: Array<{ id: AdminPanel; label: string; count: number }> = [
     { id: "overview", label: "Overview", count: apps.length },
-    { id: "applications", label: "Applications", count: filteredApps.length },
-    { id: "recommendations", label: "Best Three", count: bestApplicationsByRole.length },
-    { id: "onboarding", label: "Onboarding", count: onboardingApps.length },
-    { id: "vacancies", label: "Vacancies", count: jobs.length },
     { id: "users", label: "Users", count: profiles.length },
     { id: "activity", label: "Activity Logs", count: activityLogs.length },
     { id: "roles", label: "Roles", count: roleMatrix.length },
@@ -542,7 +538,7 @@ export default function AdminDashboard() {
             <div>
               <p className="eyebrow">Administration</p>
               <h1 className="page-title">Recruitment Command Center</h1>
-              <p className="page-subtitle max-w-3xl">Oversee stakeholder roles while retaining full control of vacancies, applications, decisions, onboarding, and reports.</p>
+              <p className="page-subtitle max-w-3xl">Oversee stakeholder roles, audit activity, user access, and institutional recruitment reports.</p>
             </div>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -580,8 +576,8 @@ export default function AdminDashboard() {
                 <h2>Upcoming Interview Meetings</h2>
                 <p className="status-note">Admin can join scheduled interviews directly from the dashboard.</p>
               </div>
-              <button className="secondary-button" type="button" onClick={() => setActivePanel("applications")}>
-                View Applications
+              <button className="secondary-button" type="button" onClick={() => setActivePanel("reports")}>
+                View Reports
               </button>
             </div>
             <div className="meeting-list">
@@ -607,7 +603,7 @@ export default function AdminDashboard() {
                     ) : (
                       <span className="status-note">{interviewAccessMessage(app.interview_scheduled_at, app.interview_passed, app.status)}</span>
                     )}
-                    <button className="secondary-button" type="button" onClick={() => setActivePanel("applications")}>
+                    <button className="secondary-button" type="button" onClick={() => setActivePanel("reports")}>
                       Details
                     </button>
                   </div>
@@ -644,7 +640,7 @@ export default function AdminDashboard() {
                   <span className="admin-section-index">{String(index + 1).padStart(2, "0")}</span>
                   <span className="admin-section-copy">
                     <strong>{panel.label}</strong>
-                    <small>{panel.id === "recommendations" ? "Top candidates" : panel.id === "vacancies" ? "Open roles" : panel.id}</small>
+                    <small>{panel.id}</small>
                   </span>
                   <span className="admin-section-count">{panel.count}</span>
                 </button>
@@ -665,7 +661,7 @@ export default function AdminDashboard() {
                 <span className="rounded-full border border-[#f8b51b]/30 bg-[#f8b51b]/10 px-3 py-1 text-xs font-black text-[#f8b51b]">Full access</span>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                {["Create, edit, and remove vacancies", "Approve or reject CVs", "Mark interview outcomes", "Recommend or approve hiring", "Override application status", "Download institution-wide reports"].map((power) => (
+                {["Manage stakeholder access", "Review user directory", "Track activity logs", "Oversee role assignments", "Monitor interview movement", "Download institution-wide reports"].map((power) => (
                   <div key={power} className="row-card border-white/10 bg-white/[0.045] transition duration-200 hover:-translate-y-0.5 hover:border-[#f8b51b]/35">
                     <strong>{power}</strong>
                   </div>
@@ -687,7 +683,7 @@ export default function AdminDashboard() {
                     <strong className="text-lg text-[#f8b51b]">{value}</strong>
                   </div>
                 ))}
-                <button className="premium-button mt-1" onClick={() => setActivePanel("applications")}>Review Applications</button>
+                <button className="premium-button mt-1" onClick={() => setActivePanel("reports")}>Open Reports</button>
               </div>
             </div>
           </section>
