@@ -266,8 +266,8 @@ export default function InterviewHistoryPage() {
                       ))}
                     </div>
                   )}
-                  <details>
-                    <summary>Interview scoring sheet</summary>
+                  <details open={isPast || savedScore === null}>
+                    <summary>{savedScore === null ? "Score this interview" : "Update interview score"}</summary>
                     <div className="interview-score-grid">
                       <input className="input-field" type="number" min="0" max="25" placeholder="Communication /25" value={form.communication} onChange={(event) => updateForm(app.id, { communication: event.target.value })} />
                       <input className="input-field" type="number" min="0" max="25" placeholder="Role knowledge /25" value={form.roleKnowledge} onChange={(event) => updateForm(app.id, { roleKnowledge: event.target.value })} />

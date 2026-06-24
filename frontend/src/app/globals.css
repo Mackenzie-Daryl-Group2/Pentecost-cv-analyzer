@@ -488,6 +488,22 @@ td {
   padding-bottom: 16px;
 }
 
+.hr-score-queue {
+  display: grid;
+  gap: 10px;
+}
+
+.hr-score-queue-card {
+  align-items: center;
+  background: var(--surface-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(220px, 1.3fr) minmax(160px, 0.7fr) minmax(130px, 0.55fr) auto;
+  padding: 14px;
+}
+
 .hr-schedule-roster {
   background: var(--surface-2);
   border: 1px solid var(--line-soft);
@@ -3236,6 +3252,7 @@ td {
   }
 
   .hr-metrics-workspace,
+  .hr-score-queue-card,
   .interview-history-summary,
   .registrar-score-header,
   .interview-score-grid {

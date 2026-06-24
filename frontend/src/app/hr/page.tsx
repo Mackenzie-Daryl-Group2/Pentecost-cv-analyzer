@@ -18,6 +18,7 @@ import UserBadge, { Avatar } from "@/components/UserBadge";
 import UniversityBrand from "@/components/UniversityBrand";
 import { generateStaffId, onboardingStepHref, parseOnboardingDocuments } from "@/utils/onboarding";
 import { canJoinInterview, interviewAccessMessage } from "@/utils/interviews";
+import { compiledInterviewScore, type InterviewPanelScore } from "@/utils/interview-panel";
 
 interface Application {
   id: number;
@@ -149,6 +150,7 @@ function CandidateSummary({ app, jobs, detail }: { app: Application; jobs: Job[]
 export default function HRDashboard() {
   const [apps, setApps] = useState<Application[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [panelScores, setPanelScores] = useState<InterviewPanelScore[]>([]);
   const [newJob, setNewJob] = useState<JobForm>(emptyJobForm);
   const [editJobId, setEditJobId] = useState<number | null>(null);
   const [editJob, setEditJob] = useState<JobForm>(emptyJobForm);
@@ -176,15 +178,24 @@ export default function HRDashboard() {
   const router = useRouter();
 
   async function fetchData() {
-    const [applicationsResponse, loadedJobs] = await Promise.all([
+    const { data: sessionData } = await supabase.auth.getSession();
+    const [applicationsResponse, loadedJobs, scoresResponse] = await Promise.all([
       supabase.from("applications").select("*").order("similarity", { ascending: false }),
       loadJobs(supabase),
+      fetch("/api/interview-scores", {
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token || ""}` },
+      }).catch(() => null),
     ]);
 
     if (applicationsResponse.error) {
       setMessage(applicationsResponse.error.message);
     } else {
       setApps((applicationsResponse.data || []) as Application[]);
+    }
+
+    if (scoresResponse?.ok) {
+      const scoreData = await scoresResponse.json().catch(() => ({}));
+      setPanelScores((scoreData.scores || []) as InterviewPanelScore[]);
     }
 
     setJobs(loadedJobs);
@@ -234,8 +245,24 @@ export default function HRDashboard() {
     init();
   }, [router]);
 
+  function interviewScoresFor(appId: number | string) {
+    return panelScores.filter((score) => String(score.application_id) === String(appId));
+  }
+
+  function interviewScoreFor(app: Application) {
+    return compiledInterviewScore(interviewScoresFor(app.id)) ?? parseInterviewScore(app.interview_notes);
+  }
+
   const cvPassedApps = useMemo(() => apps.filter((app) => passedCv(app, cvPassThreshold)), [apps, cvPassThreshold]);
   const scheduledApps = useMemo(() => apps.filter((app) => Boolean(app.interview_scheduled_at)), [apps]);
+  const completedInterviewApps = useMemo(
+    () => scheduledApps.filter((app) => new Date(app.interview_scheduled_at || "").getTime() <= Date.now()),
+    [scheduledApps]
+  );
+  const scoringQueueApps = useMemo(
+    () => completedInterviewApps.filter((app) => interviewScoreFor(app) === null || app.interview_passed === null || app.interview_passed === undefined),
+    [completedInterviewApps, panelScores]
+  );
   const upcomingInterviewApps = useMemo(
     () => scheduledApps.filter((app) =>
       new Date(app.interview_scheduled_at || "").getTime() > Date.now()
@@ -954,7 +981,7 @@ export default function HRDashboard() {
         roleTitle(app, jobs),
         Math.round(Number(app.similarity || 0) * 100),
         cvPassThreshold,
-        parseInterviewScore(app.interview_notes) ?? "",
+        interviewScoreFor(app) ?? "",
         truthy(app.interview_passed) ? "Passed" : "Not Passed",
         app.onboarding_status || "Not started",
         app.status,
@@ -1328,6 +1355,44 @@ export default function HRDashboard() {
         <section className="glass-card" style={cardStyle}>
           <div className="section-heading">
             <div>
+              <p className="eyebrow">Completed Interviews</p>
+              <h2>Ready for Scoring</h2>
+              <p className="status-note">Interviews whose scheduled time has passed appear here so HR can score them and confirm the outcome.</p>
+            </div>
+            <span className="status-pill">{scoringQueueApps.length} pending</span>
+          </div>
+          {scoringQueueApps.length ? (
+            <div className="hr-score-queue">
+              {scoringQueueApps.slice(0, 4).map((app) => {
+                const savedScore = interviewScoreFor(app);
+                const panelReviews = interviewScoresFor(app.id).length;
+                return (
+                  <article key={app.id} className="hr-score-queue-card">
+                    <CandidateSummary app={app} jobs={jobs} detail={app.email || app.phone || "No contact on file"} />
+                    <div>
+                      <p className="eyebrow">Interview Time</p>
+                      <strong>{formatDate(app.interview_scheduled_at)}</strong>
+                    </div>
+                    <div>
+                      <p className="eyebrow">Score Status</p>
+                      <strong>{savedScore === null ? "Not scored" : `${savedScore}/100`}</strong>
+                      <p className="status-note">{panelReviews} panel review{panelReviews === 1 ? "" : "s"}</p>
+                    </div>
+                    <button className="premium-button" type="button" onClick={() => router.push("/hr/interviews")}>
+                      Score Interview
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="status-note">No completed interviews are waiting for HR scoring.</p>
+          )}
+        </section>
+
+        <section className="glass-card" style={cardStyle}>
+          <div className="section-heading">
+            <div>
               <h2>Interview Score Archive</h2>
               <p className="status-note">Past, upcoming, completed, and unscored interview sessions are kept on a dedicated review page.</p>
             </div>
@@ -1362,7 +1427,7 @@ export default function HRDashboard() {
                 <div className="hr-hiring-candidate-list">
                   {passedInterviewApps.map((app) => {
                     const isSelected = selectedHiringId === app.id;
-                    const savedScore = parseInterviewScore(app.interview_notes);
+                    const savedScore = interviewScoreFor(app);
                     const recommendationState = app.pro_vc_approved
                       ? "PRO-VC approved"
                       : truthy(app.hr_report_sent)
@@ -1393,7 +1458,7 @@ export default function HRDashboard() {
 
               {(() => {
                 const progress = onboardingProgress(selectedHiringApp.onboarding_status);
-                const savedScore = parseInterviewScore(selectedHiringApp.interview_notes);
+                const savedScore = interviewScoreFor(selectedHiringApp);
                 const recommendation = interviewRecommendation(savedScore);
                 return (
                   <div className="hr-hiring-decision">
@@ -1870,7 +1935,7 @@ export default function HRDashboard() {
           <div className="hr-screening-list">
             {filteredApps.map((app) => {
               const decision = getMatchDecision(Number(app.similarity || 0));
-              const interviewScore = parseInterviewScore(app.interview_notes);
+              const interviewScore = interviewScoreFor(app);
               const recommendation = interviewRecommendation(interviewScore);
               const interviewState = truthy(app.interview_passed) ? "Passed" : app.interview_scheduled_at ? "Scheduled" : "Not scheduled";
               const matchPercent = Math.max(0, Math.min(100, Math.round(Number(app.similarity || 0) * 100)));
