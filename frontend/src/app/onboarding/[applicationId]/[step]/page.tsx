@@ -16,6 +16,7 @@ import {
 } from "@/utils/onboarding";
 import UniversityBrand from "@/components/UniversityBrand";
 import { validateRecruitmentFile } from "@/utils/application-lifecycle";
+import { onboardingEmailForStep } from "@/utils/recruitment-insights";
 
 type OnboardingApplication = {
   id: string | number;
@@ -108,6 +109,66 @@ export default function OnboardingStepPage() {
       const data = await onboardingRequest("PATCH", updates);
       setApplication(data.application);
       setMessage(success);
+    } catch (error: any) {
+      setMessage(error.message || "Update failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendCompletionEmail(updatedApplication: OnboardingApplication) {
+    if (!updatedApplication.email) return false;
+    const staffIdValue = updatedApplication.staff_id || staffId || generateStaffId(params.applicationId);
+    const email = onboardingEmailForStep("Completed", applicantName, roleName, {
+      staffId: staffIdValue,
+      orientationDetails: updatedApplication.orientation_details,
+      portalUrl: `${window.location.origin}${onboardingStepHref(updatedApplication.id, "Completed")}`,
+    });
+    if (!email) return false;
+
+    const response = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: updatedApplication.email,
+        subject: email.subject,
+        html: email.html,
+      }),
+    });
+
+    return response.ok;
+  }
+
+  async function saveHrUpdate() {
+    if (!application) return;
+    const nextStaffId = pageStep.slug === "completed" || pageStep.slug === "staff-account"
+      ? staffId
+      : application.staff_id;
+
+    setBusy(true);
+    setMessage("");
+    try {
+      const data = await onboardingRequest("PATCH", {
+        onboarding_status: pageStep.name,
+        onboarding_hr_notes: hrNotes,
+        orientation_details: orientationDetails,
+        staff_id: nextStaffId,
+        status: pageStep.slug === "completed" ? "Hired / Onboarded" : "Awaiting Onboarding",
+      });
+      setApplication(data.application);
+
+      if (pageStep.slug === "completed") {
+        const emailSent = await sendCompletionEmail(data.application);
+        setMessage(
+          data.application.email
+            ? emailSent
+              ? "Onboarding completed. Final staff details were sent to the applicant by email and are available in the portal."
+              : "Onboarding completed, but the final staff details email could not be sent."
+            : "Onboarding completed, but the applicant has no email address on file."
+        );
+      } else {
+        setMessage(`${pageStep.title} saved.`);
+      }
     } catch (error: any) {
       setMessage(error.message || "Update failed.");
     } finally {
@@ -342,9 +403,35 @@ export default function OnboardingStepPage() {
             )}
 
             {pageStep.slug === "completed" && (
-              <div className="onboarding-callout">
+              <div className="onboarding-callout onboarding-completion-package">
                 <strong>Welcome to Pentecost University</strong>
-                <p>Your staff ID is <span className="onboarding-staff-id">{application.staff_id || "pending"}</span>.</p>
+                <p>Your onboarding has been completed. Keep these final appointment details for your records.</p>
+                <div className="onboarding-final-grid">
+                  <span>
+                    <small>Staff ID</small>
+                    <strong>{application.staff_id || staffId || "Pending"}</strong>
+                  </span>
+                  <span>
+                    <small>Position</small>
+                    <strong>{roleName}</strong>
+                  </span>
+                  <span>
+                    <small>Applicant email</small>
+                    <strong>{application.email || "Not recorded"}</strong>
+                  </span>
+                  <span>
+                    <small>Status</small>
+                    <strong>{application.status || "Hired / Onboarded"}</strong>
+                  </span>
+                </div>
+                <div className="onboarding-letter-box">
+                  <p className="eyebrow">Appointment Letter Summary</p>
+                  <p>
+                    Pentecost University confirms that {applicantName} has completed onboarding for {roleName}.
+                    The assigned staff identity is {application.staff_id || staffId || "pending"}.
+                  </p>
+                  <p>{application.orientation_details || "Orientation and reporting details will be communicated by HR where applicable."}</p>
+                </div>
               </div>
             )}
           </div>
@@ -384,13 +471,7 @@ export default function OnboardingStepPage() {
                 <button
                   className="premium-button"
                   disabled={busy}
-                  onClick={() => updateRecord({
-                    onboarding_status: pageStep.name,
-                    onboarding_hr_notes: hrNotes,
-                    orientation_details: orientationDetails,
-                    staff_id: pageStep.slug === "completed" || pageStep.slug === "staff-account" ? staffId : application.staff_id,
-                    status: pageStep.slug === "completed" ? "Hired / Onboarded" : "Awaiting Onboarding",
-                  }, `${pageStep.title} saved.`)}
+                  onClick={saveHrUpdate}
                 >
                   Save HR Update
                 </button>

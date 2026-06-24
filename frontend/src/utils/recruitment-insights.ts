@@ -136,9 +136,17 @@ function escapeHtml(value?: string | null) {
   });
 }
 
-export function onboardingEmailForStep(step: string, candidateName: string, roleTitle: string) {
+export function onboardingEmailForStep(
+  step: string,
+  candidateName: string,
+  roleTitle: string,
+  details?: { staffId?: string | null; orientationDetails?: string | null; portalUrl?: string | null }
+) {
   const name = escapeHtml(candidateName || "Applicant");
   const role = escapeHtml(roleTitle || "the role");
+  const staffId = escapeHtml(details?.staffId || "To be confirmed");
+  const orientationDetails = escapeHtml(details?.orientationDetails || "Please check your onboarding portal for any reporting instructions.");
+  const portalUrl = escapeHtml(details?.portalUrl || "");
 
   if (step === "Offer Letter Sent") {
     return {
@@ -169,12 +177,17 @@ export function onboardingEmailForStep(step: string, candidateName: string, role
 
   if (step === "Completed") {
     return {
-      subject: "Welcome to Pentecost University",
+      subject: "Onboarding Complete - Pentecost University Staff Details",
       html: `
         <h2>Onboarding Completed</h2>
         <p>Hello ${name},</p>
         <p>Your onboarding for <strong>${role}</strong> has been completed.</p>
         <p>Welcome to Pentecost University. We are pleased to have you joining the team and wish you a strong start.</p>
+        <h3>Staff Details</h3>
+        <p><strong>Position:</strong> ${role}</p>
+        <p><strong>Staff ID:</strong> ${staffId}</p>
+        <p><strong>Orientation / reporting details:</strong> ${orientationDetails}</p>
+        ${portalUrl ? `<p><a href="${portalUrl}">Open your onboarding portal</a> to view your final appointment summary.</p>` : ""}
         <p>Regards,<br/>Pentecost University HR Department</p>
       `,
     };

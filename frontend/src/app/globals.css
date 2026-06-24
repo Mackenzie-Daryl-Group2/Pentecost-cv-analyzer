@@ -2113,6 +2113,38 @@ td {
   font-weight: 900;
 }
 
+.onboarding-completion-package {
+  display: grid;
+  gap: 14px;
+}
+
+.onboarding-final-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.onboarding-final-grid span,
+.onboarding-letter-box {
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.onboarding-final-grid small {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 850;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.onboarding-final-grid strong {
+  color: var(--text-primary);
+}
+
 .oversight-table-wrap {
   overflow-x: auto;
 }
@@ -3223,6 +3255,7 @@ td {
 
   .onboarding-workspace,
   .onboarding-upload-form,
+  .onboarding-final-grid,
   .onboarding-requirement-grid {
     grid-template-columns: 1fr;
   }

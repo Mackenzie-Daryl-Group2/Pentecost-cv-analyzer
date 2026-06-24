@@ -42,6 +42,7 @@ interface Application {
   onboarding_status?: string | null;
   onboarding_documents?: unknown;
   onboarding_required_documents?: string[] | null;
+  orientation_details?: string | null;
   staff_id?: string | null;
   privacy_consent_at?: string | null;
   talent_pool_consent?: boolean | null;
@@ -427,7 +428,15 @@ export default function HRDashboard() {
 
     if (!updated) return;
 
-    const email = onboardingEmailForStep(step, candidateName(app), roleTitle(app, jobs));
+    const finalStaffId = step === "Completed" ? app.staff_id || generateStaffId(app.id) : app.staff_id;
+    const portalUrl = typeof window !== "undefined"
+      ? `${window.location.origin}${onboardingStepHref(app.id, step)}`
+      : "";
+    const email = onboardingEmailForStep(step, candidateName(app), roleTitle(app, jobs), {
+      staffId: finalStaffId,
+      orientationDetails: app.orientation_details,
+      portalUrl,
+    });
     if (!email) {
       router.push(onboardingStepHref(app.id, step));
       return;
