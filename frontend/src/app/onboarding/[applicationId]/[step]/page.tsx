@@ -31,7 +31,30 @@ type OnboardingApplication = {
   onboarding_hr_notes?: string | null;
   orientation_details?: string | null;
   staff_id?: string | null;
+  offer_status?: string | null;
+  offer_details?: {
+    position?: string;
+    salary?: string;
+    startDate?: string;
+    probation?: string;
+    reportingOfficer?: string;
+    responseDeadline?: string;
+    additionalTerms?: string;
+  } | null;
 };
+
+function escapeHtml(value?: string | number | null) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[character];
+  });
+}
 
 export default function OnboardingStepPage() {
   const params = useParams<{ applicationId: string; step: string }>();
@@ -239,6 +262,49 @@ export default function OnboardingStepPage() {
     await updateRecord({ onboarding_documents: nextDocuments }, `Document marked ${status}.`);
   }
 
+  function openAppointmentLetter() {
+    if (!application?.offer_details) {
+      setMessage("The appointment letter has not been generated yet.");
+      return;
+    }
+
+    const details = application.offer_details;
+    const letter = window.open("", "_blank");
+    if (!letter) {
+      setMessage("Allow pop-ups to open the appointment letter.");
+      return;
+    }
+
+    letter.document.write(`<!doctype html>
+      <html><head><title>Appointment Letter - ${escapeHtml(applicantName)}</title>
+      <style>
+        body{font-family:Arial,sans-serif;color:#17211b;margin:0;padding:48px;line-height:1.6}
+        .page{max-width:760px;margin:auto}.header{border-bottom:4px solid #08783f;padding-bottom:18px;margin-bottom:30px}
+        h1{font-size:24px;margin:0;color:#08783f}.meta{color:#59645d;font-size:13px}.terms{background:#f4f7f5;padding:18px;margin:24px 0}
+        .sign{margin-top:48px}.actions{position:fixed;right:20px;top:20px}@media print{.actions{display:none}body{padding:0}}
+        button{background:#08783f;color:white;border:0;padding:10px 16px;font-weight:bold;cursor:pointer}
+      </style></head><body><button class="actions" onclick="window.print()">Print / Save PDF</button><main class="page">
+      <header class="header"><h1>Pentecost University</h1><p class="meta">P. O. Box KN 1739, Kaneshie, Accra - info@pentvars.edu.gh</p></header>
+      <p>${new Date().toLocaleDateString()}</p>
+      <p><strong>${escapeHtml(applicantName)}</strong><br>${escapeHtml(application.email || "")}</p>
+      <h2>Offer of Appointment: ${escapeHtml(details.position || roleName)}</h2>
+      <p>Dear ${escapeHtml(applicantName)},</p>
+      <p>Pentecost University is pleased to offer you appointment as <strong>${escapeHtml(details.position || roleName)}</strong>, commencing on <strong>${escapeHtml(details.startDate || "the agreed date")}</strong>.</p>
+      <div class="terms">
+        <p><strong>Salary:</strong> ${escapeHtml(details.salary || "As communicated by HR")}</p>
+        <p><strong>Probation:</strong> ${escapeHtml(details.probation || "Six months")}</p>
+        <p><strong>Reporting officer:</strong> ${escapeHtml(details.reportingOfficer || "Head of Department")}</p>
+        ${details.responseDeadline ? `<p><strong>Response deadline:</strong> ${escapeHtml(details.responseDeadline)}</p>` : ""}
+        <p><strong>Staff ID:</strong> ${escapeHtml(application.staff_id || staffId || "To be confirmed")}</p>
+      </div>
+      ${details.additionalTerms ? `<p>${escapeHtml(details.additionalTerms).replace(/\n/g, "<br>")}</p>` : ""}
+      <p>This appointment is subject to successful verification of your submitted documents, references, and compliance with University policies.</p>
+      <div class="sign"><p>Yours faithfully,</p><p><strong>Human Resources Department</strong><br>Pentecost University</p></div>
+      </main></body></html>`);
+    letter.document.close();
+    letter.opener = null;
+  }
+
   if (loading) {
     return <main className="app-shell"><p>Loading onboarding...</p></main>;
   }
@@ -292,6 +358,38 @@ export default function OnboardingStepPage() {
               <div className="onboarding-callout">
                 <strong>Offer status</strong>
                 <p>HR has started your formal onboarding for {roleName}. Review the offer sent to your email.</p>
+              </div>
+            )}
+
+            {application.offer_details && (
+              <div className="onboarding-callout onboarding-letter-preview">
+                <div>
+                  <strong>Generated Appointment Letter</strong>
+                  <p className="status-note">
+                    {application.offer_details.position || roleName} - {application.offer_status || "Generated"}
+                  </p>
+                </div>
+                <div className="onboarding-final-grid">
+                  <span>
+                    <small>Start date</small>
+                    <strong>{application.offer_details.startDate || "To be confirmed"}</strong>
+                  </span>
+                  <span>
+                    <small>Salary</small>
+                    <strong>{application.offer_details.salary || "As communicated by HR"}</strong>
+                  </span>
+                  <span>
+                    <small>Reporting officer</small>
+                    <strong>{application.offer_details.reportingOfficer || "Head of Department"}</strong>
+                  </span>
+                  <span>
+                    <small>Staff ID</small>
+                    <strong>{application.staff_id || staffId || "Pending"}</strong>
+                  </span>
+                </div>
+                <button className="secondary-button" type="button" onClick={openAppointmentLetter}>
+                  Open Appointment Letter
+                </button>
               </div>
             )}
 
@@ -368,9 +466,23 @@ export default function OnboardingStepPage() {
                             <button className="secondary-button" onClick={() => openDocument(document)}>View</button>
                             {role !== "user" && (
                               <>
-                                <button className="secondary-button" onClick={() => reviewDocument(document.id, "approved")}>Approve</button>
-                                <button className="danger-button" onClick={() => reviewDocument(document.id, "rejected")}>Reject</button>
+                                {document.status === "approved" ? (
+                                  <button className="secondary-button is-approved" disabled>Approved</button>
+                                ) : (
+                                  <button className="secondary-button" onClick={() => reviewDocument(document.id, "approved")}>Approve</button>
+                                )}
+                                {document.status === "rejected" ? (
+                                  <button className="danger-button" disabled>Rejected</button>
+                                ) : (
+                                  <button className="danger-button" onClick={() => reviewDocument(document.id, "rejected")}>Reject</button>
+                                )}
                               </>
+                            )}
+                            {role === "user" && document.status === "approved" && (
+                              <button className="secondary-button is-approved" disabled>Approved</button>
+                            )}
+                            {role === "user" && document.status === "rejected" && (
+                              <button className="danger-button" disabled>Rejected</button>
                             )}
                           </div>
                         )}

@@ -2043,6 +2043,11 @@ td {
   line-height: 1.55;
 }
 
+.onboarding-letter-preview {
+  display: grid;
+  gap: 12px;
+}
+
 .onboarding-upload-form {
   display: grid;
   gap: 10px;
@@ -2105,6 +2110,15 @@ td {
   flex-wrap: wrap;
   gap: 7px;
   justify-content: flex-end;
+}
+
+.secondary-button.is-approved,
+.secondary-button.is-approved:disabled {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--accent-neon);
+  cursor: default;
+  opacity: 1;
 }
 
 .onboarding-staff-id {
